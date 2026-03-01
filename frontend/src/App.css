@@ -4205,3 +4205,35 @@ img[src=""], img:not([src]), img[src="undefined"] {
   align-items: center !important;
   justify-content: center !important;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Lucide Icon Fix - Sidebar ikonları düzeltmesi
+   ═══════════════════════════════════════════════════════════ */
+
+.rail-btn-ic svg,
+.rail-item svg,
+[class*="rail"] svg {
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  fill: none !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.rail-btn.act svg,
+.rail-item.act svg {
+  color: var(--accent) !important;
+  stroke-width: 2.5 !important;
+}
+
+.rail-btn:hover svg,
+.rail-item:hover svg {
+  color: white !important;
+}
+
+/* Sidebar icon container */
+.rail-btn-ic {
+  font-size: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
