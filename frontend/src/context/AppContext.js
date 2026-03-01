@@ -714,6 +714,43 @@ export const AppProvider = ({ children }) => {
     return isAdmin();
   };
 
+  // Notification functions
+  const enableNotifications = async () => {
+    try {
+      const token = await requestNotificationPermission();
+      if (token) {
+        setFcmToken(token);
+        setNotificationsEnabled(true);
+        
+        // Save token to Firebase
+        const db = getDb();
+        if (db && currentUser) {
+          await saveFCMToken(currentUser.id, token, db);
+        }
+        
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error enabling notifications:', error);
+      return false;
+    }
+  };
+
+  const disableNotifications = () => {
+    setNotificationsEnabled(false);
+    // Note: FCM token remains but we won't send notifications
+  };
+
+  const getNotificationStatus = () => {
+    return {
+      supported: 'Notification' in window && 'serviceWorker' in navigator,
+      permission: Notification.permission,
+      enabled: notificationsEnabled,
+      token: fcmToken
+    };
+  };
+
   const value = {
     // State
     currentServer,
