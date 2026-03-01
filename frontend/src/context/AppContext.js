@@ -332,7 +332,7 @@ export const AppProvider = ({ children }) => {
     if (!currentUser || !currentServer) return;
 
     const initNotifications = async () => {
-      const supported = initializeMessaging();
+      const supported = initializeMessaging(currentServer);
       if (!supported) {
         console.log('Push notifications not supported');
         return;
