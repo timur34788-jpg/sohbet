@@ -52,10 +52,13 @@ const Login = ({ onBack }) => {
 
   const handleLoginStep1 = (e) => {
     e.preventDefault();
+    console.log('🎯 Step 1 çağrıldı!', { loginUsername });
     if (!loginUsername.trim()) {
+      console.error('❌ Username boş');
       setError('Kullanıcı adı gerekli');
       return;
     }
+    console.log('✅ Step 2ye geçiliyor...');
     setError('');
     setLoginStep(2);
   };
