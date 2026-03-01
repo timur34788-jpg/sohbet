@@ -1,6 +1,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ref, onValue, set, push, update, remove, get, query, orderByChild, limitToLast } from 'firebase/database';
 import { getFirebaseInstance, SERVERS, getDefaultServer, setDefaultServer, signInToFirebase } from '../config/firebase';
+import { 
+  initializeMessaging, 
+  requestNotificationPermission, 
+  onMessageListener, 
+  showNotification,
+  saveFCMToken,
+  getCurrentToken
+} from '../services/notificationService';
 
 const AppContext = createContext();
 
