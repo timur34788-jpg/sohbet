@@ -751,6 +751,98 @@ export const AppProvider = ({ children }) => {
     };
   };
 
+  // Admin: Delete all messages
+  const deleteAllMessages = async () => {
+    try {
+      const db = getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { ref, set } = await import('firebase/database');
+      const msgsRef = ref(db, 'msgs');
+      await set(msgsRef, null);
+      return true;
+    } catch (error) {
+      console.error('Error deleting all messages:', error);
+      throw error;
+    }
+  };
+
+  // Admin: Clear room messages
+  const clearRoomMessages = async (roomId) => {
+    try {
+      const db = getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { ref, set } = await import('firebase/database');
+      const roomMsgsRef = ref(db, `msgs/${roomId}`);
+      await set(roomMsgsRef, null);
+      return true;
+    } catch (error) {
+      console.error('Error clearing room messages:', error);
+      throw error;
+    }
+  };
+
+  // Admin: Delete user
+  const deleteUser = async (userId) => {
+    try {
+      const db = getDb();
+      if (!db) throw new Error('Database not available');
+      
+      const { ref, remove } = await import('firebase/database');
+      const userRef = ref(db, `users/${userId}`);
+      await remove(userRef);
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  };
+
+  // Admin: Get statistics
+  const getStatistics = () => {
+    const totalUsers = Object.keys(users).length;
+    const onlineUsers = Object.values(users).filter(u => u.online).length;
+    const totalRooms = rooms.length;
+    const totalMessages = Object.values(messages).reduce((acc, roomMsgs) => 
+      acc + Object.keys(roomMsgs || {}).length, 0
+    );
+    
+    return {
+      totalUsers,
+      onlineUsers,
+      totalRooms,
+      totalMessages,
+      totalForumPosts: forumPosts.length
+    };
+  };
+
+  // Admin: Backup data
+  const backupData = async () => {
+    try {
+      const data = {
+        users,
+        rooms,
+        messages,
+        settings: serverSettings,
+        timestamp: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backup-${currentServer}-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      return true;
+    } catch (error) {
+      console.error('Error creating backup:', error);
+      throw error;
+    }
+  };
+
   const value = {
     // State
     currentServer,
