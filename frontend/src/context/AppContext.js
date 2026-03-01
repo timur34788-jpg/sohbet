@@ -407,13 +407,8 @@ export const AppProvider = ({ children }) => {
     
     const room = {
       name: roomData.name,
-      description: roomData.description || '',
-      type: roomData.type || 'channel', // channel, group, dm
-      icon: roomData.icon || '#',
-      createdBy: currentUser.id,
-      createdAt: Date.now(),
-      members: roomData.members || {},
-      private: roomData.private || false
+      locked: roomData.private || false,
+      slowMode: 0
     };
     
     await set(newRoomRef, room);
@@ -425,7 +420,7 @@ export const AppProvider = ({ children }) => {
     if (!db) return;
     
     await remove(ref(db, `rooms/${roomId}`));
-    await remove(ref(db, `messages/${roomId}`));
+    await remove(ref(db, `msgs/${roomId}`));
     
     if (currentRoom?.id === roomId) {
       setCurrentRoom(null);
@@ -440,35 +435,35 @@ export const AppProvider = ({ children }) => {
   };
 
   // Admin functions
-  const banUser = async (userId, reason = '') => {
+  const banUser = async (username, reason = '') => {
     const db = getDb();
     if (!db || !isAdmin()) return;
     
-    await update(ref(db, `users/${userId}`), { 
-      banned: true, 
-      bannedAt: Date.now(),
-      bannedBy: currentUser.id,
-      banReason: reason
+    await update(ref(db, `users/${username}`), { 
+      banned: true
     });
   };
 
-  const unbanUser = async (userId) => {
+  const unbanUser = async (username) => {
     const db = getDb();
     if (!db || !isAdmin()) return;
     
-    await update(ref(db, `users/${userId}`), { 
-      banned: false,
-      bannedAt: null,
-      bannedBy: null,
-      banReason: null
+    await update(ref(db, `users/${username}`), { 
+      banned: false
     });
   };
 
-  const setUserRole = async (userId, role) => {
+  const setUserRole = async (username, isAdminRole) => {
     const db = getDb();
     if (!db || !isAdmin()) return;
     
-    await update(ref(db, `users/${userId}`), { role });
+    await update(ref(db, `users/${username}`), { isAdmin: isAdminRole });
+    
+    if (isAdminRole) {
+      await set(ref(db, `admins/${username}`), true);
+    } else {
+      await remove(ref(db, `admins/${username}`));
+    }
   };
 
   const createInviteCode = async () => {
