@@ -173,12 +173,15 @@ const MainApp = () => {
         
         
         <div id="deskRailUser">
+          {/* Status Dropdown */}
+          <StatusDropdown />
+          
           <div 
             className="rail-btn"
             onClick={() => setShowSettings(true)}
             title="Ayarlar (Tema & Layout)"
             data-testid="settings-btn"
-            style={{ marginBottom: '8px' }}
+            style={{ marginBottom: '8px', marginTop: '8px' }}
           >
             <div className="rail-btn-ic">
               <Settings size={22} />
