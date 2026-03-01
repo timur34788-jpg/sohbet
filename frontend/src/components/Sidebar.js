@@ -209,59 +209,68 @@ const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) =
 
         {/* Direct Messages */}
         {dmRooms.length > 0 && (
-          <div className="sidebar-section">
+          <>
             <div 
-              className="section-header clickable"
+              className="dsk-sec-hdr"
               onClick={() => toggleSection('dms')}
+              style={{ cursor: 'pointer' }}
             >
-              <ChevronDown 
-                size={10}
+              <span 
+                className="chev"
                 style={{ 
                   transform: expandedSections.dms ? 'rotate(0deg)' : 'rotate(-90deg)',
-                  transition: 'transform 0.2s'
+                  transition: 'transform 0.15s',
+                  display: 'inline-block'
                 }}
-              />
-              <span className="section-title">DİREKT MESAJLAR</span>
-              <button 
-                className="section-add-button"
-                title="Yeni Mesaj"
               >
-                <Plus size={12} />
-              </button>
-            </div>
-            {expandedSections.dms && (
-              <div className="section-items">
-                {dmRooms.map(room => {
-                  const otherUserId = Object.keys(room.members || {}).find(id => id !== currentUser?.id);
-                  const userColor = getColorForUser(otherUserId);
-                  
-                  return (
-                    <div
-                      key={room.id}
-                      className={`section-item dm-item ${currentRoom?.id === room.id ? 'active' : ''}`}
-                      onClick={() => onRoomSelect(room)}
-                      data-testid={`room-${room.id}`}
-                    >
-                      <div 
-                        className="dm-avatar"
-                        style={{ background: userColor }}
-                      >
-                        {room.name?.charAt(0).toUpperCase()}
-                        <div className="online-indicator" />
-                      </div>
-                      <span className="item-name">{room.name}</span>
-                    </div>
-                  );
-                })}
+                ▼
+              </span>
+              <span>DİREKT MESAJLAR</span>
+              <div 
+                className="sec-add-btn"
+                title="Yeni Mesaj"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  // TODO: New DM modal
+                }}
+              >
+                +
               </div>
-            )}
-          </div>
+            </div>
+            {expandedSections.dms && dmRooms.map(room => {
+              const otherUserId = Object.keys(room.members || {}).find(id => id !== currentUser?.id);
+              const userColor = getColorForUser(otherUserId);
+              
+              return (
+                <div
+                  key={room.id}
+                  className={`dsk-row ${currentRoom?.id === room.id ? 'act' : ''}`}
+                  onClick={() => onRoomSelect(room)}
+                  data-testid={`room-${room.id}`}
+                >
+                  <div 
+                    className="dsk-row-av"
+                    style={{ background: userColor }}
+                  >
+                    {room.name?.charAt(0).toUpperCase()}
+                    <div className="r-dot on" />
+                  </div>
+                  <div className="dsk-row-name">{room.name}</div>
+                </div>
+              );
+            })}
+          </>
         )}
 
         {rooms.length === 0 && (
-          <div className="sidebar-empty">
+          <div style={{ 
+            padding: '24px 16px', 
+            textAlign: 'center', 
+            fontSize: '.85rem', 
+            color: 'var(--muted)' 
+          }}>
             <p>Henüz oda yok</p>
-            {isAdmin() && <p className="hint">Admin panelinden oda oluşturun</p>}
+            {isAdmin() && <p style={{ fontSize: '.75rem', marginTop: '8px' }}>Admin panelinden oda oluşturun</p>}
           </div>
         )}
       </div>
