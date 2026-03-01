@@ -198,11 +198,6 @@ const AdminPanel = () => {
   };
 
   const stats = getStatistics ? getStatistics() : {};
-    } catch (err) {
-      showFeedback('Hata: ' + err.message);
-    }
-    setLoading(false);
-  };
 
   const usersList = Object.entries(users);
   const totalMessages = Object.keys(messages || {}).length;
