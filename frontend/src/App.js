@@ -1,53 +1,46 @@
-import { useEffect } from "react";
+import React from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { AppProvider, useApp } from "./context/AppContext";
+import ServerSelect from "./components/ServerSelect";
+import Login from "./components/Login";
+import MainApp from "./components/MainApp";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+const AppContent = () => {
+  const { currentServer, currentUser, isLoading, initServer } = useApp();
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="loading-screen" data-testid="loading-screen">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+        </div>
+        <p>Yükleniyor...</p>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  // No server selected - show server selection
+  if (!currentServer) {
+    return <ServerSelect />;
+  }
 
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
+  // Server selected but no user - show login
+  if (!currentUser) {
+    return <Login onBack={() => initServer(null)} />;
+  }
+
+  // User logged in - show main app
+  return <MainApp />;
 };
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <AppProvider>
+      <div className="App" data-testid="app-root">
+        <AppContent />
+      </div>
+    </AppProvider>
   );
 }
 
