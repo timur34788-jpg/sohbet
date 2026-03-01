@@ -1,5 +1,5 @@
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
-import { app } from '../config/firebase';
+import { getFirebaseInstance } from '../config/firebase';
 
 const vapidKey = process.env.REACT_APP_VAPID_KEY;
 
@@ -9,12 +9,28 @@ let currentToken = null;
 // Initialize Firebase Messaging
 export const initializeMessaging = () => {
   try {
-    if ('serviceWorker' in navigator && 'Notification' in window) {
-      messaging = getMessaging(app);
-      return true;
+    if (!('serviceWorker' in navigator) || !('Notification' in window)) {
+      console.warn('Push notifications not supported in this browser');
+      return false;
     }
-    console.warn('Push notifications not supported in this browser');
-    return false;
+
+    // Get current server from localStorage
+    const currentServer = localStorage.getItem('selectedServer');
+    if (!currentServer) {
+      console.warn('No server selected');
+      return false;
+    }
+
+    // Get Firebase app instance
+    const { app } = getFirebaseInstance(currentServer);
+    if (!app) {
+      console.error('Firebase app not initialized');
+      return false;
+    }
+
+    messaging = getMessaging(app);
+    console.log('Firebase Messaging initialized');
+    return true;
   } catch (error) {
     console.error('Error initializing messaging:', error);
     return false;
