@@ -144,6 +144,66 @@ const AdminPanel = () => {
     setLoading(false);
   };
 
+  // Data management handlers
+  const handleDeleteAllMessages = async () => {
+    if (window.confirm('⚠️ TÜM MESAJLARI silmek istediğinize emin misiniz? Bu işlem GERİ ALINAMAZ!')) {
+      if (window.confirm('Son uyarı! Bu işlem tüm sunucu mesajlarını kalıcı olarak silecek. Devam edilsin mi?')) {
+        setLoading(true);
+        try {
+          await deleteAllMessages();
+          showFeedback('✅ Tüm mesajlar silindi');
+        } catch (err) {
+          showFeedback('❌ Hata: ' + err.message);
+        }
+        setLoading(false);
+      }
+    }
+  };
+
+  const handleClearRoomMessages = async (roomId, roomName) => {
+    if (window.confirm(`${roomName} odasındaki tüm mesajları silmek istediğinize emin misiniz?`)) {
+      setLoading(true);
+      try {
+        await clearRoomMessages(roomId);
+        showFeedback(`✅ ${roomName} mesajları temizlendi`);
+      } catch (err) {
+        showFeedback('❌ Hata: ' + err.message);
+      }
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId, username) => {
+    if (window.confirm(`${username} kullanıcısını KALICI OLARAK silmek istediğinize emin misiniz?`)) {
+      setLoading(true);
+      try {
+        await deleteUser(userId);
+        showFeedback(`✅ ${username} silindi`);
+      } catch (err) {
+        showFeedback('❌ Hata: ' + err.message);
+      }
+      setLoading(false);
+    }
+  };
+
+  const handleBackupData = async () => {
+    setLoading(true);
+    try {
+      await backupData();
+      showFeedback('✅ Yedek oluşturuldu ve indirildi');
+    } catch (err) {
+      showFeedback('❌ Hata: ' + err.message);
+    }
+    setLoading(false);
+  };
+
+  const stats = getStatistics ? getStatistics() : {};
+    } catch (err) {
+      showFeedback('Hata: ' + err.message);
+    }
+    setLoading(false);
+  };
+
   const usersList = Object.entries(users);
   const totalMessages = Object.keys(messages || {}).length;
   const totalPosts = forumPosts?.length || 0;
