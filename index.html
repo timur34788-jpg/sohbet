@@ -2643,7 +2643,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   <div id="forumNewPost" style="padding:10px 12px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;">
     <div style="display:flex;gap:10px;align-items:flex-start;">
       <div id="forumMyAv" style="width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;color:#fff;flex-shrink:0;background:#5b9bd5;"></div>
-      <div style="flex:1;">
+      <div style="flex:1;min-width:0;overflow:hidden;">
         <!-- Rich Text / BBCode Editör Kutusu -->
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s;" id="forumEditorWrap"
           onfocusin="this.style.borderColor='var(--accent)'" onfocusout="this.style.borderColor='var(--border)'">
@@ -3948,6 +3948,7 @@ async function verifyRegCode(){
       username:_regPending.user,
       email:_regPending.email,
       createdAt:Date.now(),
+      lastSeen:Date.now(),
       isAdmin:false,
       banned:false,
       passwordHash:_regPending.pass,
@@ -15807,21 +15808,27 @@ class NatureBotPet {
       </div>
       <div class="bot-bubble-msg" id="botBubbleMsg">${msg}</div>
       ${quickCmds}
-      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
-        ${speakBtn}
+      <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">${speakBtn}</div>
+      <div style="display:flex;gap:4px;margin-top:8px;">
+        <input id="botChatInput" type="text" placeholder="Bir şey sor..." autocomplete="off"
+          style="flex:1;background:rgba(255,255,255,.07);border:1px solid rgba(109,191,103,.3);border-radius:8px;padding:5px 9px;color:#dcedc8;font-size:.78rem;outline:none;min-width:0;"
+          onkeydown="if(event.key==='Enter'){window._natureBotReply(this.value);this.value='';event.preventDefault();}"
+        />
+        <button onclick="const i=document.getElementById('botChatInput');window._natureBotReply(i.value);i.value='';"
+          style="background:#4a8f40;border:none;border-radius:8px;padding:5px 10px;color:#dcedc8;cursor:pointer;font-size:.82rem;">➤</button>
       </div>
       <div class="bot-bubble-close" onclick="window._natureBotInstance&&window._natureBotInstance.hideBubble()">✕</div>
     `;
 
     if (IS_MOBILE()) {
-      this.bubble.style.cssText = 'position:fixed;max-width:200px;';
+      this.bubble.style.cssText = 'position:fixed;max-width:230px;';
     } else {
       this.updateBubblePos();
     }
     this.bubble.classList.add('visible');
     this.updateBubblePos();
-    this.bubbleTimeout = setTimeout(() => this.hideBubble(), 10000);
-    // Ses: sadece "Sesli Oku" butonuyla - otomatik yok
+    this.bubbleTimeout = setTimeout(() => this.hideBubble(), 25000);
+    setTimeout(() => { try { document.getElementById('botChatInput')?.focus(); } catch(e){} }, 100);
   }
 
   _speakBubble(btn) {
@@ -15916,7 +15923,69 @@ window._natureBotRunCmd = function(cmd) {
   runBotCmd(cmd, true);
 };
 
-/* ── Başlat ── */
+/* ── NatureBot Akıllı Sohbet Motoru ── */
+window._natureBotReply = function(text) {
+  if (!text || !text.trim()) return;
+  const bot = window._natureBotInstance;
+  if (!bot) return;
+  const t = text.trim();
+  // Komut mu?
+  if (t.startsWith('/')) { runBotCmd(t, true); return; }
+
+  const lower = t.toLowerCase();
+  let reply = '';
+
+  // ── Bilgi tabanı ──
+  const kb = [
+    { q:/merhaba|selam|hey|heyy|hello|hi\b/, a:['Merhaba! 🌿 Nasıl yardımcı olabilirim?','Selam! Bugün ne öğrenmek istersin?','Hey! Buradayım, ne var ne yok? 😊'] },
+    { q:/nasılsın|ne haber|ne var/, a:['İyiyim teşekkürler! Seninle sohbet etmek güzel 🌱','Harika! Her zaman aktifim, yardımcı olmak için bekliyorum.','Sağolasın, gayet iyiyim! Sen nasılsın?'] },
+    { q:/kimsin|nesin|ne yaparsın|hakkında/, a:['Ben NatureBot! 🤖 Nature.co\'nun yapay zeka asistanıyım. Uygulama hakkında sorular sorabilir, komutlar çalıştırabilirsin.','NatureBot — Nature.co\'nun akıllı asistanı. Sana yardımcı olmak için buradayım! /yardım ile komutlarımı görebilirsin.'] },
+    { q:/teşekkür|sağ ol|eyvallah|mersi/, a:['Ne demek! Her zaman buradayım 🌿','Rica ederim! Başka bir konuda yardım istersen söyle.','Memnuniyetle! 😊'] },
+    { q:/görüşürüz|hoşça kal|bay|bye/, a:['Görüşürüz! Kendine iyi bak 🌿','Güle güle! Dilediğinde geri gel.','Bay bay! 👋'] },
+    { q:/hava|hava durumu/, a:['Hava durumu için /hava [şehir] komutunu kullanabilirsin! Örn: /hava istanbul'] },
+    { q:/saat|zaman|kaçta/, a:['Şu anki saat için /saat komutunu kullan! ⏰'] },
+    { q:/zar|zar at/, a:['Zar atmak için /zar komutunu kullan! 🎲'] },
+    { q:/yazı tura|yazı mı tura mı|flip/, a:['Yazı-tura için /flip komutunu dene! 🪙'] },
+    { q:/komut|ne yapabilirsin|yardım|özellik/, a:['İşte kullanabileceğin komutlar:\n/yardım — tam liste\n/hava [şehir] — hava durumu\n/saat — saat\n/zar — zar at\n/flip — yazı tura\n/anket [soru] — anket oluştur'] },
+    { q:/kanal|oda|grup|oluştur/, a:['Oda oluşturmak için: Ana Sayfa → GRUPLAR → + butonu 🏠'] },
+    { q:/mesaj|dm|direkt mesaj/, a:['Direkt mesaj için: Ana Sayfa → DİREKT MESAJLAR → + 💬'] },
+    { q:/arkadaş|ekle|istek/, a:['Arkadaş eklemek için: Alt menü → Arkadaşlar → + 👥'] },
+    { q:/profil|avatar|fotoğraf|pp/, a:['Profilini düzenlemek için sağ üstteki avatar ikonuna tıkla 👤'] },
+    { q:/tema|renk|görünüm|arayüz/, a:['Tema değiştirmek için: Profil → Ayarlar → Görünüm 🎨'] },
+    { q:/bildirim|zil|ses/, a:['Bildirim ayarları için sağ üstteki zil ikonuna tıkla 🔔'] },
+    { q:/forum|paylaşım|konu/, a:['Forum için alt menüden "Forum" sekmesine git 📋'] },
+    { q:/video|izle|yayın/, a:['"İzle" sekmesinden içeriklere erişebilirsin 📺'] },
+    { q:/şifre|parola|unutt/, a:['Şifre değiştirmek için: Profil → Ayarlar → Şifreyi Değiştir 🔑'] },
+    { q:/admin|yönetici|panel/, a:['Admin paneline Profil → Admin yolundan ulaşabilirsin ⚙️'] },
+    { q:/ban|yasakla|engelle/, a:['Ban işlemleri için Admin panelini kullanabilirsin.'] },
+    { q:/çıkış|logout|oturumu kapat/, a:['Çıkış için: Profil → Ayarlar → Çıkış Yap 🚪'] },
+    { q:/doğa|nature|çevre|ekosistem/, a:['Nature.co, doğayı seven insanların buluştuğu bir topluluk platformu! 🌿🌍'] },
+    { q:/güzel|harika|süper|bravo/, a:['Teşekkürler! 🌟 Başka bir şey istersen buradayım.','Çok naziksin! 😊'] },
+    { q:/neden|niye|nasıl|ne zaman/, a:['Güzel soru! Daha detaylı bilgi için /yardım komutunu veya uygulama içi kılavuzu deneyebilirsin 🤔','Bunu tam olarak bilemiyorum ama yardımcı olmak için elimden geleni yaparım!'] },
+  ];
+
+  for (const item of kb) {
+    if (item.q.test(lower)) {
+      const pool = item.a;
+      reply = pool[Math.floor(Math.random() * pool.length)];
+      break;
+    }
+  }
+
+  if (!reply) {
+    const fallbacks = [
+      `"${t}" konusunda yardımcı olmak isterim ama bu konuda bilgim yok 😅 /yardım ile neler yapabileceğimi görebilirsin!`,
+      'Bunu tam anlayamadım, farklı bir şekilde sorabilir misin? 🤔',
+      'Hmm, bu konuda bilgim sınırlı. /yardım ile komutlarımı listeyebilirsin! 🌿',
+      'İlginç bir soru! Ama bunun cevabını bilmiyorum şu an. Uygulama hakkında bir şey sorarsan daha iyi yardım edebilirim 😊',
+    ];
+    reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+  }
+
+  bot.showBubble(reply, false);
+};
+
+
 function startNatureBot() {
   if (document.getElementById('natureBotPet')) return;
   window._natureBotInstance = new NatureBotPet();
@@ -16473,7 +16542,7 @@ setTimeout(() => {
   <div class="ai-panel-card">
     <div class="ai-panel-header">
       <span style="font-size:1.3rem;">🤖</span>
-      <div class="ai-panel-title">AI Mesaj Asistanı</div>
+      <div class="ai-panel-title">✨ Akıllı Yazı Asistanı</div>
       <button class="ai-panel-close" onclick="closeAiPanel()">✕</button>
     </div>
     <div class="ai-panel-body">
@@ -16725,72 +16794,169 @@ async function runAiAssist() {
   const prompt = (document.getElementById('aiPromptInp')?.value || '').trim();
   if (!prompt) { showToast('Önce ne söylemek istediğini yaz!'); return; }
 
-  // Gömülü API key (önce gömülü, sonra Firebase, sonra localStorage)
-  let apiKey = '';
-  if (!apiKey) {
-    try {
-      const snap = await dbRef('settings/openrouterKey').once('value');
-      apiKey = snap.val() || null;
-    } catch(e) {}
-  }
-  if (!apiKey) apiKey = localStorage.getItem('nc_openrouter_key');
-  if (!apiKey) {
-    document.getElementById('aiKeySection').style.display = 'block';
-    showToast('⚠️ Önce OpenRouter API key giriniz');
-    return;
-  }
-
-  const styleMap = {
-    casual: 'samimi ve arkadaşça',
-    formal: 'resmi ve profesyonel',
-    funny: 'esprili ve eğlenceli',
-    kind: 'nazik ve sıcak',
-    direct: 'kısa ve doğrudan',
-  };
-
   const loading = document.getElementById('aiLoading');
   const resultBox = document.getElementById('aiResultBox');
   if (loading) loading.classList.add('show');
   if (resultBox) resultBox.classList.remove('show');
 
-  try {
-    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + apiKey,
-        'HTTP-Referer': location.origin,
-        'X-Title': 'Nature.co AI Asistan',
-      },
-      body: JSON.stringify({
-        model: 'meta-llama/llama-3.1-8b-instruct:free',
-        max_tokens: 400,
-        messages: [{
-          role: 'user',
-          content: `Türkçe bir sohbet mesajı yaz. Ton: ${styleMap[_aiStyle]}. İstek: ${prompt}. Sadece mesajı yaz, açıklama ekleme. Kısa ve doğal olsun.`
-        }]
-      })
-    });
+  // Kısa yapay gecikme — daha gerçekçi his
+  await new Promise(r => setTimeout(r, 600 + Math.random() * 500));
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error?.message || 'API hatası: ' + res.status);
-    }
+  const styleMap = {
+    casual: 'samimi',
+    formal: 'resmi',
+    funny: 'esprili',
+    kind: 'nazik',
+    direct: 'doğrudan',
+  };
+  const tone = _aiStyle || 'casual';
 
-    const data = await res.json();
-    _aiResult = (data.choices?.[0]?.message?.content || '').trim();
+  // ── Offline Akıllı Yazı Motoru ──
+  const p = prompt.toLowerCase();
 
-    const resultText = document.getElementById('aiResultText');
-    if (resultText) resultText.textContent = _aiResult;
-    if (resultBox) resultBox.classList.add('show');
-  } catch(e) {
-    showToast('❌ AI hatası: ' + e.message);
-    if (e.message.includes('401') || e.message.includes('403')) {
-      document.getElementById('aiKeySection').style.display = 'block';
-    }
-  } finally {
-    if (loading) loading.classList.remove('show');
+  // Kural tabanlı niyet tespiti
+  const intents = [
+    { test: /özür|üzgün|kusura|affet|hata|yanlış/, type: 'apology' },
+    { test: /teşekkür|sağ ol|mersi|memnun|minnet/, type: 'thanks' },
+    { test: /gelemeyeceğim|gidemeyeceğim|katılamayacağım|iptal|erteleme/, type: 'cancel' },
+    { test: /geçmiş olsun|hasta|üzüldüm|zor|sabret/, type: 'sympathy' },
+    { test: /tebrik|kutlu|doğum|başarı|kazandı|kazandın|harika/, type: 'congrats' },
+    { test: /davet|gel|buyur|bekleriz|katıl/, type: 'invite' },
+    { test: /hatırlat|unutma|not|anımsatma/, type: 'reminder' },
+    { test: /rica|yardım|destek|lazım|gerekiyor/, type: 'request' },
+    { test: /selam|merhaba|nasılsın|ne haber/, type: 'greeting' },
+    { test: /veda|güle güle|görüşürüz|bay bay/, type: 'farewell' },
+  ];
+
+  let matchedType = 'general';
+  for (const intent of intents) {
+    if (intent.test.test(p)) { matchedType = intent.type; break; }
   }
+
+  // Ton bazlı şablonlar
+  const templates = {
+    apology: {
+      casual: ['Gerçekten çok üzgünüm, bu konuda haklısın. Bir daha olmaz! 🙏', 'Hata bende, affeder misin? İnan ki kasıtlı değildi 😔', 'Özür dilerim, farkındayım ne kadar rahatsız ettiğimi. Düzeltmek için elimden geleni yapacağım.'],
+      formal: ['Bu konudaki hatam için içtenlikle özür dilerim. Gerekli önlemleri alacağımı taahhüt ediyorum.', 'Yaşanan aksaklık için özür dilerim. Durumu en kısa sürede çözüme kavuşturacağım.'],
+      funny: ['Tamam tamam, suçlu benim! Mahkeme biter mi artık? 😅 Üzgünüm gerçekten hehe', 'Evet, rezil bir hata yaptım 🙈 Af dilerim, bir daha yapmam söz!'],
+      kind: ['Çok üzgünüm, bu durum seni zor bir konuma sokmuş olmalı. Tüm kalbimle özür dilerim 💙', 'Seni kırdıysam çok pişmanım. Senin için önemli olan her şey benim için de önemli.'],
+      direct: ['Hata bende, özür dilerim. Tekrarlanmayacak.', 'Yanlış yaptım, üzgünüm.'],
+    },
+    thanks: {
+      casual: ['Çok teşekkürler, gerçekten iyi biri sin! 😊', 'Sağ ol, bu kadar yardım ettiğin için çok mutlu oldum 🙏', 'Vallahi teşekkür etmek yetmez, çok şey ifade etti benim için!'],
+      formal: ['Gösterdiğiniz ilgi ve destek için içtenlikle teşekkür ederim.', 'Değerli katkılarınız için minnettarlığımı ifade etmek istedim.'],
+      funny: ['Sen olmasaydın ben ne yapardım 😂 Çok teşekkürler kahramanım!', 'Sana Nobel ödülü verilmeli! Teşekkürler 🏆'],
+      kind: ['Bu kadar güzel bir şey yaptığın için kalbim ısındı, teşekkür ederim 🌸', 'Seninle aynı ortamda olmak bile bir şans, bu destek için çok teşekkürler 💚'],
+      direct: ['Teşekkürler, işe yaradı.', 'Yardımın için teşekkürler.'],
+    },
+    cancel: {
+      casual: ['Üzgünüm ama bugün gelemeyeceğim, bir engel çıktı. Başka bir zaman telafi ederiz! 🙏', 'Maalesef katılamayacağım, çok kötü hissettim ama olmadı. Bir sonrakinde kesinlikle varım!'],
+      formal: ['Beklenmedik bir durum nedeniyle katılımımın mümkün olmayacağını bildirmek isterim. Anlayışınız için teşekkür ederim.'],
+      funny: ['Kaderim olmadı bir türlü 😅 Gelemiyorum, ama ruhum sizinle olacak!', 'Beni bekleme, olmadı bir türlü 😩 Ama bir dahaki sefere ilk ben geliyorum!'],
+      kind: ['Çok üzülerek söylüyorum ama bu sefer aramızda olamayacağım. Umarım güzel geçer, eksikliğimi hissettirme 🌷'],
+      direct: ['Gelemeyeceğim. Anlayışın için teşekkürler.'],
+    },
+    sympathy: {
+      casual: ['Geçmiş olsun, umarım çok geçmeden iyileşirsin! 💪', 'Zor bir dönemden geçiyorsun biliyorum, yanındayım her zaman 🤗'],
+      formal: ['Yaşadığınız süreç için geçmiş olsun dilerim. Desteğe ihtiyaç duyduğunuzda yanınızda olacağım.'],
+      funny: ['Dur dur, sen mi hasta oldun?! O kadar sağlam birisin ki inanamıyorum 😅 Çabuk geç şunu!'],
+      kind: ['Şu an çok zor hissediyorsun biliyorum. Yanında olduğumu bilmeni istedim 💙 Geçer bu da.'],
+      direct: ['Geçmiş olsun. Bir şeye ihtiyacın olursa söyle.'],
+    },
+    congrats: {
+      casual: ['Tebrikler!! 🎉 Bunu hak ediyordun, çok sevindim senin için!', 'Yaptın! Süpersin ya, tebrikler 🥳 Kutlamaya gidiyoruz mu?'],
+      formal: ['Başarınız için içtenlikle tebrik ederim. Hak ettiğiniz bir sonuç.', 'Bu önemli başarınızı kutlar, gelecek çalışmalarınızda da başarılar dilerim.'],
+      funny: ['Dur dur tamam kazandın, kahramanlar listesine adın yazıldı! Tebrikler 🏆😄'],
+      kind: ['Ne kadar mutlu oldum senin için! Bu başarı uzun emeklerin meyvesi, çok tebrikler 🌟💚'],
+      direct: ['Tebrikler. Hak ettin.'],
+    },
+    invite: {
+      casual: ['Gel ya, çok eğlenceli olacak! Seni bekliyoruz 🎊', 'Mutlaka gel, seninle olmadan olmaz! 😄'],
+      formal: ['Sizi bu özel etkinliğe davet etmekten memnuniyet duyarım. Katılımınız bizi onurlandıracaktır.'],
+      funny: ['Gel artık, seninle gülmeden olmaz 😂 Seni bekliyoruz!'],
+      kind: ['Seninle birlikte olsak çok güzel olurdu. Umarım katılabilirsin 🌸'],
+      direct: ['Gel, bekliyoruz.'],
+    },
+    reminder: {
+      casual: ['Hatırlatmak istedim, unutma sakın! 😊', 'Bunu not et: önemli bir şey var!'],
+      formal: ['Hatırlatma amacıyla bilginize sunmak istedim.'],
+      funny: ['Psst! Unutma bunu, yoksa pişman olursun 😅'],
+      kind: ['Seni düşündüm ve hatırlatmak istedim, merak etme yanındayım 💙'],
+      direct: ['Hatırlatma: önemli.'],
+    },
+    request: {
+      casual: ['Bir küçük ricam var, yapabilir misin acaba? 🙏', 'Senden bir şey isteyecektim, uygun olursa tabii'],
+      formal: ['Bir konuda desteğinizi talep etmek istiyorum, uygun olduğunuzda bilgi verebilirseniz sevinirim.'],
+      funny: ['Senden bir iyilik isteyeceğim... Hayır deme sakın 😅'],
+      kind: ['Zahmet olacak ama, bana yardım edebilir misin acaba? Çok minnettar olurum 💙'],
+      direct: ['Yardıma ihtiyacım var.'],
+    },
+    greeting: {
+      casual: ['Hey! Nasılsın, ne var ne yok? 😊', 'Selam! Umarım iyisindir 👋'],
+      formal: ['Merhaba, umarım her şey yolundadır.'],
+      funny: ['Selamlar selamlar! Hayat güzel mi? 😄'],
+      kind: ['Merhaba, seni görmek güzel 🌸 Nasıl gidiyor?'],
+      direct: ['Merhaba.'],
+    },
+    farewell: {
+      casual: ['Görüşmek üzere! Kendine iyi bak 👋😊', 'Güle güle, tekrar konuşuruz!'],
+      formal: ['İyi günler dilerim, görüşmek üzere.'],
+      funny: ['Bay bay! Özlemeyeceksin ama ben özleyeceğim 😄'],
+      kind: ['Güle güle, kendine çok iyi bak 💙 Umarım yakında görüşürüz.'],
+      direct: ['Görüşürüz.'],
+    },
+    general: {
+      casual: [], formal: [], funny: [], kind: [], direct: [],
+    },
+  };
+
+  // Genel durum için prompt'tan akıllı cümle üret
+  const generalTemplates = {
+    casual: [
+      `"${prompt}" — bunu ${prompt.length > 30 ? 'kısaltarak' : 'genişleterek'} söylemek istiyorsun diye anladım. İşte samimi bir versiyon: ${_offlineRewrite(prompt, 'casual')}`,
+      _offlineRewrite(prompt, 'casual'),
+    ],
+    formal: [_offlineRewrite(prompt, 'formal')],
+    funny: [_offlineRewrite(prompt, 'funny')],
+    kind: [_offlineRewrite(prompt, 'kind')],
+    direct: [_offlineRewrite(prompt, 'direct')],
+  };
+
+  let pool = (templates[matchedType]?.[tone] || []);
+  if (!pool.length) pool = generalTemplates[tone] || [_offlineRewrite(prompt, tone)];
+
+  _aiResult = pool[Math.floor(Math.random() * pool.length)];
+
+  const resultText = document.getElementById('aiResultText');
+  if (resultText) resultText.textContent = _aiResult;
+  if (loading) loading.classList.remove('show');
+  if (resultBox) resultBox.classList.add('show');
+}
+
+function _offlineRewrite(text, tone) {
+  const t = text.trim();
+  const endings = {
+    casual: ['😊', '🙏', '👋', '✌️', ''],
+    formal: ['', '. Bilgilerinize sunarım.', '. Saygılarımla.', ''],
+    funny: ['😄', '😅', '🤣', ' haha', ''],
+    kind: ['💙', '🌸', '💚', '🌿', ''],
+    direct: ['', '.', ''],
+  };
+  const prefixes = {
+    casual: ['Bir şey söyleyeyim: ', 'Şunu demek istedim: ', '', '', ''],
+    formal: ['Belirtmek isterim ki, ', 'Bilginize sunmak isterim: ', ''],
+    funny: ['Dur bir dakika, ', 'Şimdi kulak ver: ', '', ''],
+    kind: ['Sana içtenlikle söylemek istiyorum: ', 'Şunu paylaşmak istedim: ', ''],
+    direct: ['', '', ''],
+  };
+  const pfx = prefixes[tone] || [''];
+  const end = endings[tone] || [''];
+  const p = pfx[Math.floor(Math.random() * pfx.length)];
+  const e = end[Math.floor(Math.random() * end.length)];
+  // Büyük harf düzelt
+  const body = t.charAt(0).toUpperCase() + t.slice(1);
+  const punctuated = /[.!?]$/.test(body) ? body : body + '.';
+  return p + punctuated + (e ? ' ' + e : '');
 }
 
 function useAiResult() {
