@@ -3,7 +3,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-  /* Original Theme Colors (from index.html) */
+  /* Original Theme Colors (from index.html) - DARK (default) */
   --purple-dark: #1c1f23;
   --purple: #2c3038;
   --purple-mid: #3a3f47;
@@ -32,6 +32,52 @@
   --rail-width: 68px;
   --sidebar-width: 260px;
   --header-height: 54px;
+}
+
+/* LIGHT THEME */
+[data-theme="light"] {
+  --bg: #f5f6f7;
+  --bg2: #ffffff;
+  --surface: #ffffff;
+  --surface2: #f0f1f2;
+  --border: #e1e2e4;
+  --text: #2e3338;
+  --text-hi: #000000;
+  --muted: #6a7079;
+  --own-bg: #5b9bd5;
+  --incoming-bg: #e9ecef;
+}
+
+/* NATURE THEME (Green) */
+[data-theme="nature"] {
+  --bg: #0d1f0c;
+  --bg2: #1a3318;
+  --surface: #2e5c28;
+  --surface2: #3a7a34;
+  --border: #4a8f40;
+  --text: #a5d6a7;
+  --text-hi: #e8f5e9;
+  --muted: #66a862;
+  --accent: #4a8f40;
+  --accent-light: #6dbf67;
+  --own-bg: #2e5c28;
+  --incoming-bg: #1e3d18;
+}
+
+/* BLUE THEME */
+[data-theme="blue"] {
+  --bg: #0a0f1a;
+  --bg2: #141b2e;
+  --surface: #1e2a45;
+  --surface2: #2a3a5a;
+  --border: #3a4a6a;
+  --text: #b3c5e7;
+  --text-hi: #e8f0ff;
+  --muted: #6a8ab0;
+  --accent: #5b9bd5;
+  --accent2: #2a4a7a;
+  --own-bg: #2a4a7a;
+  --incoming-bg: #1e2a45;
 }
 
 * {
