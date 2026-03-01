@@ -43,7 +43,7 @@ const ChatArea = ({ room, onViewProfile }) => {
     switch (action) {
       case 'edit':
         setEditingMessage(message);
-        setMessageText(message.content);
+        setMessageText(message.text);
         inputRef.current?.focus();
         break;
       case 'delete':
@@ -52,7 +52,7 @@ const ChatArea = ({ room, onViewProfile }) => {
         }
         break;
       case 'copy':
-        navigator.clipboard.writeText(message.content);
+        navigator.clipboard.writeText(message.text);
         break;
       default:
         break;
@@ -60,7 +60,17 @@ const ChatArea = ({ room, onViewProfile }) => {
   };
 
   const canEditDelete = (message) => {
-    return message.senderId === currentUser?.id || isAdmin() || isMod();
+    return message.user === currentUser?.username || isAdmin() || isMod();
+  };
+
+  // Generate consistent color for username
+  const getColorForUser = (username) => {
+    const colors = ['#5b9bd5', '#6c63ff', '#2ecc71', '#f97316', '#ec4899', '#00bca0', '#fbbf24', '#e05555', '#9b59b6', '#1abc9c'];
+    let hash = 0;
+    for (let i = 0; i < (username || '').length; i++) {
+      hash = username.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return colors[Math.abs(hash) % colors.length];
   };
 
   const formatTime = (timestamp) => {
