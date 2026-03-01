@@ -134,13 +134,16 @@ const ChatArea = ({ room, onViewProfile }) => {
             messages.map((message, index) => {
               const prevMessage = messages[index - 1];
               const showAvatar = !prevMessage || 
-                prevMessage.senderId !== message.senderId ||
-                (message.timestamp - prevMessage.timestamp) > 300000; // 5 min
+                prevMessage.user !== message.user ||
+                ((message.ts || 0) - (prevMessage.ts || 0)) > 300000; // 5 min
+              
+              // Get user color from users list
+              const userColor = users[message.user]?.color || getColorForUser(message.user);
 
               return (
                 <div 
                   key={message.id}
-                  className={`message ${message.senderId === currentUser?.id ? 'own' : ''} ${showAvatar ? 'with-avatar' : ''}`}
+                  className={`message ${message.user === currentUser?.username ? 'own' : ''} ${showAvatar ? 'with-avatar' : ''}`}
                   data-testid={`message-${message.id}`}
                   onContextMenu={(e) => {
                     e.preventDefault();
@@ -152,10 +155,10 @@ const ChatArea = ({ room, onViewProfile }) => {
                   {showAvatar && (
                     <div 
                       className="message-avatar"
-                      style={{ background: message.senderColor || '#5b9bd5' }}
-                      onClick={() => onViewProfile(message.senderId)}
+                      style={{ background: userColor }}
+                      onClick={() => onViewProfile(message.user)}
                     >
-                      {message.senderName?.charAt(0).toUpperCase()}
+                      {message.user?.charAt(0).toUpperCase()}
                     </div>
                   )}
                   <div className="message-content">
@@ -163,19 +166,19 @@ const ChatArea = ({ room, onViewProfile }) => {
                       <div className="message-header">
                         <span 
                           className="message-author"
-                          style={{ color: message.senderColor }}
-                          onClick={() => onViewProfile(message.senderId)}
+                          style={{ color: userColor }}
+                          onClick={() => onViewProfile(message.user)}
                         >
-                          {message.senderName}
+                          {message.user}
                         </span>
-                        <span className="message-time">{formatTime(message.timestamp)}</span>
+                        <span className="message-time">{formatTime(message.ts)}</span>
                         {message.edited && (
                           <span className="message-edited">(düzenlendi)</span>
                         )}
                       </div>
                     )}
                     <div className="message-text">
-                      {message.content}
+                      {message.text}
                     </div>
                   </div>
                   {canEditDelete(message) && (
