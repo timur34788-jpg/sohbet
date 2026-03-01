@@ -10,14 +10,16 @@ import { tr } from 'date-fns/locale';
 const ChatArea = ({ room, onViewProfile }) => {
   const { 
     messages, sendMessage, deleteMessage, editMessage, currentUser, 
-    users, isAdmin, isMod 
+    users, isAdmin, isMod, addReaction, removeReaction, setTyping
   } = useApp();
   const [messageText, setMessageText] = useState('');
   const [editingMessage, setEditingMessage] = useState(null);
   const [showMembers, setShowMembers] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,6 +29,10 @@ const ChatArea = ({ room, onViewProfile }) => {
     e.preventDefault();
     if (!messageText.trim()) return;
 
+    // Clear typing indicator
+    if (setTyping) setTyping(room.id, false);
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+
     if (editingMessage) {
       await editMessage(room.id, editingMessage.id, messageText);
       setEditingMessage(null);
@@ -35,6 +41,28 @@ const ChatArea = ({ room, onViewProfile }) => {
     }
     setMessageText('');
     inputRef.current?.focus();
+  };
+
+  const handleTyping = (e) => {
+    setMessageText(e.target.value);
+    
+    // Trigger typing indicator
+    if (setTyping && e.target.value.length > 0) {
+      setTyping(room.id, true);
+      
+      // Clear after 3 seconds
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        setTyping(room.id, false);
+      }, 3000);
+    }
+  };
+
+  const handleReaction = async (messageId, emoji) => {
+    if (addReaction) {
+      await addReaction(room.id, messageId, emoji);
+    }
+    setShowEmojiPicker(null);
   };
 
   const handleMessageAction = async (action, message) => {
