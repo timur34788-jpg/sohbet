@@ -3181,7 +3181,7 @@ let FB_CONFIG = null;
    Admin yetkisi: users/{admin}.isAdmin === true  VEYA  admins/{admin} kaydı
    Cloud Function (setAdminClaim) bağımlılığı KALDIRILDI.
    ══════════════════════════════════════ */
-const ADMIN_USERNAME = 'admin';
+const ADMIN_USERNAME = 'admin1';
 
 let _db=null,_auth=null,_functions=null,_cu=null,_isAdmin=false,_cRoom=null;
 
@@ -3762,7 +3762,8 @@ async function submitLogin(){
           resetBtn(); return;
         }
         const storedHash = adminData.passwordHash || '';
-        const matched    = (storedHash === ph) || (storedHash === phLegacy);
+        const phLegacyAdmin = await hashStr(pass+'admin'); // eski 'admin' adıyla üretilmiş hash desteği
+        const matched    = (storedHash === ph) || (storedHash === phLegacy) || (storedHash === phLegacyAdmin);
         if(!matched){
           const rem  = recordLoginAttempt(user, false);
           const lock = checkLoginLock(user);
