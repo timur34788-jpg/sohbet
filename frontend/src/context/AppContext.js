@@ -246,29 +246,10 @@ export const AppProvider = ({ children }) => {
     return () => unsubscribe();
   }, [currentServer, firebaseUser, getDb]);
 
-  // Load notifications
+  // Load notifications - skip for now as not all apps have this
   useEffect(() => {
-    if (!currentServer || !currentUser) return;
-    
-    const db = getDb();
-    if (!db) return;
-    
-    const notifRef = ref(db, `notifications/${currentUser.id}`);
-    const unsubscribe = onValue(notifRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const notifData = snapshot.val();
-        const notifList = Object.entries(notifData).map(([id, data]) => ({
-          id,
-          ...data
-        })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-        setNotifications(notifList);
-      } else {
-        setNotifications([]);
-      }
-    });
-    
-    return () => unsubscribe();
-  }, [currentServer, currentUser, getDb]);
+    setNotifications([]);
+  }, [currentServer, currentUser]);
 
   // Auth functions
   const login = async (username, password) => {
