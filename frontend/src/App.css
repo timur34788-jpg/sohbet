@@ -4160,3 +4160,28 @@ body {
   font-size: 0.9rem;
   font-weight: 500;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Avatar Fix - Bozuk görseller için fallback
+   ═══════════════════════════════════════════════════════════ */
+
+.user-avatar, .msg-avatar, [class*="avatar"] {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Bozuk resimleri gizle */
+img[src=""], img:not([src]), img[src="undefined"] {
+  display: none;
+}
+
+/* Fallback avatar */
+.user-avatar::before, .msg-avatar::before {
+  content: attr(data-initial);
+  font-size: 1.2em;
+}
