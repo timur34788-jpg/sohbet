@@ -208,45 +208,9 @@ const ChatArea = ({ room, onViewProfile }) => {
         <div ref={messagesEndRef} />
       </div>
 
-        {/* Members Panel */}
-        {showMembers && (
-          <div className="members-panel" data-testid="members-panel">
-            <h4>Üyeler</h4>
-            <div className="members-list">
-              {roomMembers.map(([id, user]) => (
-                <div 
-                  key={id}
-                  className="member-item"
-                  onClick={() => onViewProfile(id)}
-                >
-                  <div 
-                    className="member-avatar"
-                    style={{ background: user.color || '#5b9bd5' }}
-                  >
-                    {user.username?.charAt(0).toUpperCase()}
-                    <div className={`status-dot ${user.online ? 'online' : 'offline'}`} />
-                  </div>
-                  <div className="member-info">
-                    <span className="member-name">{user.username}</span>
-                    <span className="member-role">
-                      {user.role === 'admin' ? '⭐ Admin' : 
-                       user.role === 'mod' ? '🛡️ Mod' : ''}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
 
-      {/* Input Area */}
-      <div className="chat-input-area">
-        {editingMessage && (
-          <div className="editing-indicator">
-            <span>✏️ Düzenleniyor: {editingMessage.content.substring(0, 30)}...</span>
-            <button onClick={() => { setEditingMessage(null); setMessageText(''); }}>
-              İptal
+        {/* Members Panel - hidden for now, can be shown in future */}
+      </div>
 
       {/* Input Area */}
       <div id="deskInputArea">
