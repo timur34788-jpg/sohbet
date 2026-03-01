@@ -900,7 +900,7 @@ body {
    Main Content Area
    ═══════════════════════════════════════════════════════════ */
 
-.main-content-area {
+#deskMain, .main-content-area {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -909,7 +909,7 @@ body {
 }
 
 /* Empty State */
-.empty-state {
+#deskEmptyState, .empty-state {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -920,25 +920,14 @@ body {
   gap: 16px;
 }
 
-.empty-state-icon {
-  position: relative;
-  margin-bottom: 8px;
-}
-
-.empty-state-icon svg {
-  filter: drop-shadow(0 0 32px rgba(74, 143, 64, 0.4));
-  width: 80px;
-  height: 80px;
-}
-
-.empty-state-title {
+.big-title {
   font-size: 1.5rem;
   font-weight: 900;
   color: var(--text-hi);
   margin-bottom: 8px;
 }
 
-.empty-state-subtitle {
+.big-sub {
   font-size: 0.9rem;
   color: var(--muted);
   max-width: 400px;
