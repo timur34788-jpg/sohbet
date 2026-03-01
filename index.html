@@ -11875,16 +11875,17 @@ function closeNotifCenter(){
   const modal=document.getElementById('notifCenterModal');
   if(modal) modal.style.display='none';
 }
+function _notifKey(){ return 'nc_notifs_' + (_cu || 'guest'); }
 function addNotif(type, title, sub, action){
   const notif={id:Date.now(),type,title,sub,action,ts:Date.now(),read:false};
   _notifs.unshift(notif);
   if(_notifs.length>50) _notifs=_notifs.slice(0,50);
   updateNotifBadge();
   // Kaydet
-  try{localStorage.setItem('nc_notifs',JSON.stringify(_notifs.slice(0,20)));}catch(e){}
+  try{localStorage.setItem(_notifKey(),JSON.stringify(_notifs.slice(0,20)));}catch(e){}
 }
 function loadNotifs(){
-  try{const saved=localStorage.getItem('nc_notifs');if(saved)_notifs=JSON.parse(saved);}catch(e){}
+  try{const saved=localStorage.getItem(_notifKey());if(saved)_notifs=JSON.parse(saved);}catch(e){}
   updateNotifBadge();
 }
 function updateNotifBadge(){
@@ -11898,7 +11899,13 @@ function updateNotifBadge(){
 }
 function markAllNotifsRead(){
   _notifs.forEach(n=>n.read=true);
-  try{localStorage.setItem('nc_notifs',JSON.stringify(_notifs));}catch(e){}
+  try{localStorage.setItem(_notifKey(),JSON.stringify(_notifs));}catch(e){}
+  updateNotifBadge();
+  renderNotifCenter();
+}
+function clearAllNotifs(){
+  _notifs=[];
+  try{localStorage.removeItem(_notifKey());}catch(e){}
   updateNotifBadge();
   renderNotifCenter();
 }
@@ -11927,7 +11934,7 @@ function notifClick(id){
   const n=_notifs.find(x=>x.id==id);
   if(!n) return;
   n.read=true;
-  try{localStorage.setItem('nc_notifs',JSON.stringify(_notifs));}catch(e){}
+  try{localStorage.setItem(_notifKey(),JSON.stringify(_notifs));}catch(e){}
   updateNotifBadge();
   closeNotifCenter();
   if(n.action) try{n.action();}catch(e){}
@@ -14392,6 +14399,7 @@ function _updateHdrOnlineFlip(newCount){
       <div style="display:flex;gap:8px;align-items:center;">
         <span id="ncUnreadCount" style="background:var(--red);color:#fff;font-size:.62rem;font-weight:900;border-radius:100px;padding:1px 7px;display:none;">0</span>
         <span onclick="markAllNotifsRead()" style="font-size:.72rem;color:var(--accent);cursor:pointer;font-weight:700;">Tümünü Oku</span>
+        <span onclick="clearAllNotifs()" style="font-size:.72rem;color:var(--red);cursor:pointer;font-weight:700;">Tümünü Sil</span>
         <span onclick="closeNotifCenter()" style="color:var(--muted);cursor:pointer;font-size:1.1rem;line-height:1;">✕</span>
       </div>
     </div>
