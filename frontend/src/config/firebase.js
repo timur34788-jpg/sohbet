@@ -62,6 +62,18 @@ export const getFirebaseInstance = (serverId) => {
   return firebaseInstances[serverId];
 };
 
+// Sign in anonymously to Firebase Auth
+export const signInToFirebase = async (serverId) => {
+  const { auth } = getFirebaseInstance(serverId);
+  try {
+    const userCredential = await signInAnonymously(auth);
+    return userCredential.user;
+  } catch (error) {
+    console.error('Firebase Auth error:', error);
+    throw error;
+  }
+};
+
 export const getDefaultServer = () => {
   return localStorage.getItem('selectedServer') || 'biyom';
 };
