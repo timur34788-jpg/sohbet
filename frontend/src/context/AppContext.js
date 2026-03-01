@@ -882,6 +882,12 @@ export const AppProvider = ({ children }) => {
     notificationsEnabled,
     fcmToken,
     
+    // Theme & Layout
+    theme,
+    layout,
+    changeTheme,
+    changeLayout,
+    
     // Server functions
     initServer,
     
