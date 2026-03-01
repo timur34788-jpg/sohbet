@@ -92,42 +92,45 @@ const ChatArea = ({ room, onViewProfile }) => {
   });
 
   return (
-    <div className="chat-container" data-testid="chat-area">
+    <div id="deskChatArea" data-testid="chat-area">
       {/* Header */}
-      <div className="chat-header-bar">
-        <div className="chat-header-info">
-          <div className="chat-header-icon">
-            {room.type === 'dm' ? '💬' : room.private ? <Lock size={20} /> : '#'}
-          </div>
-          <div>
-            <h3 className="chat-name">{room.name}</h3>
-            {room.description && (
-              <p className="chat-description">{room.description}</p>
-            )}
-          </div>
+      <div id="deskChatHeader">
+        <div 
+          id="deskChatHdrIcon"
+          style={{
+            background: room.type === 'dm' ? getColorForUser(room.name) : 'var(--surface2)'
+          }}
+        >
+          {room.type === 'dm' ? room.name?.charAt(0).toUpperCase() : room.private ? '🔒' : '#'}
         </div>
-        <div className="chat-header-actions">
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div id="deskChatHdrName">{room.name}</div>
+          {room.description && (
+            <div id="deskChatHdrSub">{room.description}</div>
+          )}
+        </div>
+        <div className="dsk-hdr-actions">
           {room.type === 'dm' && (
             <>
-              <button className="header-btn" title="Sesli Ara" data-testid="voice-call-btn">
+              <div className="dsk-hdr-btn" title="Sesli Ara" data-testid="voice-call-btn">
                 <Phone size={18} />
-              </button>
-              <button className="header-btn" title="Görüntülü Ara" data-testid="video-call-btn">
+              </div>
+              <div className="dsk-hdr-btn" title="Görüntülü Ara" data-testid="video-call-btn">
                 <Video size={18} />
-              </button>
+              </div>
             </>
           )}
-          <button className="header-btn" title="Ekran Paylaş" data-testid="screen-share-btn">
+          <div className="dsk-hdr-btn" title="Ekran Paylaş" data-testid="screen-share-btn">
             <Monitor size={18} />
-          </button>
-          <button 
-            className={`header-btn ${showMembers ? 'active' : ''}`}
+          </div>
+          <div 
+            className={`dsk-hdr-btn ${showMembers ? 'active' : ''}`}
             onClick={() => setShowMembers(!showMembers)}
             title="Üyeler"
             data-testid="toggle-members-btn"
           >
             <Users size={18} />
-          </button>
+          </div>
         </div>
       </div>
 
