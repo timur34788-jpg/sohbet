@@ -227,6 +227,13 @@ const AdminPanel = () => {
         >
           <Key size={16} /> Davet Kodları
         </button>
+        <button
+          className={`admin-tab ${activeTab === 'data' ? 'active' : ''}`}
+          onClick={() => setActiveTab('data')}
+          data-testid="admin-tab-data"
+        >
+          <Database size={16} /> Veri Yönetimi
+        </button>
       </div>
 
       {/* Content */}
