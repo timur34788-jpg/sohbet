@@ -15,7 +15,7 @@ export const useApp = () => {
 export const AppProvider = ({ children }) => {
   const [currentServer, setCurrentServer] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [rooms, setRooms] = useState([]);
   const [currentRoom, setCurrentRoom] = useState(null);
   const [messages, setMessages] = useState([]);
