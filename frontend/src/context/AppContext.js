@@ -471,13 +471,7 @@ export const AppProvider = ({ children }) => {
     if (!db || !isAdmin()) return;
     
     const code = generateInviteCode();
-    const inviteRef = ref(db, `inviteCodes/${code}`);
-    
-    await set(inviteRef, {
-      createdBy: currentUser.id,
-      createdAt: Date.now(),
-      used: false
-    });
+    await update(ref(db, 'settings'), { inviteCode: code });
     
     return code;
   };
@@ -486,7 +480,7 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db || !isAdmin()) return;
     
-    await update(ref(db, 'serverSettings'), settings);
+    await update(ref(db, 'settings'), settings);
     setServerSettings(prev => ({ ...prev, ...settings }));
   };
 
@@ -495,18 +489,14 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db || !currentUser) return;
     
-    const forumRef = ref(db, 'forum');
+    const forumRef = ref(db, 'forum/posts');
     const newPostRef = push(forumRef);
     
     const post = {
-      content: postData.content,
-      authorId: currentUser.id,
-      authorName: currentUser.username,
-      authorColor: currentUser.color,
-      timestamp: Date.now(),
-      likes: {},
-      comments: {},
-      image: postData.image || null
+      text: postData.content,
+      user: currentUser.username,
+      ts: Date.now(),
+      cat: 'genel'
     };
     
     await set(newPostRef, post);
@@ -517,13 +507,13 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db || !currentUser) return;
     
-    const likeRef = ref(db, `forum/${postId}/likes/${currentUser.id}`);
+    const likeRef = ref(db, `forum/posts/${postId}/likes/${currentUser.username}`);
     const snapshot = await get(likeRef);
     
     if (snapshot.exists()) {
       await remove(likeRef);
     } else {
-      await set(likeRef, { timestamp: Date.now() });
+      await set(likeRef, true);
     }
   };
 
@@ -531,15 +521,13 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db || !currentUser) return;
     
-    const commentsRef = ref(db, `forum/${postId}/comments`);
+    const commentsRef = ref(db, `forum/posts/${postId}/comments`);
     const newCommentRef = push(commentsRef);
     
     await set(newCommentRef, {
-      content,
-      authorId: currentUser.id,
-      authorName: currentUser.username,
-      authorColor: currentUser.color,
-      timestamp: Date.now()
+      text: content,
+      user: currentUser.username,
+      ts: Date.now()
     });
   };
 
