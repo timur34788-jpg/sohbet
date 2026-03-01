@@ -172,6 +172,17 @@ const MainApp = () => {
         
         
         <div id="deskRailUser">
+          <div 
+            className="rail-btn"
+            onClick={() => setShowSettings(true)}
+            title="Ayarlar (Tema & Layout)"
+            data-testid="settings-btn"
+            style={{ marginBottom: '8px' }}
+          >
+            <div className="rail-btn-ic">
+              <Settings size={22} />
+            </div>
+          </div>
           <div className="sdot"></div>
         </div>
       </div>
