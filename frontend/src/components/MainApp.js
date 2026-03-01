@@ -7,6 +7,7 @@ import ForumPanel from './ForumPanel';
 import FriendsPanel from './FriendsPanel';
 import ProfileModal from './ProfileModal';
 import SettingsModal from './SettingsModal';
+import StatusDropdown from './StatusDropdown';
 import NatureBot from './NatureBot';
 import { Home, FileText, Users, Tv, Settings } from 'lucide-react';
 
