@@ -16,6 +16,7 @@ const MainApp = () => {
   const [showProfile, setShowProfile] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [showMembers, setShowMembers] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const serverInfo = servers[currentServer];
 
