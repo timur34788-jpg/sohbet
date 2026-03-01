@@ -208,10 +208,6 @@ const ChatArea = ({ room, onViewProfile }) => {
         <div ref={messagesEndRef} />
       </div>
 
-
-        {/* Members Panel - hidden for now, can be shown in future */}
-      </div>
-
       {/* Input Area */}
       <div id="deskInputArea">
         <form id="deskInputBox" onSubmit={handleSend}>
