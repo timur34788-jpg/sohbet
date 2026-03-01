@@ -223,6 +223,39 @@ const ChatArea = ({ room, onViewProfile }) => {
                   <div className={isOwn ? 'ob' : 'mb-text'}>
                     {message.text}
                   </div>
+                  
+                  {/* Emoji Reactions */}
+                  <div className="msg-reactions">
+                    <button 
+                      className="reaction-btn"
+                      onClick={() => setShowEmojiPicker(showEmojiPicker === message.id ? null : message.id)}
+                      title="Tepki ekle"
+                    >
+                      <Smile size={14} />
+                    </button>
+                    {showEmojiPicker === message.id && (
+                      <div className="emoji-picker">
+                        {['❤️', '👍', '😂', '😮', '😢', '🔥'].map(emoji => (
+                          <button 
+                            key={emoji}
+                            onClick={() => handleReaction(message.id, emoji)}
+                            className="emoji-option"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {message.reactions && Object.keys(message.reactions).length > 0 && (
+                      <div className="reactions-display">
+                        {Object.entries(message.reactions).map(([user, emoji]) => (
+                          <span key={user} className="reaction-badge" title={user}>
+                            {emoji}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 {canEditDelete(message) && (
                   <div className="mb-more-btn" style={{ display: 'none' }}>
