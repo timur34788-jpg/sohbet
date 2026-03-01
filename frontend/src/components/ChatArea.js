@@ -282,7 +282,7 @@ const ChatArea = ({ room, onViewProfile }) => {
             ref={inputRef}
             id="deskInp"
             value={messageText}
-            onChange={(e) => setMessageText(e.target.value)}
+            onChange={handleTyping}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
