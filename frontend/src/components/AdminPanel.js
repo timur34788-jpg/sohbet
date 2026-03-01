@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { 
   Users, Settings, Shield, Ban, UserPlus, Key, Hash, Trash2,
   ToggleLeft, ToggleRight, Plus, Edit2, Save, X, RefreshCw,
-  MessageSquare, FileText, Database, Activity
+  MessageSquare, FileText, Database, Activity, Download
 } from 'lucide-react';
 
 const AdminPanel = () => {
