@@ -807,6 +807,11 @@ export const AppProvider = ({ children }) => {
     acceptFriendRequest,
     rejectFriendRequest,
     
+    // Notification functions
+    enableNotifications,
+    disableNotifications,
+    getNotificationStatus,
+    
     // Utils
     getDb
   };
