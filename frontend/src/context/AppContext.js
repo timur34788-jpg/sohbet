@@ -982,7 +982,15 @@ export const AppProvider = ({ children }) => {
     backupData,
     
     // Utils
-    getDb
+    getDb,
+    
+    // FAZ 1 Features
+    userStatus,
+    updateUserStatus,
+    typingUsers,
+    setTyping,
+    addReaction,
+    removeReaction,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
