@@ -327,6 +327,63 @@ export const AppProvider = ({ children }) => {
     setNotifications([]);
   }, [currentServer, currentUser]);
 
+  // Initialize Push Notifications
+  useEffect(() => {
+    if (!currentUser || !currentServer) return;
+
+    const initNotifications = async () => {
+      const supported = initializeMessaging();
+      if (!supported) {
+        console.log('Push notifications not supported');
+        return;
+      }
+
+      // Check if user already granted permission
+      if (Notification.permission === 'granted') {
+        const token = await requestNotificationPermission();
+        if (token) {
+          setFcmToken(token);
+          setNotificationsEnabled(true);
+          
+          // Save token to Firebase
+          const db = getDb();
+          if (db) {
+            await saveFCMToken(currentUser.id, token, db);
+          }
+        }
+      }
+
+      // Listen for foreground messages
+      const unsubscribe = onMessageListener((payload) => {
+        console.log('Foreground message:', payload);
+        
+        const title = payload.notification?.title || payload.data?.title || 'Yeni Mesaj';
+        const body = payload.notification?.body || payload.data?.body || 'Yeni bir mesajınız var';
+        
+        // Show notification
+        showNotification(title, {
+          body: body,
+          icon: '/logo192.png',
+          badge: '/logo192.png',
+          tag: payload.data?.roomId || 'default',
+          data: payload.data
+        });
+
+        // Play notification sound (optional)
+        try {
+          const audio = new Audio('/notification.mp3');
+          audio.play().catch(err => console.log('Could not play sound:', err));
+        } catch (err) {
+          console.log('Audio error:', err);
+        }
+      });
+
+      return unsubscribe;
+    };
+
+    initNotifications();
+  }, [currentServer, currentUser, getDb]);
+
   // Auth functions
   const login = async (username, password) => {
     const db = getDb();
