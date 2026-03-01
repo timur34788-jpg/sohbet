@@ -253,40 +253,35 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db) throw new Error('Server not initialized');
     
-    const usersRef = ref(db, 'users');
-    const snapshot = await get(usersRef);
+    // Check user exists
+    const userRef = ref(db, `users/${username}`);
+    const snapshot = await get(userRef);
     
     if (!snapshot.exists()) {
       throw new Error('Kullanıcı bulunamadı');
     }
     
-    const usersData = snapshot.val();
-    const userEntry = Object.entries(usersData).find(
-      ([_, user]) => user.username?.toLowerCase() === username.toLowerCase()
-    );
-    
-    if (!userEntry) {
-      throw new Error('Kullanıcı bulunamadı');
-    }
-    
-    const [userId, userData] = userEntry;
+    const userData = snapshot.val();
     
     if (userData.banned) {
       throw new Error('Bu hesap yasaklanmış');
     }
     
-    // Simple password check (in production use proper hashing)
-    if (userData.password !== password) {
+    // Password check - hash comparison
+    const inputHash = await hashPassword(password);
+    if (userData.passwordHash !== inputHash) {
       throw new Error('Şifre yanlış');
     }
     
     // Update online status
-    const userRef = ref(db, `users/${userId}`);
-    await update(userRef, { online: true, lastSeen: Date.now() });
+    await update(ref(db, `online/${username}`), { 
+      ts: Date.now(), 
+      user: username 
+    });
     
-    const user = { id: userId, ...userData };
+    const user = { username, ...userData };
     setCurrentUser(user);
-    localStorage.setItem(`user_${currentServer}`, JSON.stringify({ id: userId }));
+    localStorage.setItem(`user_${currentServer}`, JSON.stringify({ username }));
     
     return user;
   };
@@ -296,57 +291,58 @@ export const AppProvider = ({ children }) => {
     if (!db) throw new Error('Server not initialized');
     
     // Check if registration is open
-    if (serverSettings && !serverSettings.registrationOpen) {
+    if (serverSettings?.registration === 'closed') {
       throw new Error('Kayıt şu an kapalı');
     }
     
     // Check invite code if required
-    if (serverSettings?.requireInviteCode && userData.inviteCode) {
-      const inviteRef = ref(db, `inviteCodes/${userData.inviteCode}`);
-      const inviteSnap = await get(inviteRef);
-      if (!inviteSnap.exists() || inviteSnap.val().used) {
-        throw new Error('Geçersiz davet kodu');
-      }
+    if (serverSettings?.inviteCode && userData.inviteCode !== serverSettings.inviteCode) {
+      throw new Error('Geçersiz davet kodu');
     }
     
     // Check if username exists
-    const usersRef = ref(db, 'users');
-    const snapshot = await get(usersRef);
+    const userRef = ref(db, `users/${userData.username}`);
+    const snapshot = await get(userRef);
     
     if (snapshot.exists()) {
-      const usersData = snapshot.val();
-      const exists = Object.values(usersData).some(
-        user => user.username?.toLowerCase() === userData.username.toLowerCase()
-      );
-      if (exists) {
-        throw new Error('Bu kullanıcı adı zaten alınmış');
-      }
-      
-      // Check email
-      const emailExists = Object.values(usersData).some(
-        user => user.email?.toLowerCase() === userData.email.toLowerCase()
-      );
-      if (emailExists) {
-        throw new Error('Bu e-posta zaten kayıtlı');
-      }
+      throw new Error('Bu kullanıcı adı zaten alınmış');
     }
     
+    // Check username in usernames list
+    const usernameRef = ref(db, `usernames/${userData.username.toLowerCase()}`);
+    const usernameSnap = await get(usernameRef);
+    if (usernameSnap.exists()) {
+      throw new Error('Bu kullanıcı adı zaten alınmış');
+    }
+    
+    // Hash password
+    const passwordHash = await hashPassword(userData.password);
+    
     // Create user
-    const newUserRef = push(usersRef);
     const newUser = {
       username: userData.username,
-      email: userData.email,
-      password: userData.password, // In production, hash this
-      origin: userData.origin || '',
-      role: 'member',
-      online: true,
-      lastSeen: Date.now(),
+      passwordHash: passwordHash,
       createdAt: Date.now(),
-      banned: false,
-      color: getRandomColor()
+      lastSeen: Date.now(),
+      isAdmin: false,
+      banned: false
     };
     
-    await set(newUserRef, newUser);
+    await set(userRef, newUser);
+    await set(usernameRef, Date.now());
+    
+    // Update online status
+    await update(ref(db, `online/${userData.username}`), { 
+      ts: Date.now(), 
+      user: userData.username 
+    });
+    
+    const user = { username: userData.username, ...newUser };
+    setCurrentUser(user);
+    localStorage.setItem(`user_${currentServer}`, JSON.stringify({ username: userData.username }));
+    
+    return user;
+  };
     
     // Mark invite code as used
     if (userData.inviteCode) {
