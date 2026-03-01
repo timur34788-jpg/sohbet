@@ -343,29 +343,12 @@ export const AppProvider = ({ children }) => {
     
     return user;
   };
-    
-    // Mark invite code as used
-    if (userData.inviteCode) {
-      await update(ref(db, `inviteCodes/${userData.inviteCode}`), { 
-        used: true, 
-        usedBy: newUserRef.key,
-        usedAt: Date.now()
-      });
-    }
-    
-    const user = { id: newUserRef.key, ...newUser };
-    setCurrentUser(user);
-    localStorage.setItem(`user_${currentServer}`, JSON.stringify({ id: newUserRef.key }));
-    
-    return user;
-  };
 
   const logout = async () => {
     if (currentUser && currentServer) {
       const db = getDb();
       if (db) {
-        const userRef = ref(db, `users/${currentUser.id}`);
-        await update(userRef, { online: false, lastSeen: Date.now() });
+        await remove(ref(db, `online/${currentUser.username}`));
       }
       localStorage.removeItem(`user_${currentServer}`);
     }
@@ -379,27 +362,17 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db || !currentUser) return;
     
-    const messagesRef = ref(db, `messages/${roomId}`);
+    const messagesRef = ref(db, `msgs/${roomId}`);
     const newMessageRef = push(messagesRef);
     
     const message = {
-      content,
-      type,
-      senderId: currentUser.id,
-      senderName: currentUser.username,
-      senderColor: currentUser.color,
-      timestamp: Date.now(),
+      text: content,
+      user: currentUser.username,
+      ts: Date.now(),
       ...extra
     };
     
     await set(newMessageRef, message);
-    
-    // Update room's last message
-    await update(ref(db, `rooms/${roomId}`), {
-      lastMessage: content.substring(0, 50),
-      lastMessageTime: Date.now(),
-      lastMessageBy: currentUser.username
-    });
     
     return { id: newMessageRef.key, ...message };
   };
@@ -408,17 +381,16 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db) return;
     
-    await remove(ref(db, `messages/${roomId}/${messageId}`));
+    await remove(ref(db, `msgs/${roomId}/${messageId}`));
   };
 
   const editMessage = async (roomId, messageId, newContent) => {
     const db = getDb();
     if (!db) return;
     
-    await update(ref(db, `messages/${roomId}/${messageId}`), {
-      content: newContent,
-      edited: true,
-      editedAt: Date.now()
+    await update(ref(db, `msgs/${roomId}/${messageId}`), {
+      text: newContent,
+      edited: true
     });
   };
 
