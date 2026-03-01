@@ -101,7 +101,7 @@ export const AppProvider = ({ children }) => {
 
   // Load rooms
   useEffect(() => {
-    if (!currentServer || !currentUser) return;
+    if (!currentServer || !firebaseUser) return;
     
     const db = getDb();
     if (!db) return;
@@ -118,14 +118,16 @@ export const AppProvider = ({ children }) => {
       } else {
         setRooms([]);
       }
+    }, (error) => {
+      console.error('Error loading rooms:', error);
     });
     
     return () => unsubscribe();
-  }, [currentServer, currentUser, getDb]);
+  }, [currentServer, firebaseUser, getDb]);
 
   // Load users
   useEffect(() => {
-    if (!currentServer) return;
+    if (!currentServer || !firebaseUser) return;
     
     const db = getDb();
     if (!db) return;
@@ -137,10 +139,12 @@ export const AppProvider = ({ children }) => {
       } else {
         setUsers({});
       }
+    }, (error) => {
+      console.error('Error loading users:', error);
     });
     
     return () => unsubscribe();
-  }, [currentServer, getDb]);
+  }, [currentServer, firebaseUser, getDb]);
 
   // Load messages for current room
   useEffect(() => {
