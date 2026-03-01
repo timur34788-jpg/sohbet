@@ -904,6 +904,13 @@ export const AppProvider = ({ children }) => {
     disableNotifications,
     getNotificationStatus,
     
+    // Admin: Data management
+    deleteAllMessages,
+    clearRoomMessages,
+    deleteUser,
+    getStatistics,
+    backupData,
+    
     // Utils
     getDb
   };
