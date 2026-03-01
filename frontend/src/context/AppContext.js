@@ -532,56 +532,47 @@ export const AppProvider = ({ children }) => {
   };
 
   // Friend functions
-  const sendFriendRequest = async (userId) => {
+  const sendFriendRequest = async (toUsername) => {
     const db = getDb();
     if (!db || !currentUser) return;
     
-    // Add to both users' friends lists
-    await set(ref(db, `friends/${currentUser.id}/${userId}`), {
-      status: 'pending',
-      fromId: currentUser.id,
-      timestamp: Date.now()
+    await set(ref(db, `friendRequests/${toUsername}/${currentUser.username}`), {
+      ts: Date.now()
     });
     
-    await set(ref(db, `friends/${userId}/${currentUser.id}`), {
-      status: 'pending',
-      fromId: currentUser.id,
-      timestamp: Date.now()
-    });
-    
-    // Send notification
-    await push(ref(db, `notifications/${userId}`), {
-      type: 'friendRequest',
-      fromId: currentUser.id,
-      fromName: currentUser.username,
-      timestamp: Date.now(),
-      read: false
+    await set(ref(db, `friendRequestsSent/${currentUser.username}/${toUsername}`), {
+      ts: Date.now()
     });
   };
 
-  const acceptFriendRequest = async (userId) => {
+  const acceptFriendRequest = async (fromUsername) => {
     const db = getDb();
     if (!db || !currentUser) return;
     
-    await update(ref(db, `friends/${currentUser.id}/${userId}`), { status: 'accepted' });
-    await update(ref(db, `friends/${userId}/${currentUser.id}`), { status: 'accepted' });
+    // Add to friends
+    await set(ref(db, `friends/${currentUser.username}/${fromUsername}`), { ts: Date.now() });
+    await set(ref(db, `friends/${fromUsername}/${currentUser.username}`), { ts: Date.now() });
+    
+    // Remove from requests
+    await remove(ref(db, `friendRequests/${currentUser.username}/${fromUsername}`));
+    await remove(ref(db, `friendRequestsSent/${fromUsername}/${currentUser.username}`));
   };
 
-  const rejectFriendRequest = async (userId) => {
+  const rejectFriendRequest = async (fromUsername) => {
     const db = getDb();
     if (!db || !currentUser) return;
     
-    await remove(ref(db, `friends/${currentUser.id}/${userId}`));
-    await remove(ref(db, `friends/${userId}/${currentUser.id}`));
+    await remove(ref(db, `friendRequests/${currentUser.username}/${fromUsername}`));
+    await remove(ref(db, `friendRequestsSent/${fromUsername}/${currentUser.username}`));
   };
 
   // Utility functions
   const isAdmin = () => {
-    return currentUser?.role === 'admin' || currentUser?.role === 'owner';
+    return currentUser?.isAdmin === true;
   };
 
   const isMod = () => {
-    return currentUser?.role === 'mod' || isAdmin();
+    return isAdmin();
   };
 
   const value = {
