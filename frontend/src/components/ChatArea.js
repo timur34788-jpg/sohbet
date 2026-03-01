@@ -135,52 +135,57 @@ const ChatArea = ({ room, onViewProfile }) => {
       </div>
 
       {/* Messages Area */}
-      <div className="chat-messages-container">
-        <div className="chat-messages" data-testid="chat-messages">
-          {messages.length === 0 ? (
-            <div className="no-messages">
-              <div className="no-messages-icon">💬</div>
-              <h3>Henüz mesaj yok</h3>
-              <p>İlk mesajı göndererek sohbeti başlat!</p>
-            </div>
-          ) : (
-            messages.map((message, index) => {
-              const prevMessage = messages[index - 1];
-              const showAvatar = !prevMessage || 
-                prevMessage.user !== message.user ||
-                ((message.ts || 0) - (prevMessage.ts || 0)) > 300000; // 5 min
-              
-              // Get user color from users list
-              const userColor = users[message.user]?.color || getColorForUser(message.user);
+      <div id="deskMsgs" data-testid="chat-messages">
+        {messages.length === 0 ? (
+          <div className="empty-chat">
+            <div className="empty-ic">💬</div>
+            <div className="empty-title">Henüz mesaj yok</div>
+            <div className="empty-sub">İlk mesajı göndererek sohbeti başlat!</div>
+          </div>
+        ) : (
+          messages.map((message, index) => {
+            const prevMessage = messages[index - 1];
+            const showAvatar = !prevMessage || 
+              prevMessage.user !== message.user ||
+              ((message.ts || 0) - (prevMessage.ts || 0)) > 300000; // 5 min
+            
+            // Get user color from users list
+            const userColor = users[message.user]?.color || getColorForUser(message.user);
+            const isOwn = message.user === currentUser?.username;
 
-              return (
-                <div 
-                  key={message.id}
-                  className={`message ${message.user === currentUser?.username ? 'own' : ''} ${showAvatar ? 'with-avatar' : ''}`}
-                  data-testid={`message-${message.id}`}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    if (canEditDelete(message)) {
-                      setContextMenu({ x: e.clientX, y: e.clientY, message });
-                    }
-                  }}
-                >
+            return (
+              <div 
+                key={message.id}
+                className={`mb ${isOwn ? 'own' : ''} ${showAvatar ? 'first' : ''}`}
+                data-testid={`message-${message.id}`}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  if (canEditDelete(message)) {
+                    setContextMenu({ x: e.clientX, y: e.clientY, message });
+                  }
+                }}
+              >
+                {showAvatar && !isOwn && (
+                  <div 
+                    className="av"
+                    style={{ background: userColor }}
+                    onClick={() => onViewProfile(message.user)}
+                  >
+                    {message.user?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {!showAvatar && !isOwn && (
+                  <div className="av ghost"></div>
+                )}
+                <div className="mb-body">
                   {showAvatar && (
-                    <div 
-                      className="message-avatar"
-                      style={{ background: userColor }}
-                      onClick={() => onViewProfile(message.user)}
-                    >
-                      {message.user?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div className="message-content">
-                    {showAvatar && (
-                      <div className="message-header">
-                        <span 
-                          className="message-author"
-                          style={{ color: userColor }}
-                          onClick={() => onViewProfile(message.user)}
+                    <div className="mb-meta">
+                      <span 
+                        className="mb-name"
+                        style={{ color: isOwn ? 'var(--blue)' : userColor }}
+                        onClick={() => onViewProfile(message.user)}
+                      >
+                        {message.user}
                         >
                           {message.user}
                         </span>
