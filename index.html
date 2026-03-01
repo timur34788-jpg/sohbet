@@ -3758,7 +3758,7 @@ async function submitLogin(){
         const adminData = await fbRestGet('users/'+user).catch(()=>null);
         const phLegacy  = hashStrSync(pass+user);
         if(!adminData){
-          showLoginErr('Admin hesabı bulunamadı. Firebase DB'ye users/admin kaydı ekleyin.');
+          showLoginErr('Admin hesabı bulunamadı. Firebase DB\'ye users/admin kaydı ekleyin.');
           resetBtn(); return;
         }
         const storedHash = adminData.passwordHash || '';
