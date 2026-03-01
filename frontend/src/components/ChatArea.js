@@ -95,9 +95,10 @@ const ChatArea = ({ room, onViewProfile }) => {
     <div className="chat-container" data-testid="chat-area">
       {/* Header */}
       <div className="chat-header-bar">
-        <div className="chat-header-icon">
-          {room.type === 'dm' ? '💬' : room.private ? <Lock size={20} /> : '#'}
-        </div>
+        <div className="chat-header-info">
+          <div className="chat-header-icon">
+            {room.type === 'dm' ? '💬' : room.private ? <Lock size={20} /> : '#'}
+          </div>
           <div>
             <h3 className="chat-name">{room.name}</h3>
             {room.description && (
