@@ -52,41 +52,32 @@ const Login = ({ onBack }) => {
 
   const handleLoginStep1 = (e) => {
     e.preventDefault();
-    console.log('🎯 Step 1 çağrıldı!', { loginUsername });
     if (!loginUsername.trim()) {
-      console.error('❌ Username boş');
       setError('Kullanıcı adı gerekli');
       return;
     }
-    console.log('✅ Step 2ye geçiliyor...');
     setError('');
     setLoginStep(2);
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    console.log('🚀 handleLogin çağrıldı!', { loginUsername, hasPassword: !!loginPassword });
     
     if (!loginPassword) {
-      console.error('❌ Şifre boş!');
       setError('Şifre gerekli');
       return;
     }
 
     setLoading(true);
     setError('');
-    console.log('⏳ Loading true, login() çağrılıyor...');
 
     try {
-      console.log('📞 Context.login() çağrılıyor...');
       await login(loginUsername, loginPassword);
-      console.log('✅ Login başarılı döndü!');
     } catch (err) {
-      console.error('❌ Login error:', err);
+      console.error('Login error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
-      console.log('⏳ Loading false');
     }
   };
 

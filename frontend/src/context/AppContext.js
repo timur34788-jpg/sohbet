@@ -390,40 +390,26 @@ export const AppProvider = ({ children }) => {
 
   // Auth functions
   const login = async (username, password) => {
-    console.log('🔐 Login başladı:', username);
     const db = getDb();
-    if (!db) {
-      console.error('❌ DB yok!');
-      throw new Error('Server not initialized');
-    }
-    console.log('✅ DB var');
+    if (!db) throw new Error('Server not initialized');
     
     // Check user exists
     const userRef = ref(db, `users/${username}`);
-    console.log('📡 Firebase\'den veri alınıyor...');
     const snapshot = await get(userRef);
-    console.log('📦 Snapshot:', snapshot.exists());
     
     if (!snapshot.exists()) {
-      console.error('❌ Kullanıcı bulunamadı');
       throw new Error('Kullanıcı bulunamadı');
     }
     
     const userData = snapshot.val();
-    console.log('👤 UserData alındı:', !!userData);
     
     if (userData.banned) {
-      console.error('❌ Banned');
       throw new Error('Bu hesap yasaklanmış');
     }
     
     // Password check - try multiple hash methods
     const inputHash = await hashPassword(password);
     const inputHashOld = await hashPasswordOld(password);
-    
-    console.log('🔑 Stored hash:', userData.passwordHash);
-    console.log('🔑 Input hash (new):', inputHash);
-    console.log('🔑 Input hash (old):', inputHashOld);
     
     if (userData.passwordHash !== inputHash && userData.passwordHash !== inputHashOld) {
       throw new Error('Şifre yanlış');
