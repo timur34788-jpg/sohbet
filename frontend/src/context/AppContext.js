@@ -37,6 +37,10 @@ export const AppProvider = ({ children }) => {
   const [initialized, setInitialized] = useState(false);
   const [fcmToken, setFcmToken] = useState(null);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  
+  // Theme & Layout preferences
+  const [theme, setTheme] = useState(() => localStorage.getItem('app-theme') || 'dark');
+  const [layout, setLayout] = useState(() => localStorage.getItem('app-layout') || 'original');
 
   // Get Firebase instance for current server
   const getDb = useCallback(() => {
