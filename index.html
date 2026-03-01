@@ -412,9 +412,9 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 /* ══════ ROOMS SCREEN ══════ */
 #roomsScreen{background:var(--purple-dark);padding-top:0;padding-bottom:0;}
 
-.ws-header{display:flex;align-items:center;gap:10px;padding:14px 16px 11px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--purple);flex-shrink:0;}
+.ws-header{display:flex;align-items:center;gap:10px;padding:14px 16px 11px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--purple);flex-shrink:0;overflow:hidden;}
 .ws-logo{width:30px;height:30px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
-.ws-name{flex:1;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ws-name{flex:1;min-width:0;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ws-av{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,.3);position:relative;}
 .ws-av .sdot{position:absolute;bottom:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2.5px solid var(--purple);}
 .admin-badge{background:var(--yellow);color:#000;font-size:.55rem;font-weight:900;border-radius:3px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
@@ -2018,7 +2018,13 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .prof-stat-num {
   font-size: 1.1rem; font-weight: 900;
   color: var(--text-hi); display: block;
+  min-height: 1.3em;
 }
+/* "—" gösterilince hafif animasyon */
+@keyframes statPulse {
+  0%,100% { opacity:.4; } 50% { opacity:.9; }
+}
+.prof-stat-num:not(:empty) { animation: none; }
 .prof-stat-lbl {
   font-size: .62rem; color: var(--muted);
   text-transform: uppercase; letter-spacing: .06em;
@@ -2606,7 +2612,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
       </div>
       <div class="ws-av" id="myAvatar" onclick="openProfile()"><div class="sdot"></div></div>
       <!-- Robot yuvası: bell → profil → robot sırası -->
-      <div id="mobileRobotSlot" style="width:44px;height:54px;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;"></div>
+      <div id="mobileRobotSlot" style="width:40px;height:44px;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;"></div>
     </div>
   </div>
   <div class="search-row" onclick="openGlobalSearch()" style="cursor:pointer;">
@@ -2642,7 +2648,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border-color .15s;" id="forumEditorWrap"
           onfocusin="this.style.borderColor='var(--accent)'" onfocusout="this.style.borderColor='var(--border)'">
           <!-- Toolbar -->
-          <div id="forumToolbar" style="display:flex;flex-wrap:wrap;gap:1px;padding:6px 8px;border-bottom:1px solid var(--border);background:var(--surface2);align-items:center;">
+          <div id="forumToolbar" style="display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:1px;padding:6px 8px;border-bottom:1px solid var(--border);background:var(--surface2);align-items:center;scrollbar-width:none;-webkit-overflow-scrolling:touch;" onscroll="this.style.setProperty('--tb-scroll',this.scrollLeft+'px')">
             <button onclick="bbWrap('b')" title="Kalın" class="fmt-btn"><b>B</b></button>
             <button onclick="bbWrap('i')" title="İtalik" class="fmt-btn"><i>I</i></button>
             <button onclick="bbWrap('u')" title="Altı Çizili" class="fmt-btn"><u>U</u></button>
@@ -11788,18 +11794,33 @@ function openNotifCenter(triggerEl){
   const panel=document.getElementById('notifCenterPanel');
   if(!modal||!panel) return;
 
-  // Bell butonunun konumunu bul
-  const btn = triggerEl || document.getElementById('deskBellBtn');
-  if(btn){
-    const r = btn.getBoundingClientRect();
-    const panelW = 360;
-    // Panel bell'in hizasında, sağ kenarı bell'in sağ kenarıyla hizalı
-    let left = r.right - panelW;
-    if(left < 8) left = 8;
-    if(left + panelW > window.innerWidth - 8) left = window.innerWidth - panelW - 8;
-    panel.style.left = left + 'px';
-    panel.style.top  = (r.bottom + 6) + 'px';
-    panel.style.right = 'auto';
+  const isMobile = window.innerWidth < 768;
+
+  if(isMobile){
+    // Mobilde: sayfanın üst kısmında tam genişlik panel
+    const safeTop = parseInt(getComputedStyle(document.documentElement)
+      .getPropertyValue('--safe-top')) || 0;
+    panel.style.left     = '12px';
+    panel.style.right    = '12px';
+    panel.style.width    = 'calc(100vw - 24px)';
+    panel.style.maxWidth = 'calc(100vw - 24px)';
+    panel.style.top      = (safeTop + 58) + 'px';
+    panel.style.position = 'absolute';
+  } else {
+    // Masaüstü: bell butonunun hizasında
+    const btn = triggerEl || document.getElementById('deskBellBtn');
+    if(btn){
+      const r = btn.getBoundingClientRect();
+      const panelW = 360;
+      let left = r.right - panelW;
+      if(left < 8) left = 8;
+      if(left + panelW > window.innerWidth - 8) left = window.innerWidth - panelW - 8;
+      panel.style.left  = left + 'px';
+      panel.style.top   = (r.bottom + 6) + 'px';
+      panel.style.right = 'auto';
+      panel.style.width = '';
+      panel.style.maxWidth = '';
+    }
   }
 
   modal.style.display='flex';
@@ -14377,8 +14398,9 @@ const BOT_CSS = `
     right: auto !important;
     top: auto !important;
     left: auto !important;
-    width: 44px !important;
-    height: 54px !important;
+    width: 40px !important;
+    height: 44px !important;
+    overflow: hidden !important;
   }
 }
 
@@ -18337,6 +18359,317 @@ if (_savedLang && _savedLang !== 'tr') {
 
 /* ── Global erişim ── */
 window._i18n = { apply: applyI18n, t: () => _activeT, lang: () => _activeLang, dict: I18N };
+
+})();
+</script>
+
+
+<!-- ════════════════════════════════════════════
+     📱 MOBİL UI İYİLEŞTİRMELERİ v2.0
+════════════════════════════════════════════ -->
+<style>
+
+/* ── 1. ROBOT MASKOT: Header'da taşma önleme ── */
+@media (max-width: 767px) {
+  #mobileRobotSlot {
+    width: 40px !important;
+    height: 44px !important;
+    overflow: hidden !important;
+    border-radius: 10px;
+    flex-shrink: 0;
+  }
+  #natureBotPet {
+    width: 40px !important;
+    height: 44px !important;
+    overflow: hidden !important;
+  }
+  /* ws-name robot ile örtüşmesin */
+  .ws-header {
+    overflow: hidden;
+    gap: 8px;
+  }
+  .ws-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ── 2. BİLDİRİM PANELİ: Mobilde tam genişlik ── */
+@media (max-width: 767px) {
+  #notifCenterModal {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    background: rgba(0,0,0,0.45) !important;
+  }
+  #notifCenterPanel {
+    width: calc(100vw - 24px) !important;
+    max-width: calc(100vw - 24px) !important;
+    top: calc(env(safe-area-inset-top, 0px) + 56px) !important;
+    left: 12px !important;
+    right: 12px !important;
+    border-radius: 14px !important;
+    animation: notifSlideDown .22s cubic-bezier(.34,1.56,.64,1) !important;
+  }
+  @keyframes notifSlideDown {
+    from { opacity: 0; transform: translateY(-14px) scale(.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  #notifCenterList {
+    max-height: min(55vh, 420px) !important;
+  }
+}
+
+/* ── 3. FORUM TOOLBAR: Kaydırılabilir tek satır ── */
+#forumToolbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+#forumToolbar::-webkit-scrollbar { display: none; }
+#forumToolbar .fmt-btn { flex-shrink: 0; }
+#forumToolbar > span[style*="width:1px"] { flex-shrink: 0; }
+
+/* ── 4. WS-HEADER: Logo & isim hizalama ── */
+.ws-header {
+  align-items: center;
+}
+/* Header sağ grup: sıkışmayı önle */
+.ws-header > div:last-child {
+  flex-shrink: 0;
+}
+
+/* ── 5. PROFİL İSTATİSTİKLER: Loading shimmer ── */
+.prof-stat-num {
+  min-width: 20px;
+  display: inline-block;
+}
+@keyframes profStatShimmer {
+  0%   { opacity: .3; }
+  50%  { opacity: .8; }
+  100% { opacity: .3; }
+}
+.prof-stat-num:empty::before,
+.prof-stat-num[data-loading]::before {
+  content: '—';
+  animation: profStatShimmer 1.4s ease-in-out infinite;
+}
+
+/* ── 6. MESAJLAR / ARKADAŞLAR: Buton tutarlılığı ── */
+.dm-user-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.dm-user-actions { margin-left: auto; display: flex; gap: 6px; }
+
+/* Tüm arkadaş/mesaj butonları aynı minimum genişlikte */
+.fr-msg-btn, .fr-add-btn {
+  min-width: 90px;
+  text-align: center;
+  justify-content: center;
+}
+
+/* ── 7. BOŞLUK DOLGUSU: Sayfalar için hoş empty-state ── */
+#roomsList:empty::after {
+  content: 'Henüz kanal yok';
+  display: block;
+  text-align: center;
+  color: var(--muted);
+  font-size: .82rem;
+  padding: 48px 16px;
+  opacity: .6;
+}
+
+/* ── 8. TAB BAR: Aktif sekme belirginleştirme ── */
+.tab.act .tab-ic-wrap {
+  background: rgba(91,155,213,.22) !important;
+  border-radius: 10px;
+}
+.tab.act .tab-lb {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+/* ── 9. GENEL: Kaydırma çubuklarını gizle ── */
+.rooms-scroll::-webkit-scrollbar,
+#frContent::-webkit-scrollbar,
+#dmUserList::-webkit-scrollbar,
+#notifCenterList::-webkit-scrollbar { display: none; }
+
+/* ── 10. SEARCH ROW: Daha şık görünüm ── */
+.search-row {
+  margin: 10px 12px 6px !important;
+  border-radius: 10px !important;
+  padding: 9px 13px !important;
+  gap: 10px !important;
+}
+
+/* ── 11. MOBİL BİLDİRİM BALONU: Sağa konumla ── */
+@media (max-width: 767px) {
+  .bot-bubble {
+    right: 8px !important;
+    left: auto !important;
+    max-width: calc(100vw - 80px) !important;
+  }
+}
+
+/* ── 12. CANLI İZLE: Kanal kartları ── */
+@media (max-width: 767px) {
+  .watch-channel-card, [class*="watch-card"] {
+    border-radius: 14px;
+  }
+}
+
+/* ── 13. PROFIL BANNER: Gradient rengi düzelt ── */
+.prof-banner {
+  background: linear-gradient(135deg, var(--accent2, #2a4a7a) 0%, var(--accent, #5b9bd5) 100%) !important;
+}
+
+/* ── 14. ANA SAYFA: Bot konuşma balonunu sol taşmadan koru ── */
+@media (max-width: 767px) {
+  #natureBotBubble, [id*="BotBubble"], .bot-bubble {
+    left: max(8px, env(safe-area-inset-left, 0px)) !important;
+    right: 8px !important;
+    max-width: calc(100vw - 80px) !important;
+    width: auto !important;
+  }
+}
+
+</style>
+
+<script>
+/* ══ MOBİL BİLDİRİM PANELİ: Doğru konum hesabı ══ */
+(function() {
+  'use strict';
+
+  /* openNotifCenter'ı mobil için override et */
+  const _origOpen = window.openNotifCenter;
+  window.openNotifCenter = function(triggerEl) {
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) {
+      const modal  = document.getElementById('notifCenterModal');
+      const panel  = document.getElementById('notifCenterPanel');
+      if (!modal || !panel) return;
+
+      /* Mobilde: safe-area'yı hesaba kat */
+      const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--safe-top')) || 0;
+      panel.style.left   = '12px';
+      panel.style.right  = '12px';
+      panel.style.top    = (safeTop + 56) + 'px';
+      panel.style.width  = '';
+      panel.style.maxWidth = '';
+      panel.style.position = 'absolute';
+      modal.style.display = 'flex';
+
+      if (typeof renderNotifCenter === 'function') renderNotifCenter();
+
+      requestAnimationFrame(() => {
+        const close = (e) => {
+          if (!panel.contains(e.target)) {
+            if (typeof closeNotifCenter === 'function') closeNotifCenter();
+            document.removeEventListener('touchstart', close);
+            document.removeEventListener('mousedown', close);
+          }
+        };
+        document.addEventListener('touchstart', close, { passive: true });
+        document.addEventListener('mousedown', close);
+      });
+    } else {
+      if (typeof _origOpen === 'function') _origOpen.call(this, triggerEl);
+    }
+  };
+
+  /* ══ PROFİL İSTATİSTİKLER: Otomatik yükleme animasyonu ══ */
+  function watchProfileStats() {
+    const ids = ['profMsgCount', 'profFriendCount', 'profJoinDate'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      /* Başlangıçta "—" ise shimmer göster */
+      if (el.textContent.trim() === '—') {
+        el.dataset.loading = '1';
+      }
+      /* İçerik değişince loading'i kaldır */
+      const obs = new MutationObserver(() => {
+        if (el.textContent.trim() !== '—' && el.textContent.trim() !== '') {
+          delete el.dataset.loading;
+          obs.disconnect();
+        }
+      });
+      obs.observe(el, { childList: true, subtree: true, characterData: true });
+    });
+  }
+
+  /* DOM hazır olunca çalıştır */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', watchProfileStats);
+  } else {
+    setTimeout(watchProfileStats, 500);
+  }
+
+  /* ══ FORUM TOOLBAR: Kaydırma hint (blur efekti) ══ */
+  function setupForumToolbar() {
+    const tb = document.getElementById('forumToolbar');
+    if (!tb) return;
+    /* Sağ kenar fade efekti için wrapper */
+    const wrap = tb.parentElement;
+    if (!wrap) return;
+    wrap.style.position = 'relative';
+
+    /* Fade overlay ekle */
+    if (!document.getElementById('_tbFadeR')) {
+      const fadeR = document.createElement('div');
+      fadeR.id = '_tbFadeR';
+      fadeR.style.cssText = [
+        'position:absolute', 'right:0', 'top:0', 'width:28px',
+        'height:100%', 'pointer-events:none', 'z-index:2',
+        'background:linear-gradient(to right, transparent, var(--surface2))',
+        'border-radius:0 6px 0 0', 'transition:opacity .2s'
+      ].join(';');
+      tb.parentElement.style.position = 'relative';
+      tb.parentElement.appendChild(fadeR);
+
+      tb.addEventListener('scroll', function() {
+        const atEnd = this.scrollLeft + this.clientWidth >= this.scrollWidth - 4;
+        fadeR.style.opacity = atEnd ? '0' : '1';
+      }, { passive: true });
+    }
+  }
+
+  /* ══ ROBOT MASKOT: Header'dan taşma düzeltmesi ══ */
+  function fixMobileRobot() {
+    if (window.innerWidth >= 768) return;
+    const slot = document.getElementById('mobileRobotSlot');
+    const bot  = document.getElementById('natureBotPet');
+    if (!slot || !bot) return;
+
+    slot.style.width   = '40px';
+    slot.style.height  = '44px';
+    slot.style.overflow = 'hidden';
+    slot.style.borderRadius = '10px';
+    slot.style.display = 'flex';
+    slot.style.alignItems = 'center';
+    slot.style.justifyContent = 'center';
+
+    bot.style.width  = '40px';
+    bot.style.height = '44px';
+  }
+
+  /* Sayfa yüklenince ve resize'da uygula */
+  window.addEventListener('load', () => {
+    fixMobileRobot();
+    setupForumToolbar();
+    watchProfileStats();
+  });
+  window.addEventListener('resize', fixMobileRobot);
+
+  /* MutationObserver ile robot inject edilince yakala */
+  const robotObs = new MutationObserver(() => {
+    if (document.getElementById('natureBotPet')) {
+      fixMobileRobot();
+    }
+    if (document.getElementById('forumToolbar')) {
+      setupForumToolbar();
+    }
+  });
+  robotObs.observe(document.body, { childList: true, subtree: true });
 
 })();
 </script>
