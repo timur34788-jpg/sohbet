@@ -766,6 +766,8 @@ export const AppProvider = ({ children }) => {
     forumPosts,
     notifications,
     servers: SERVERS,
+    notificationsEnabled,
+    fcmToken,
     
     // Server functions
     initServer,
