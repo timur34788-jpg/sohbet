@@ -4185,3 +4185,23 @@ img[src=""], img:not([src]), img[src="undefined"] {
   content: attr(data-initial);
   font-size: 1.2em;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   Sidebar Avatar Fix - Baş harfi göster
+   ═══════════════════════════════════════════════════════════ */
+
+.dsk-row-av {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: white !important;
+  font-weight: 600 !important;
+  font-size: 1rem !important;
+  text-transform: uppercase !important;
+}
+
+.dsk-row-ic {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
