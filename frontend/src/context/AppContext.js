@@ -39,7 +39,55 @@ export const AppProvider = ({ children }) => {
     const initFromStorage = async () => {
       const savedServer = localStorage.getItem('selectedServer');
       if (savedServer && SERVERS[savedServer]) {
-        await initServer(savedServer);
+        try {
+          setIsLoading(true);
+          
+          // Sign in to Firebase anonymously first
+          const fbUser = await signInToFirebase(savedServer);
+          setFirebaseUser(fbUser);
+          
+          const { db } = getFirebaseInstance(savedServer);
+          setCurrentServer(savedServer);
+          
+          // Load server settings
+          const settingsRef = ref(db, 'settings');
+          const settingsSnap = await get(settingsRef);
+          if (settingsSnap.exists()) {
+            setServerSettings(settingsSnap.val());
+          } else {
+            setServerSettings({
+              registration: 'open',
+              appName: SERVERS[savedServer].name
+            });
+          }
+          
+          // Check for saved user session
+          const savedUserStr = localStorage.getItem(`user_${savedServer}`);
+          if (savedUserStr) {
+            const savedUserData = JSON.parse(savedUserStr);
+            const userRef = ref(db, `users/${savedUserData.username}`);
+            const userSnap = await get(userRef);
+            if (userSnap.exists()) {
+              const dbUser = userSnap.val();
+              if (!dbUser.banned) {
+                setCurrentUser({ username: savedUserData.username, ...dbUser });
+                await update(ref(db, `online/${savedUserData.username}`), { 
+                  ts: Date.now(), 
+                  user: savedUserData.username 
+                });
+              } else {
+                localStorage.removeItem(`user_${savedServer}`);
+              }
+            } else {
+              localStorage.removeItem(`user_${savedServer}`);
+            }
+          }
+          
+          setIsLoading(false);
+        } catch (error) {
+          console.error('Error initializing from storage:', error);
+          setIsLoading(false);
+        }
       } else {
         setIsLoading(false);
       }
