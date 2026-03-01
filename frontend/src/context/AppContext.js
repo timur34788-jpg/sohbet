@@ -144,7 +144,7 @@ export const AppProvider = ({ children }) => {
 
   // Load messages for current room
   useEffect(() => {
-    if (!currentServer || !currentRoom) {
+    if (!currentServer || !currentRoom || !firebaseUser) {
       setMessages([]);
       return;
     }
@@ -152,8 +152,8 @@ export const AppProvider = ({ children }) => {
     const db = getDb();
     if (!db) return;
     
-    const messagesRef = ref(db, `messages/${currentRoom.id}`);
-    const messagesQuery = query(messagesRef, orderByChild('timestamp'), limitToLast(100));
+    const messagesRef = ref(db, `msgs/${currentRoom.id}`);
+    const messagesQuery = query(messagesRef, orderByChild('ts'), limitToLast(100));
     
     const unsubscribe = onValue(messagesQuery, (snapshot) => {
       if (snapshot.exists()) {
@@ -161,68 +161,86 @@ export const AppProvider = ({ children }) => {
         const messagesList = Object.entries(messagesData).map(([id, data]) => ({
           id,
           ...data
-        })).sort((a, b) => a.timestamp - b.timestamp);
+        })).sort((a, b) => (a.ts || 0) - (b.ts || 0));
         setMessages(messagesList);
       } else {
         setMessages([]);
       }
+    }, (error) => {
+      console.error('Error loading messages:', error);
+      setMessages([]);
     });
     
     return () => unsubscribe();
-  }, [currentServer, currentRoom, getDb]);
+  }, [currentServer, currentRoom, firebaseUser, getDb]);
 
   // Load friends
   useEffect(() => {
-    if (!currentServer || !currentUser) return;
+    if (!currentServer || !currentUser || !firebaseUser) return;
     
     const db = getDb();
     if (!db) return;
     
-    const friendsRef = ref(db, `friends/${currentUser.id}`);
+    const friendsRef = ref(db, `friends/${currentUser.username}`);
     const unsubscribe = onValue(friendsRef, (snapshot) => {
       if (snapshot.exists()) {
         const friendsData = snapshot.val();
         const friendsList = Object.entries(friendsData)
-          .filter(([_, data]) => data.status === 'accepted')
           .map(([id, data]) => ({ id, ...data }));
         setFriends(friendsList);
-        
-        const requestsList = Object.entries(friendsData)
-          .filter(([_, data]) => data.status === 'pending' && data.fromId !== currentUser.id)
-          .map(([id, data]) => ({ id, ...data }));
-        setFriendRequests(requestsList);
       } else {
         setFriends([]);
-        setFriendRequests([]);
       }
+    }, (error) => {
+      console.error('Error loading friends:', error);
     });
     
-    return () => unsubscribe();
-  }, [currentServer, currentUser, getDb]);
+    // Load friend requests
+    const requestsRef = ref(db, `friendRequests/${currentUser.username}`);
+    const unsubRequests = onValue(requestsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const requestsData = snapshot.val();
+        const requestsList = Object.entries(requestsData)
+          .map(([id, data]) => ({ id, fromUser: id, ...data }));
+        setFriendRequests(requestsList);
+      } else {
+        setFriendRequests([]);
+      }
+    }, (error) => {
+      console.error('Error loading friend requests:', error);
+    });
+    
+    return () => {
+      unsubscribe();
+      unsubRequests();
+    };
+  }, [currentServer, currentUser, firebaseUser, getDb]);
 
   // Load forum posts
   useEffect(() => {
-    if (!currentServer) return;
+    if (!currentServer || !firebaseUser) return;
     
     const db = getDb();
     if (!db) return;
     
-    const forumRef = ref(db, 'forum');
+    const forumRef = ref(db, 'forum/posts');
     const unsubscribe = onValue(forumRef, (snapshot) => {
       if (snapshot.exists()) {
         const forumData = snapshot.val();
         const postsList = Object.entries(forumData).map(([id, data]) => ({
           id,
           ...data
-        })).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+        })).sort((a, b) => (b.ts || 0) - (a.ts || 0));
         setForumPosts(postsList);
       } else {
         setForumPosts([]);
       }
+    }, (error) => {
+      console.error('Error loading forum posts:', error);
     });
     
     return () => unsubscribe();
-  }, [currentServer, getDb]);
+  }, [currentServer, firebaseUser, getDb]);
 
   // Load notifications
   useEffect(() => {
