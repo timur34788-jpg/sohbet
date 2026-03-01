@@ -152,6 +152,17 @@ const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) =
         <div 
           className="dsk-row"
           style={{ cursor: 'pointer' }}
+          onClick={() => {
+            // Create a dummy NatureBot room
+            const natureBotRoom = {
+              id: 'naturebot',
+              name: 'NatureBot',
+              type: 'channel',
+              description: 'AI Asistan - Sana yardımcı olmak için buradayım!',
+              private: false
+            };
+            onRoomSelect(natureBotRoom);
+          }}
         >
           <div className="dsk-row-ic">🤖</div>
           <div className="dsk-row-name">NatureBot</div>
