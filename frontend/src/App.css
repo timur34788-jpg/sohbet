@@ -725,6 +725,145 @@ body {
   width: 6px;
 }
 
+#deskSideList::-webkit-scrollbar-track, .sidebar-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#deskSideList::-webkit-scrollbar-thumb, .sidebar-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+#deskSideList::-webkit-scrollbar-thumb:hover, .sidebar-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Sidebar Section Headers */
+.dsk-sec-hdr {
+  display: flex;
+  align-items: center;
+  padding: 14px 10px 4px 12px;
+  font-size: 0.7rem;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dsk-sec-hdr .chev {
+  font-size: 0.6rem;
+  margin-right: 4px;
+  transition: transform 0.15s;
+}
+
+.dsk-sec-hdr .sec-add-btn {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.4);
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+
+.dsk-sec-hdr .sec-add-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* Sidebar Rows (Channels, DMs) */
+.dsk-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 10px 3px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  margin: 0 6px;
+  transition: background 0.1s;
+  min-height: 32px;
+  position: relative;
+}
+
+.dsk-row:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.dsk-row.act {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.dsk-row.act .dsk-row-name,
+.dsk-row:hover .dsk-row-name {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.dsk-row-ic {
+  width: 18px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.45);
+  flex-shrink: 0;
+}
+
+.dsk-row-av {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.dsk-row-av .r-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #222529;
+}
+
+.dsk-row-av .r-dot.on {
+  background: var(--green);
+}
+
+.dsk-row-av .r-dot.off {
+  background: var(--muted);
+}
+
+.dsk-row-name {
+  flex: 1;
+  font-size: 0.87rem;
+  color: rgba(255, 255, 255, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dsk-row-badge {
+  background: var(--red);
+  color: #fff;
+  font-size: 0.58rem;
+  font-weight: 900;
+  border-radius: 100px;
+  padding: 1px 5px;
+  min-width: 16px;
+  text-align: center;
+}
+
 .sidebar-list::-webkit-scrollbar-track {
   background: transparent;
 }
