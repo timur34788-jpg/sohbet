@@ -36,58 +36,114 @@ const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) =
   };
 
   return (
-    <div className="desktop-sidebar" data-testid="sidebar">
+    <div id="deskSidebar" data-testid="sidebar">
       {/* Header */}
-      <div className="sidebar-header">
-        <div className="sidebar-header-content">
+      <div id="deskSidebarHeader">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div 
-              className="sidebar-server-name" 
+              id="deskSidebarTitle"
               title="Sunucu değiştir"
               style={{ cursor: 'pointer', userSelect: 'none' }}
             >
-              🍃 Robot Evi
+              Nature.co
             </div>
-            <div className="sidebar-server-subtitle">
-              NatureBot'a yuvaya gönderildi
-            </div>
+            <div id="deskSidebarSub">Ana Sayfa</div>
           </div>
-          <div className="sidebar-header-icons">
-            <button 
-              className="sidebar-icon-button"
+          {/* Zil + Profil */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <div 
+              id="deskBellBtn"
               title="Bildirimler"
+              style={{
+                width: '28px',
+                height: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                position: 'relative',
+                color: 'rgba(255,255,255,.7)',
+                transition: 'background .15s',
+                flexShrink: 0
+              }}
               data-testid="notifications-btn"
             >
               <Bell size={15} />
               {unreadNotifs > 0 && (
-                <div className="notification-dot" />
+                <div 
+                  id="deskNotifDot"
+                  style={{
+                    display: 'block',
+                    position: 'absolute',
+                    top: '3px',
+                    right: '3px',
+                    width: '6px',
+                    height: '6px',
+                    background: '#e05555',
+                    borderRadius: '50%',
+                    border: '1.5px solid #222529'
+                  }}
+                />
               )}
-            </button>
+            </div>
             <div 
-              className="sidebar-user-avatar"
-              style={{ background: currentUser?.color || '#5b9bd5' }}
+              id="deskSidebarAvatar"
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '.65rem',
+                fontWeight: 900,
+                color: '#fff',
+                cursor: 'pointer',
+                flexShrink: 0,
+                background: getColorForUser(currentUser?.username || ''),
+                border: '1.5px solid rgba(255,255,255,.2)',
+                transition: 'opacity .15s',
+                position: 'relative'
+              }}
               onClick={() => onViewProfile(currentUser?.id)}
               title="Profilim"
               data-testid="sidebar-avatar"
             >
               {currentUser?.username?.charAt(0).toUpperCase()}
-              <div className="online-indicator" />
+              <div 
+                className="sdot"
+                style={{
+                  position: 'absolute',
+                  bottom: '-2px',
+                  right: '-2px',
+                  width: '9px',
+                  height: '9px',
+                  borderRadius: '50%',
+                  background: 'var(--green)',
+                  border: '2px solid #222529'
+                }}
+              />
             </div>
           </div>
         </div>
       </div>
 
       {/* Search */}
-      <div className="sidebar-search" data-testid="sidebar-search">
+      <div 
+        id="deskSearch"
+        style={{ cursor: 'pointer' }}
+        data-testid="sidebar-search"
+      >
         <Search size={14} strokeWidth={2} />
-        <span className="search-placeholder">
-          Ara...
-          <span className="search-shortcut">⌘K</span>
+        <span style={{ color: 'var(--muted)', fontSize: '.82rem' }}>
+          Ara... <span style={{ marginLeft: 'auto', fontSize: '.7rem', opacity: .6 }}>⌘K</span>
         </span>
       </div>
 
       {/* List */}
-      <div className="sidebar-list">
+      <div id="deskSideList">
         {/* NatureBot Section */}
         <div className="sidebar-section">
           <div className="section-header">
