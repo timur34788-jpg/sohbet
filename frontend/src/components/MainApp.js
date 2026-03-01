@@ -259,6 +259,11 @@ const MainApp = () => {
           onClose={() => setShowProfile(false)}
         />
       )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
     </div>
   );
 };
