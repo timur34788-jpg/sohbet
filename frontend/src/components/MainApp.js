@@ -78,9 +78,9 @@ const MainApp = () => {
   );
 
   return (
-    <div className="desktop-shell" data-testid="main-app">
+    <div id="desktopShell" data-testid="main-app">
       {/* Icon Rail */}
-      <div className="icon-rail">
+      <div id="deskRail">
         <div 
           className="rail-logo" 
           title="Sunucu Değiştir"
@@ -89,63 +89,82 @@ const MainApp = () => {
           <LeafLogo />
         </div>
         
-        <div className="rail-separator" />
+        <div className="rail-sep" />
         
-        <button
-          className={`rail-button ${activePanel === 'home' ? 'active' : ''}`}
+        <div
+          className={`rail-btn ${activePanel === 'home' ? 'act' : ''}`}
           onClick={() => setActivePanel('home')}
           title="Ana Sayfa"
           data-testid="rail-home"
+          id="rb-home"
         >
-          <Home size={22} />
-        </button>
+          <div className="rail-btn-ic" style={{ fontSize: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Home size={22} />
+          </div>
+        </div>
         
-        <button
-          className={`rail-button ${activePanel === 'forum' ? 'active' : ''}`}
+        <div
+          className={`rail-btn ${activePanel === 'forum' ? 'act' : ''}`}
           onClick={() => setActivePanel('forum')}
           title="Forum"
           data-testid="rail-forum"
+          id="rb-forum"
         >
-          <FileText size={22} />
-        </button>
+          <div className="rail-btn-ic" style={{ fontSize: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <FileText size={22} />
+          </div>
+        </div>
         
-        <button
-          className={`rail-button ${activePanel === 'friends' ? 'active' : ''}`}
+        <div
+          className={`rail-btn ${activePanel === 'friends' ? 'act' : ''}`}
           onClick={() => setActivePanel('friends')}
           title="Arkadaşlar"
           data-testid="rail-friends"
+          id="rb-friends"
         >
-          <Users size={22} />
-        </button>
+          <div className="rail-btn-ic" style={{ fontSize: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Users size={22} />
+          </div>
+        </div>
         
-        <button
-          className={`rail-button ${activePanel === 'watch' ? 'active' : ''}`}
+        <div
+          className={`rail-btn ${activePanel === 'watch' ? 'act' : ''}`}
           onClick={() => setActivePanel('watch')}
           title="Canlı İzle"
           data-testid="rail-watch"
+          id="rb-watch"
         >
-          <Tv size={22} />
-        </button>
+          <div className="rail-btn-ic" style={{ fontSize: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Tv size={22} />
+          </div>
+        </div>
         
-        <button
-          className="rail-button"
+        <div
+          className="rail-btn"
           title="Robot Evi"
           data-testid="rail-robot"
+          id="rb-botHome"
         >
-          <RobotHouseIcon />
-        </button>
+          <div className="rail-btn-ic" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <RobotHouseIcon />
+          </div>
+        </div>
         
-        <div className="rail-separator" />
+        <div className="rail-sep" />
         
         {isAdmin() && (
-          <button
-            className={`rail-button admin-btn ${activePanel === 'admin' ? 'active' : ''}`}
+          <div
+            className={`rail-btn ${activePanel === 'admin' ? 'act' : ''}`}
             onClick={() => setActivePanel('admin')}
             title="Admin Paneli"
             data-testid="rail-admin"
+            id="rb-admin"
+            style={{ display: isAdmin() ? 'flex' : 'none' }}
           >
-            <Settings size={22} />
-          </button>
+            <div className="rail-btn-ic">
+              <Settings size={22} />
+            </div>
+          </div>
         )}
         
         <div className="rail-spacer" />
