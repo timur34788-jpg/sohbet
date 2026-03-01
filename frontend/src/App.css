@@ -3,28 +3,33 @@
    ═══════════════════════════════════════════════════════════ */
 
 :root {
-  /* Original Colors */
-  --bg: #0a0a0a;
-  --bg2: #101014;
-  --surface: #18181c;
-  --surface2: #1e1e24;
-  --border: #2a2a30;
-  --text: #9a9aa0;
-  --text-hi: #f0f0f5;
-  --muted: #5a5a60;
-  --accent: #4a8f40;
-  --accent-light: #6dbf67;
+  /* Original Theme Colors (from index.html) */
+  --purple-dark: #1c1f23;
+  --purple: #2c3038;
+  --purple-mid: #3a3f47;
+  --aubergine: #141618;
+  --bg: #141618;
+  --bg2: #1c1f23;
+  --surface: #252830;
+  --surface2: #2f3340;
+  --border: #3a3f47;
+  --text: #c9cdd4;
+  --text-hi: #ffffff;
+  --muted: #7a8090;
   --green: #2ecc71;
   --blue: #5b9bd5;
-  --purple: #6c63ff;
-  --purple-dark: #1a0a2e;
   --red: #e05555;
+  --yellow: #f0c040;
+  --own-bg: #2a4a7a;
+  --incoming-bg: #263045;
+  --accent: #5b9bd5;
+  --accent2: #2a4a7a;
+  --accent-light: #6dbf67;
   --orange: #f97316;
   --pink: #ec4899;
-  --yellow: #fbbf24;
   
   /* Layout */
-  --rail-width: 60px;
+  --rail-width: 68px;
   --sidebar-width: 260px;
   --header-height: 54px;
 }
