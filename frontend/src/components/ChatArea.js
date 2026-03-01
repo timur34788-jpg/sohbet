@@ -185,44 +185,28 @@ const ChatArea = ({ room, onViewProfile }) => {
                         style={{ color: isOwn ? 'var(--blue)' : userColor }}
                         onClick={() => onViewProfile(message.user)}
                       >
-                        {message.user}
-                        >
-                          {message.user}
-                        </span>
-                        <span className="message-time">{formatTime(message.ts)}</span>
-                        {message.edited && (
-                          <span className="message-edited">(düzenlendi)</span>
-                        )}
-                      </div>
-                    )}
-                    <div className="message-text">
-                      {message.text}
-                    </div>
-                  </div>
-                  {canEditDelete(message) && (
-                    <div className="message-actions">
-                      <button 
-                        className="msg-action-btn"
-                        onClick={() => handleMessageAction('edit', message)}
-                        title="Düzenle"
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button 
-                        className="msg-action-btn delete"
-                        onClick={() => handleMessageAction('delete', message)}
-                        title="Sil"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      </span>
+                      <span className="mb-ts">{formatTime(message.ts)}</span>
+                      {message.edited && (
+                        <span className="mb-ts"> (düzenlendi)</span>
+                      )}
                     </div>
                   )}
+                  <div className={isOwn ? 'ob' : 'mb-text'}>
+                    {message.text}
+                  </div>
                 </div>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+                {canEditDelete(message) && (
+                  <div className="mb-more-btn" style={{ display: 'none' }}>
+                    <MoreVertical size={14} />
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
         {/* Members Panel */}
         {showMembers && (
