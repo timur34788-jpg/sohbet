@@ -167,16 +167,9 @@ const MainApp = () => {
           </div>
         )}
         
-        <div className="rail-spacer" />
         
-        <div 
-          className="rail-user-avatar"
-          style={{ background: currentUser?.color || '#5b9bd5' }}
-          onClick={() => handleViewProfile(currentUser?.id)}
-          title="Profilim"
-        >
-          {currentUser?.username?.charAt(0).toUpperCase()}
-          <div className="online-indicator" />
+        <div id="deskRailUser">
+          <div className="sdot"></div>
         </div>
       </div>
 
@@ -189,26 +182,44 @@ const MainApp = () => {
       />
 
       {/* Main Content */}
-      <div className="main-content-area">
+      <div id="deskMain">
         {activePanel === 'home' && !currentRoom && (
-          <div className="empty-state" data-testid="empty-state">
-            <div className="empty-state-icon">
-              <LeafLogo />
+          <div id="deskEmptyState" data-testid="empty-state">
+            <div style={{ position: 'relative', marginBottom: '8px' }}>
+              <LeafLogo size={72} />
             </div>
-            <div className="empty-state-title">Nature.co'ya Hoş Geldin</div>
-            <div className="empty-state-subtitle">
+            <div className="big-title">Nature.co'ya Hoş Geldin</div>
+            <div className="big-sub">
               Soldaki listeden bir kanal, grup veya kişi seçerek sohbete başla
             </div>
-            <div className="empty-state-actions">
-              <button className="action-button primary">
+            <div style={{ marginTop: '16px', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{
+                background: 'rgba(74,143,64,.15)',
+                border: '1px solid rgba(74,143,64,.25)',
+                borderRadius: '10px',
+                padding: '8px 14px',
+                fontSize: '.78rem',
+                color: '#a5d6a7',
+                cursor: 'pointer',
+                transition: 'background .15s'
+              }}>
                 💬 Kanal Seç
-              </button>
-              <button 
-                className="action-button secondary"
+              </div>
+              <div 
+                style={{
+                  background: 'rgba(91,155,213,.12)',
+                  border: '1px solid rgba(91,155,213,.2)',
+                  borderRadius: '10px',
+                  padding: '8px 14px',
+                  fontSize: '.78rem',
+                  color: '#90caf9',
+                  cursor: 'pointer',
+                  transition: 'background .15s'
+                }}
                 onClick={() => setActivePanel('friends')}
               >
                 👥 Arkadaşlar
-              </button>
+              </div>
             </div>
           </div>
         )}
