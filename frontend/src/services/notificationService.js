@@ -1,35 +1,47 @@
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import { getFirebaseInstance } from '../config/firebase';
 
-const vapidKey = process.env.REACT_APP_VAPID_KEY;
+// VAPID keys for different servers
+const vapidKeys = {
+  layla: process.env.REACT_APP_VAPID_KEY_LAYLA,
+  biyom: process.env.REACT_APP_VAPID_KEY_BIYOM
+};
 
 let messaging = null;
 let currentToken = null;
+let currentServer = null;
+
+// Get VAPID key for current server
+const getVapidKey = (serverId) => {
+  return vapidKeys[serverId] || vapidKeys.layla; // fallback to layla
+};
 
 // Initialize Firebase Messaging
-export const initializeMessaging = () => {
+export const initializeMessaging = (serverId) => {
   try {
     if (!('serviceWorker' in navigator) || !('Notification' in window)) {
       console.warn('Push notifications not supported in this browser');
       return false;
     }
 
-    // Get current server from localStorage
-    const currentServer = localStorage.getItem('selectedServer');
-    if (!currentServer) {
+    // Get current server from localStorage if not provided
+    const server = serverId || localStorage.getItem('selectedServer');
+    if (!server) {
       console.warn('No server selected');
       return false;
     }
 
+    currentServer = server;
+
     // Get Firebase app instance
-    const { app } = getFirebaseInstance(currentServer);
+    const { app } = getFirebaseInstance(server);
     if (!app) {
       console.error('Firebase app not initialized');
       return false;
     }
 
     messaging = getMessaging(app);
-    console.log('Firebase Messaging initialized');
+    console.log('Firebase Messaging initialized for server:', server);
     return true;
   } catch (error) {
     console.error('Error initializing messaging:', error);
