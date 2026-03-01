@@ -863,6 +863,49 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+  
+  // ============================================
+  // FAZ 1: New Features
+  // ============================================
+  
+  // User Status
+  const updateUserStatus = async (status) => {
+    if (!currentUser || !currentServer) return;
+    const db = getDb();
+    await update(ref(db, `users/${currentUser.username}`), { status });
+    setUserStatus(status);
+  };
+  
+  // Typing Indicator
+  const setTyping = async (roomId, isTyping) => {
+    if (!currentUser || !currentServer) return;
+    const db = getDb();
+    const typingRef = ref(db, `typing/${roomId}/${currentUser.username}`);
+    
+    if (isTyping) {
+      await set(typingRef, { ts: Date.now() });
+      setTimeout(async () => {
+        await remove(typingRef);
+      }, 3000);
+    } else {
+      await remove(typingRef);
+    }
+  };
+  
+  // Message Reactions
+  const addReaction = async (roomId, messageId, emoji) => {
+    if (!currentUser || !currentServer) return;
+    const db = getDb();
+    const reactionRef = ref(db, `msgs/${roomId}/${messageId}/reactions/${currentUser.username}`);
+    await set(reactionRef, emoji);
+  };
+  
+  const removeReaction = async (roomId, messageId) => {
+    if (!currentUser || !currentServer) return;
+    const db = getDb();
+    const reactionRef = ref(db, `msgs/${roomId}/${messageId}/reactions/${currentUser.username}`);
+    await remove(reactionRef);
+  };
 
   const value = {
     // State
