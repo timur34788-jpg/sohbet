@@ -28,8 +28,8 @@ const MainApp = () => {
   };
 
   // Yaprak logo SVG
-  const LeafLogo = () => (
-    <svg viewBox="0 0 120 120" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+  const LeafLogo = ({ size = 32 }) => (
+    <svg viewBox="0 0 120 120" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <clipPath id="leafClip">
           <path d="M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z" />
