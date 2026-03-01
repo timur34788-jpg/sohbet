@@ -145,61 +145,66 @@ const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) =
       {/* List */}
       <div id="deskSideList">
         {/* NatureBot Section */}
-        <div className="sidebar-section">
-          <div className="section-header">
-            <ChevronDown size={10} />
-            <span className="section-title">NATUREBOT</span>
-          </div>
-          <div className="section-item">
-            <span className="item-icon">🤖</span>
-            <span className="item-name">NatureBot</span>
-            <span className="item-badge">AI</span>
-          </div>
+        <div className="dsk-sec-hdr">
+          <span className="chev">▼</span>
+          <span>NATUREBOT</span>
+        </div>
+        <div 
+          className="dsk-row"
+          style={{ cursor: 'pointer' }}
+        >
+          <div className="dsk-row-ic">🤖</div>
+          <div className="dsk-row-name">NatureBot</div>
+          <div className="ui-badge ui-badge-green">AI</div>
         </div>
 
         {/* Channels */}
         {channelRooms.length > 0 && (
-          <div className="sidebar-section">
+          <>
             <div 
-              className="section-header clickable"
+              className="dsk-sec-hdr"
               onClick={() => toggleSection('channels')}
+              style={{ cursor: 'pointer' }}
             >
-              <ChevronDown 
-                size={10} 
+              <span 
+                className="chev"
                 style={{ 
                   transform: expandedSections.channels ? 'rotate(0deg)' : 'rotate(-90deg)',
-                  transition: 'transform 0.2s'
+                  transition: 'transform 0.15s',
+                  display: 'inline-block'
                 }}
-              />
-              <span className="section-title">KANALLAR</span>
+              >
+                ▼
+              </span>
+              <span>KANALLAR</span>
               {isAdmin() && (
-                <button 
-                  className="section-add-button"
+                <div 
+                  className="sec-add-btn"
                   title="Kanal Ekle"
                   data-testid="add-channel-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // TODO: Add channel modal
+                  }}
                 >
-                  <Plus size={12} />
-                </button>
+                  +
+                </div>
               )}
             </div>
-            {expandedSections.channels && (
-              <div className="section-items">
-                {channelRooms.map(room => (
-                  <div
-                    key={room.id}
-                    className={`section-item ${currentRoom?.id === room.id ? 'active' : ''}`}
-                    onClick={() => onRoomSelect(room)}
-                    data-testid={`room-${room.id}`}
-                  >
-                    <span className="item-icon channel-icon">
-                      {room.private ? <Lock size={16} /> : '#'}
-                    </span>
-                    <span className="item-name">{room.name}</span>
-                  </div>
-                ))}
+            {expandedSections.channels && channelRooms.map(room => (
+              <div
+                key={room.id}
+                className={`dsk-row ${currentRoom?.id === room.id ? 'act' : ''}`}
+                onClick={() => onRoomSelect(room)}
+                data-testid={`room-${room.id}`}
+              >
+                <div className="dsk-row-ic">
+                  {room.private ? '🔒' : '#'}
+                </div>
+                <div className="dsk-row-name">{room.name}</div>
               </div>
-            )}
-          </div>
+            ))}
+          </>
         )}
 
         {/* Direct Messages */}
