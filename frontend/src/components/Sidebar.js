@@ -63,7 +63,7 @@ const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) =
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             <div 
               id="deskBellBtn"
-              title="Bildirimler"
+              title={notificationsEnabled ? "Bildirimler aktif" : "Bildirimleri etkinleştir"}
               style={{
                 width: '28px',
                 height: '28px',
@@ -73,10 +73,11 @@ const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) =
                 borderRadius: '8px',
                 cursor: 'pointer',
                 position: 'relative',
-                color: 'rgba(255,255,255,.7)',
+                color: notificationsEnabled ? 'var(--green)' : 'rgba(255,255,255,.7)',
                 transition: 'background .15s',
                 flexShrink: 0
               }}
+              onClick={handleEnableNotifications}
               data-testid="notifications-btn"
             >
               <Bell size={15} />
