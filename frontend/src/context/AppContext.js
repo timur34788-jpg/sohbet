@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { ref, onValue, set, push, update, remove, get, serverTimestamp, query, orderByChild, limitToLast } from 'firebase/database';
-import { getFirebaseInstance, SERVERS, getDefaultServer, setDefaultServer } from '../config/firebase';
+import { ref, onValue, set, push, update, remove, get, query, orderByChild, limitToLast } from 'firebase/database';
+import { getFirebaseInstance, SERVERS, getDefaultServer, setDefaultServer, signInToFirebase } from '../config/firebase';
 
 const AppContext = createContext();
 
@@ -16,6 +16,7 @@ export const AppProvider = ({ children }) => {
   const [currentServer, setCurrentServer] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [firebaseUser, setFirebaseUser] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [currentRoom, setCurrentRoom] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -32,29 +33,39 @@ export const AppProvider = ({ children }) => {
     return getFirebaseInstance(currentServer).db;
   }, [currentServer]);
 
-  // Initialize server
+  // Initialize server with Firebase Auth
   const initServer = useCallback(async (serverId) => {
+    if (!serverId) {
+      setCurrentServer(null);
+      setCurrentUser(null);
+      setFirebaseUser(null);
+      setServerSettings(null);
+      setRooms([]);
+      setMessages([]);
+      return;
+    }
+    
     try {
       setIsLoading(true);
+      
+      // Sign in to Firebase anonymously first
+      const fbUser = await signInToFirebase(serverId);
+      setFirebaseUser(fbUser);
+      
       const { db } = getFirebaseInstance(serverId);
       setCurrentServer(serverId);
       setDefaultServer(serverId);
       
       // Load server settings
-      const settingsRef = ref(db, 'serverSettings');
+      const settingsRef = ref(db, 'settings');
       const settingsSnap = await get(settingsRef);
       if (settingsSnap.exists()) {
         setServerSettings(settingsSnap.val());
       } else {
-        // Default settings
-        const defaultSettings = {
-          name: SERVERS[serverId].name,
-          registrationOpen: true,
-          requireInviteCode: true,
-          maintenanceMode: false
-        };
-        await set(settingsRef, defaultSettings);
-        setServerSettings(defaultSettings);
+        setServerSettings({
+          registration: 'open',
+          appName: SERVERS[serverId].name
+        });
       }
       
       // Check for saved user session
@@ -62,14 +73,17 @@ export const AppProvider = ({ children }) => {
       if (savedUser) {
         const userData = JSON.parse(savedUser);
         // Verify user still exists in database
-        const userRef = ref(db, `users/${userData.id}`);
+        const userRef = ref(db, `users/${userData.username}`);
         const userSnap = await get(userRef);
         if (userSnap.exists()) {
           const dbUser = userSnap.val();
           if (!dbUser.banned) {
-            setCurrentUser({ id: userData.id, ...dbUser });
+            setCurrentUser({ username: userData.username, ...dbUser });
             // Update online status
-            await update(userRef, { online: true, lastSeen: Date.now() });
+            await update(ref(db, `online/${userData.username}`), { 
+              ts: Date.now(), 
+              user: userData.username 
+            });
           } else {
             localStorage.removeItem(`user_${serverId}`);
           }
