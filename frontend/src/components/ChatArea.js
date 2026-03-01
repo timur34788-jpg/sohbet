@@ -247,32 +247,38 @@ const ChatArea = ({ room, onViewProfile }) => {
             <span>✏️ Düzenleniyor: {editingMessage.content.substring(0, 30)}...</span>
             <button onClick={() => { setEditingMessage(null); setMessageText(''); }}>
               İptal
-            </button>
-          </div>
-        )}
-        <form className="chat-input-form" onSubmit={handleSend}>
-          <button type="button" className="input-btn" title="Emoji">
-            <Smile size={20} />
+
+      {/* Input Area */}
+      <div id="deskInputArea">
+        <form id="deskInputBox" onSubmit={handleSend}>
+          <button type="button" className="dsk-inp-btn" title="Emoji">
+            <Smile size={18} />
           </button>
-          <button type="button" className="input-btn" title="Dosya">
-            <Paperclip size={20} />
+          <button type="button" className="dsk-inp-btn" title="Dosya">
+            <Paperclip size={18} />
           </button>
-          <input
+          <textarea
             ref={inputRef}
-            type="text"
+            id="deskInp"
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(e);
+              }
+            }}
             placeholder="Mesaj yaz..."
-            className="chat-input"
             data-testid="chat-input"
+            rows={1}
           />
           <button 
             type="submit" 
-            className="send-btn"
+            id="deskSendBtn"
             disabled={!messageText.trim()}
             data-testid="send-message-btn"
           >
-            <Send size={18} />
+            ➤
           </button>
         </form>
       </div>
@@ -280,25 +286,43 @@ const ChatArea = ({ room, onViewProfile }) => {
       {/* Context Menu */}
       {contextMenu && (
         <>
-          <div className="context-overlay" onClick={() => setContextMenu(null)} />
           <div 
-            className="context-menu"
-            style={{ left: contextMenu.x, top: contextMenu.y }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 998
+            }}
+            onClick={() => setContextMenu(null)} 
+          />
+          <div 
+            id="msgCtxMenu"
+            className="show"
+            style={{ 
+              position: 'fixed',
+              left: contextMenu.x, 
+              top: contextMenu.y,
+              background: 'var(--surface2)',
+              border: '1px solid var(--border)',
+              borderRadius: '8px',
+              padding: '4px',
+              zIndex: 999,
+              boxShadow: '0 8px 24px rgba(0,0,0,.4)'
+            }}
           >
-            <button onClick={() => handleMessageAction('copy', contextMenu.message)}>
+            <div className="ctx-item" onClick={() => handleMessageAction('copy', contextMenu.message)}>
               <Copy size={14} /> Kopyala
-            </button>
-            {contextMenu.message.senderId === currentUser?.id && (
-              <button onClick={() => handleMessageAction('edit', contextMenu.message)}>
+            </div>
+            {contextMenu.message.user === currentUser?.username && (
+              <div className="ctx-item" onClick={() => handleMessageAction('edit', contextMenu.message)}>
                 <Edit2 size={14} /> Düzenle
-              </button>
+              </div>
             )}
-            <button 
-              className="delete"
+            <div 
+              className="ctx-item danger"
               onClick={() => handleMessageAction('delete', contextMenu.message)}
             >
               <Trash2 size={14} /> Sil
-            </button>
+            </div>
           </div>
         </>
       )}
