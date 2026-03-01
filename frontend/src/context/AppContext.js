@@ -670,4 +670,17 @@ async function hashPassword(password) {
   return hashHex;
 }
 
+// Alternative hash method (base64)
+async function hashPasswordOld(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = new Uint8Array(hashBuffer);
+  let binary = '';
+  for (let i = 0; i < hashArray.length; i++) {
+    binary += String.fromCharCode(hashArray[i]);
+  }
+  return btoa(binary);
+}
+
 export default AppContext;
