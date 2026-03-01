@@ -6,6 +6,7 @@ import AdminPanel from './AdminPanel';
 import ForumPanel from './ForumPanel';
 import FriendsPanel from './FriendsPanel';
 import ProfileModal from './ProfileModal';
+import NatureBot from './NatureBot';
 import { Home, FileText, Users, Tv, Settings } from 'lucide-react';
 
 const MainApp = () => {
@@ -185,8 +186,8 @@ const MainApp = () => {
       <div id="deskMain">
         {activePanel === 'home' && !currentRoom && (
           <div id="deskEmptyState" data-testid="empty-state">
-            <div style={{ position: 'relative', marginBottom: '8px' }}>
-              <LeafLogo size={72} />
+            <div style={{ position: 'relative', marginBottom: '20px' }}>
+              <NatureBot size={160} animate={true} />
             </div>
             <div className="big-title">Nature.co'ya Hoş Geldin</div>
             <div className="big-sub">
