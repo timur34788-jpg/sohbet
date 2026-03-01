@@ -528,6 +528,129 @@ const AdminPanel = () => {
             </div>
           </div>
         )}
+
+        {/* Data Management Tab */}
+        {activeTab === 'data' && (
+          <div className="admin-data" data-testid="admin-data-section">
+            <div className="section-header">
+              <h3>Veri Yönetimi</h3>
+            </div>
+
+            {/* Statistics */}
+            <div className="data-stats">
+              <div className="stat-box">
+                <Users size={24} />
+                <div>
+                  <div className="stat-number">{stats.totalUsers || 0}</div>
+                  <div className="stat-label">Toplam Kullanıcı</div>
+                </div>
+              </div>
+              <div className="stat-box">
+                <Activity size={24} />
+                <div>
+                  <div className="stat-number">{stats.onlineUsers || 0}</div>
+                  <div className="stat-label">Çevrimiçi</div>
+                </div>
+              </div>
+              <div className="stat-box">
+                <Hash size={24} />
+                <div>
+                  <div className="stat-number">{stats.totalRooms || 0}</div>
+                  <div className="stat-label">Oda</div>
+                </div>
+              </div>
+              <div className="stat-box">
+                <MessageSquare size={24} />
+                <div>
+                  <div className="stat-number">{stats.totalMessages || 0}</div>
+                  <div className="stat-label">Mesaj</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Dangerous Actions */}
+            <div className="danger-zone">
+              <h4>🚨 Tehlikeli İşlemler</h4>
+              <p className="warning-text">Aşağıdaki işlemler geri alınamaz! Dikkatli olun.</p>
+              
+              <div className="danger-actions">
+                <button 
+                  className="danger-btn"
+                  onClick={handleDeleteAllMessages}
+                  disabled={loading}
+                >
+                  <Trash2 size={18} />
+                  TÜM MESAJLARI SİL
+                </button>
+                
+                <button 
+                  className="danger-btn"
+                  onClick={handleBackupData}
+                  disabled={loading}
+                >
+                  <Download size={18} />
+                  YEDEK OLUŞTUR
+                </button>
+              </div>
+            </div>
+
+            {/* Room-specific actions */}
+            <div className="room-actions">
+              <h4>Oda Mesaj Yönetimi</h4>
+              <div className="room-list">
+                {rooms.map(room => {
+                  const roomMsgCount = messages[room.id] ? Object.keys(messages[room.id]).length : 0;
+                  return (
+                    <div key={room.id} className="room-action-row">
+                      <div className="room-info">
+                        <span className="room-name">{room.name}</span>
+                        <span className="room-msg-count">{roomMsgCount} mesaj</span>
+                      </div>
+                      <button 
+                        className="mini-danger-btn"
+                        onClick={() => handleClearRoomMessages(room.id, room.name)}
+                        disabled={loading || roomMsgCount === 0}
+                      >
+                        <Trash2 size={14} />
+                        Temizle
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* User deletion */}
+            <div className="user-deletion">
+              <h4>Kullanıcı Silme</h4>
+              <p className="warning-text">Kullanıcı kalıcı olarak silinir!</p>
+              <div className="user-delete-list">
+                {Object.entries(users).map(([userId, user]) => (
+                  <div key={userId} className="user-delete-row">
+                    <div className="user-info-mini">
+                      <div 
+                        className="mini-avatar"
+                        style={{ background: user.color || '#5b9bd5' }}
+                      >
+                        {user.username?.charAt(0).toUpperCase()}
+                      </div>
+                      <span>{user.username}</span>
+                      {user.isAdmin && <span className="admin-badge-mini">Admin</span>}
+                    </div>
+                    <button 
+                      className="mini-danger-btn"
+                      onClick={() => handleDeleteUser(userId, user.username)}
+                      disabled={loading || user.isAdmin}
+                      title={user.isAdmin ? 'Admin silinemez' : 'Kullanıcıyı sil'}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
