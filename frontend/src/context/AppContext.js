@@ -270,9 +270,15 @@ export const AppProvider = ({ children }) => {
       throw new Error('Bu hesap yasaklanmış');
     }
     
-    // Password check - hash comparison
+    // Password check - try multiple hash methods
     const inputHash = await hashPassword(password);
-    if (userData.passwordHash !== inputHash) {
+    const inputHashOld = await hashPasswordOld(password);
+    
+    console.log('Stored hash:', userData.passwordHash);
+    console.log('Input hash (new):', inputHash);
+    console.log('Input hash (old):', inputHashOld);
+    
+    if (userData.passwordHash !== inputHash && userData.passwordHash !== inputHashOld) {
       throw new Error('Şifre yanlış');
     }
     
