@@ -5,7 +5,7 @@ import { Bell, Search, ChevronDown, Plus, Hash, Lock } from 'lucide-react';
 const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) => {
   const { 
     currentUser, rooms, currentRoom, servers, currentServer,
-    notifications, isAdmin 
+    notifications, isAdmin, enableNotifications, notificationsEnabled
   } = useApp();
 
   const serverInfo = servers[currentServer];
@@ -23,6 +23,15 @@ const Sidebar = ({ activePanel, setActivePanel, onRoomSelect, onViewProfile }) =
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  const handleEnableNotifications = async () => {
+    const success = await enableNotifications();
+    if (success) {
+      alert('🔔 Bildirimler etkinleştirildi! Artık yeni mesajlardan haberdar olacaksınız.');
+    } else {
+      alert('❌ Bildirimler etkinleştirilemedi. Lütfen tarayıcı ayarlarından bildirimlere izin verin.');
+    }
   };
 
   // Generate color for user initials
