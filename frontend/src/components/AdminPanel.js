@@ -143,11 +143,6 @@ const AdminPanel = () => {
     }
     setLoading(false);
   };
-    } catch (err) {
-      showFeedback('Hata: ' + err.message);
-    }
-    setLoading(false);
-  };
 
   // Data management handlers
   const handleDeleteAllMessages = async () => {
