@@ -81,6 +81,18 @@ export const getFCMToken = async () => {
       return null;
     }
 
+    if (!currentServer) {
+      console.error('No server selected');
+      return null;
+    }
+
+    const vapidKey = getVapidKey(currentServer);
+    if (!vapidKey || vapidKey === 'PENDING') {
+      console.error('VAPID key not configured for server:', currentServer);
+      alert(`⚠️ Bu sunucu için bildirimler henüz yapılandırılmamış.\nLütfen ${currentServer === 'biyom' ? 'Biyom' : 'Ekosistem Chat'} Firebase projesinde Cloud Messaging'i etkinleştirin.`);
+      return null;
+    }
+
     // Register service worker
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     console.log('Service Worker registered:', registration);
