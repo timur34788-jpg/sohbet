@@ -3177,8 +3177,9 @@ let FB_CONFIG = null;
 /* ══════════════════════════════════════
    ADMİN KULLANICI ADI
    Şifre/hash kaynak kodda SAKLANMIYOR.
-   Doğrulama tamamen Cloud Function (setAdminClaim) üzerinden yapılır.
-   Kullanıcı adı hassas değil — sadece UI yönlendirmesi için burada.
+   Doğrulama: Firebase Realtime DB (REST) — users/{admin}.passwordHash
+   Admin yetkisi: users/{admin}.isAdmin === true  VEYA  admins/{admin} kaydı
+   Cloud Function (setAdminClaim) bağımlılığı kaldırılmıştır.
    ══════════════════════════════════════ */
 const ADMIN_USERNAME = 'admin';
 
@@ -3361,9 +3362,8 @@ async function fbInit(){
       await _auth.signInAnonymously();
     }catch(e){
       if(e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed'){
-        console.warn('⚠️ Layla (layla-70d21) Firebase projesinde Anonymous Auth aktif değil.',
-          'Firebase Console → layla-70d21 → Authentication → Sign-in method → Anonymous → Enable yapın.',
-          'DB REST bağlantısı token\'sız çalışmaya devam ediyor.');
+        console.warn('⚠️ Bu Firebase projesinde Anonymous Authentication aktif değil.',
+          'Firebase Console → Authentication → Sign-in method → Anonymous → Enable yapın.');
         // Auth olmadan devam et; DB bağlantısı var, REST token'sız çalışacak
       } else {
         console.warn('Anonim giriş başarısız:', e);
@@ -3751,65 +3751,73 @@ async function submitLogin(){
 
   const ph=await hashStr(pass+user);
   try{
-    // Admin girişi — doğrulama tamamen Cloud Function üzerinden yapılır
-    // ADMIN_USERNAME sadece UI yönlendirmesi için client'ta tutulur (hassas değil)
-    // Şifre hash'i artık kaynak kodda YOK — Cloud Function DB'deki hash ile karşılaştırır
+    // ── Admin girişi — Cloud Function bağımlılığı kaldırıldı ──
+    // Tüm doğrulama doğrudan Firebase Realtime DB (REST) üzerinden yapılır.
+    // Admin tespiti: users/{user}.isAdmin === true  VEYA  admins/{user} kaydı mevcut
     if(ADMIN_USERNAME && user===ADMIN_USERNAME){
       try{
-        // Anonim oturum yoksa aç — Cloud Function request.auth zorunlu kılıyor
-        if(!_auth || !_auth.currentUser){ await _auth.signInAnonymously(); }
-        const setAdminClaim = _functions.httpsCallable('setAdminClaim');
-        const result = await setAdminClaim({ username: user, hash: ph });
-        if(result.data && result.data.customToken){
-          await _auth.signInWithCustomToken(result.data.customToken);
-          if(_auth.currentUser){ await _auth.currentUser.getIdToken(true); }
-          recordLoginAttempt(user, true);
-          _passwordHash=ph; _cu=user; _isAdmin=true;
-          onLoginSuccess();
-        } else {
-          showLoginErr('Giriş başarısız. Tekrar deneyin.');
-          resetBtn();
-        }
-      }catch(cfErr){
-        // Cloud Function CORS/network hatası → DB fallback ile doğrula
-        const isNetworkErr = !cfErr.code || cfErr.code==='functions/internal' || cfErr.message==='internal' ||
-          (cfErr.message && (cfErr.message.includes('CORS') || cfErr.message.includes('network') || cfErr.message.includes('fetch') || cfErr.message.includes('Failed')));
-        if(isNetworkErr){
-          // Cloud Function erişilemiyor, DB üzerinden admin doğrula
-          try{
-            const adminData = await fbRestGet('users/'+user).catch(()=>null);
-            if(!adminData){ showLoginErr('Admin hesabı bulunamadı.'); resetBtn(); return; }
-            const storedHash = adminData.passwordHash;
-            const phLegacy2 = hashStrSync(pass+user);
-            const matched2 = (storedHash===ph) || (storedHash===phLegacy2);
-            if(!matched2){
-              const rem2 = recordLoginAttempt(user, false);
-              const lock2 = checkLoginLock(user);
-              if(!lock2.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock2.mins + ' dakika kilitli.');
-              else showLoginErr('Şifre yanlış.' + (rem2.remaining!==undefined ? ' '+rem2.remaining+' hakkınız kaldı.' : ''));
-              resetBtn(); return;
-            }
-            // DB doğrulama başarılı — Cloud Function olmadan admin girişi
-            recordLoginAttempt(user, true);
-            _passwordHash=ph; _cu=user; _isAdmin=true;
-            onLoginSuccess();
-            return;
-          }catch(dbErr){
-            showLoginErr('Bağlantı hatası: Sunucuya ulaşılamıyor. İnternet bağlantınızı kontrol edin.');
+        // DB bağlantısı yoksa yenile
+        if(!_db){ const ok = await fbInit().catch(()=>false); if(!ok || !_db){ showLoginErr('Sunucuya bağlanılamadı.'); resetBtn(); return; } }
+
+        // 1) users/ kaydından hash doğrula (SHA-256 + legacy fallback)
+        const adminData = await fbRestGet('users/'+user).catch(()=>null);
+        const phLegacy  = hashStrSync(pass+user);
+
+        if(!adminData){
+          // users/ kaydı yok — admins/ path'inde doğrudan kontrol et
+          const admEntry = await fbRestGet('admins/'+user).catch(()=>null);
+          if(!admEntry){
+            showLoginErr('Admin hesabı bulunamadı. Firebase DB\'ye users/admin kaydı ekleyin.');
             resetBtn(); return;
           }
+          // admins/ kaydı varsa hash doğrulaması yapılamaz — şifre yanlış uyarısı
+          showLoginErr('Admin hesabı users/ tablosunda bulunamadı. DB yapısını kontrol edin.');
+          resetBtn(); return;
         }
-        recordLoginAttempt(user, false);
-        const lock = checkLoginLock(user);
-        const lockMsg = !lock.allowed ? ' Hesap ' + lock.mins + ' dakika kilitlendi.' : (lock.remaining ? ' ' + lock.remaining + ' hakkınız kaldı.' : '');
-        if(cfErr.code === 'functions/unauthenticated')      showLoginErr('Şifre hatalı.' + lockMsg);
-        else if(cfErr.code === 'functions/not-found')       showLoginErr('Admin hesabı bulunamadı. DB\'yi kontrol edin.');
-        else if(cfErr.code === 'functions/permission-denied') showLoginErr('Erişim reddedildi.' + lockMsg);
-        else if(cfErr.code === 'functions/unavailable')     showLoginErr('Sunucu şu an erişilemiyor. Tekrar deneyin.');
-        else showLoginErr('Bağlantı hatası: ' + (cfErr.message||cfErr.code||'Bilinmeyen hata'));
-        resetBtn();
+
+        const storedHash = adminData.passwordHash || '';
+        const matched    = (storedHash === ph) || (storedHash === phLegacy);
+
+        if(!matched){
+          const rem  = recordLoginAttempt(user, false);
+          const lock = checkLoginLock(user);
+          if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika kilitli.');
+          else showLoginErr('Şifre yanlış.' + (rem.remaining !== undefined ? ' ' + rem.remaining + ' hakkınız kaldı.' : ''));
+          resetBtn(); return;
+        }
+
+        if(adminData.banned){ showLoginErr('Bu hesap yasaklandı.'); resetBtn(); return; }
+
+        // Legacy hash → SHA-256'ya yükselt
+        if(storedHash === phLegacy && storedHash !== ph){
+          await fbRestSet('users/'+user+'/passwordHash', ph).catch(()=>{});
+        }
+
+        // 2) Admin yetkisini doğrula: users.isAdmin VEYA admins/ path'i
+        const isAdminUser = adminData.isAdmin === true;
+        const adminsEntry = await fbRestGet('admins/'+user).catch(()=>null);
+        if(!isAdminUser && !adminsEntry){
+          // Kayıt var ama admin değil — normal kullanıcı olarak giriş yap
+          recordLoginAttempt(user, true);
+          _passwordHash=ph; _cu=user; _isAdmin=false;
+          onLoginSuccess();
+          return;
+        }
+
+        // ✅ Admin doğrulandı
+        recordLoginAttempt(user, true);
+        _passwordHash=ph; _cu=user; _isAdmin=true;
+        onLoginSuccess();
+        return;
+      }catch(dbErr){
+        const msg = dbErr.message || String(dbErr);
+        if(msg.includes('permission_denied') || msg.includes('401') || msg.includes('403')){
+          showLoginErr('DB erişimi reddedildi. Firebase Rules veya Anonymous Auth ayarını kontrol edin.');
+        } else {
+          showLoginErr('Bağlantı hatası: ' + msg);
+        }
+        resetBtn(); return;
       }
-      return;
     }
     // Normal kullanıcı — users/ tablosundan doğrula
     const phLegacy = hashStrSync(pass+user);
@@ -3910,22 +3918,16 @@ async function submitRegister(){
   _regPending = {user,email,pass:ph,origin,code,exp:Date.now()+30*60*1000};
 
   // ── EmailJS Graceful Degradation ──
-  // EmailJS anahtarları tanımlı değilse e-posta doğrulamasını atla,
-  // kullanıcıyı doğrudan kaydet (özellik devre dışı — graceful degradation).
   const _ejsConfigured = window._EJS && window._EJS.pub && window._EJS.svc && window._EJS.tpl;
   if(!_ejsConfigured){
+    // EmailJS yapılandırılmamış — e-posta doğrulamasız doğrudan kaydet
     regBtn.textContent='Hesap oluşturuluyor...';
     try{
       const ex2 = await fbRestGet('users/'+user).catch(()=>null);
       if(ex2){ showLoginErr('Bu kullanıcı adı alınmış.'); rstReg(); return; }
       await fbRestSet('users/'+user,{
-        username:user,
-        email:email,
-        createdAt:Date.now(),
-        isAdmin:false,
-        banned:false,
-        passwordHash:ph,
-        origin:origin
+        username:user, email:email, createdAt:Date.now(),
+        isAdmin:false, banned:false, passwordHash:ph, origin:origin
       });
       _passwordHash=ph; _cu=user; _isAdmin=false;
       _regPending=null;
@@ -3946,9 +3948,7 @@ async function submitRegister(){
     localStorage.setItem(ejsKey, JSON.stringify(ejsLog));
 
     await emailjs.send(window._EJS.svc, window._EJS.tpl, {
-      to_name: user,
-      email: email,
-      passcode: code
+      to_name: user, email: email, passcode: code
     });
     document.getElementById('regVerifyStep').style.display='block';
     regBtn.style.display='none';
@@ -3992,10 +3992,7 @@ async function verifyRegCode(){
 async function resendRegCode(){
   if(!_regPending){return;}
   const _ejsOk = window._EJS && window._EJS.pub && window._EJS.svc && window._EJS.tpl;
-  if(!_ejsOk){
-    showLoginErr('⚠️ E-posta özelliği şu an devre dışı.');
-    return;
-  }
+  if(!_ejsOk){ showLoginErr('⚠️ E-posta özelliği şu an devre dışı.'); return; }
   const newCode=String(Math.floor(100000+Math.random()*900000));
   _regPending.code=newCode;
   _regPending.exp=Date.now()+30*60*1000;
@@ -9775,15 +9772,15 @@ document.addEventListener('DOMContentLoaded',()=>{
         }catch(e){ console.warn('Otomatik giriş başarısız:',e); }
         localStorage.removeItem('sohbet_last_server');
         removeLoader();
-        // Başarısız otomatik girişte sunucu seçimine değil, Layla login ekranına dön
+        // Başarısız otomatik girişte Layla login ekranına dön
         _activeServer = 'chat';
         FB_CONFIG     = FB_SERVERS['chat'].config;
         _FB_REST      = FB_SERVERS['chat'].config.databaseURL;
         await fbInit().catch(()=>{});
-        const ss=document.getElementById('serverSelectScreen');
-        const ls=document.getElementById('loginScreen');
-        if(ss) ss.classList.remove('active');
-        if(ls) ls.classList.add('active');
+        const ss_fl = document.getElementById('serverSelectScreen');
+        const ls_fl = document.getElementById('loginScreen');
+        if(ss_fl) ss_fl.classList.remove('active');
+        if(ls_fl) ls_fl.classList.add('active');
         if(typeof startTurkQuoteTimer === 'function') startTurkQuoteTimer();
       });
       return;
@@ -9805,7 +9802,6 @@ document.addEventListener('DOMContentLoaded',()=>{
       }catch(e){
         console.warn('Layla bağlantı hatası:', e);
       }
-      // Giriş ekranını göster
       const ls = document.getElementById('loginScreen');
       const ss = document.getElementById('serverSelectScreen');
       if(ss) ss.classList.remove('active');
