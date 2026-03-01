@@ -35,6 +35,8 @@ export const AppProvider = ({ children }) => {
   const [forumPosts, setForumPosts] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [initialized, setInitialized] = useState(false);
+  const [fcmToken, setFcmToken] = useState(null);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   // Get Firebase instance for current server
   const getDb = useCallback(() => {
