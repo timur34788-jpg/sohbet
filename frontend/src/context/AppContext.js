@@ -847,6 +847,23 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // Theme & Layout
+  const changeTheme = (newTheme) => {
+    setTheme(newTheme);
+    localStorage.setItem('app-theme', newTheme);
+    document.documentElement.setAttribute('data-theme', newTheme);
+  };
+
+  const changeLayout = (newLayout) => {
+    setLayout(newLayout);
+    localStorage.setItem('app-layout', newLayout);
+  };
+
+  // Apply theme on mount
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
   const value = {
     // State
     currentServer,
