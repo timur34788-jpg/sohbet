@@ -11,7 +11,8 @@ const AdminPanel = () => {
     users, rooms, serverSettings, isAdmin,
     banUser, unbanUser, setUserRole, createInviteCode,
     updateServerSettings, createRoom, deleteRoom, updateRoom,
-    forumPosts, messages, currentServer
+    forumPosts, messages, currentServer,
+    deleteAllMessages, clearRoomMessages, deleteUser, getStatistics, backupData
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('users');
