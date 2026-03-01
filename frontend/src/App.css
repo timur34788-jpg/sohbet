@@ -477,7 +477,8 @@ body {
    Main App Layout (Original Desktop Style)
    ═══════════════════════════════════════════════════════════ */
 
-.desktop-shell {
+/* Desktop Shell - Main Container */
+#desktopShell {
   display: flex;
   height: 100vh;
   width: 100vw;
@@ -485,8 +486,8 @@ body {
   overflow: hidden;
 }
 
-/* Icon Rail (Original Style) */
-.icon-rail {
+/* Icon Rail (Left Navigation) */
+#deskRail {
   width: var(--rail-width);
   height: 100vh;
   background: rgba(16, 16, 20, 0.8);
@@ -510,14 +511,14 @@ body {
   transform: scale(1.1);
 }
 
-.rail-separator {
+.rail-sep {
   width: 32px;
   height: 1px;
   background: var(--border);
   margin: 8px 0;
 }
 
-.rail-button {
+.rail-btn {
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -533,18 +534,18 @@ body {
   position: relative;
 }
 
-.rail-button:hover {
+.rail-btn:hover {
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-hi);
   transform: translateX(2px);
 }
 
-.rail-button.active {
+.rail-btn.act {
   background: var(--surface2);
   color: var(--accent-light);
 }
 
-.rail-button.active::before {
+.rail-btn.act::before {
   content: '';
   position: absolute;
   left: -12px;
@@ -554,44 +555,24 @@ body {
   border-radius: 0 4px 4px 0;
 }
 
-.rail-button.admin-btn {
-  color: var(--yellow);
-}
-
-.rail-spacer {
-  flex: 1;
-}
-
-.rail-user-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+.rail-btn-ic {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
-  font-weight: 900;
-  color: #fff;
-  cursor: pointer;
-  position: relative;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  transition: all 0.2s;
 }
 
-.rail-user-avatar:hover {
-  border-color: var(--accent);
-  transform: scale(1.05);
+#deskRailUser {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: 8px;
 }
 
-.online-indicator {
-  position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
+.sdot {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--green);
-  border: 2px solid var(--bg2);
   box-shadow: 0 0 8px var(--green);
 }
 
