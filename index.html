@@ -4,11 +4,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 <script>
   (function(){
-    var EMAILJS_PUBLIC_KEY  = 'k0VJPzZLwcdsOL7zc';
-    var EMAILJS_SERVICE_ID  = 'service_pwyfg6j';
-    var EMAILJS_TEMPLATE_ID = 'template_jvivfgc';
+    var EMAILJS_PUBLIC_KEY  = '';
+    var EMAILJS_SERVICE_ID  = '';
+    var EMAILJS_TEMPLATE_ID = '';
     window._EJS = { pub: EMAILJS_PUBLIC_KEY, svc: EMAILJS_SERVICE_ID, tpl: EMAILJS_TEMPLATE_ID };
-    emailjs.init(EMAILJS_PUBLIC_KEY);
+    if (EMAILJS_PUBLIC_KEY) emailjs.init(EMAILJS_PUBLIC_KEY);
   })();
 </script>
 <meta charset="UTF-8">
@@ -3153,10 +3153,10 @@ const FB_SERVERS = {
     }
   },
   chat: {
-    label: 'Ekosistem Chat',
-    icon: '🌐',
+    label: 'Layla',
+    icon: '🌿',
     color: '#2ecc71',
-    description: 'Özel chat kanalı',
+    description: 'Layla Ekosistem Chat Sunucusu',
     config: {
       apiKey:"AIzaSyCXVbDjj8pKxhKUCOEP_kSL_2ll4JsNwak",
       authDomain:"layla-70d21.firebaseapp.com",
@@ -3164,7 +3164,8 @@ const FB_SERVERS = {
       projectId:"layla-70d21",
       storageBucket:"layla-70d21.firebasestorage.app",
       messagingSenderId:"1057180434994",
-      appId:"1:1057180434994:web:e797773af5e03f1f9ff22b"
+      appId:"1:1057180434994:web:e797773af5e03f1f9ff22b",
+      measurementId:"G-PVX40L6D9J"
     }
   }
 };
@@ -3360,8 +3361,9 @@ async function fbInit(){
       await _auth.signInAnonymously();
     }catch(e){
       if(e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed'){
-        console.warn('⚠️ Bu Firebase projesinde Anonymous Authentication aktif değil.',
-          'Firebase Console → Authentication → Sign-in method → Anonymous → Enable yapın.');
+        console.warn('⚠️ Layla (layla-70d21) Firebase projesinde Anonymous Auth aktif değil.',
+          'Firebase Console → layla-70d21 → Authentication → Sign-in method → Anonymous → Enable yapın.',
+          'DB REST bağlantısı token\'sız çalışmaya devam ediyor.');
         // Auth olmadan devam et; DB bağlantısı var, REST token'sız çalışacak
       } else {
         console.warn('Anonim giriş başarısız:', e);
@@ -3907,6 +3909,34 @@ async function submitRegister(){
   const ph = await hashStr(pass+user);
   _regPending = {user,email,pass:ph,origin,code,exp:Date.now()+30*60*1000};
 
+  // ── EmailJS Graceful Degradation ──
+  // EmailJS anahtarları tanımlı değilse e-posta doğrulamasını atla,
+  // kullanıcıyı doğrudan kaydet (özellik devre dışı — graceful degradation).
+  const _ejsConfigured = window._EJS && window._EJS.pub && window._EJS.svc && window._EJS.tpl;
+  if(!_ejsConfigured){
+    regBtn.textContent='Hesap oluşturuluyor...';
+    try{
+      const ex2 = await fbRestGet('users/'+user).catch(()=>null);
+      if(ex2){ showLoginErr('Bu kullanıcı adı alınmış.'); rstReg(); return; }
+      await fbRestSet('users/'+user,{
+        username:user,
+        email:email,
+        createdAt:Date.now(),
+        isAdmin:false,
+        banned:false,
+        passwordHash:ph,
+        origin:origin
+      });
+      _passwordHash=ph; _cu=user; _isAdmin=false;
+      _regPending=null;
+      onLoginSuccess();
+    }catch(e){
+      showLoginErr('Kayıt hatası. İnternet bağlantını kontrol et.');
+      rstReg();
+    }
+    return;
+  }
+
   try{
     // EmailJS kota koruması: aynı email'e 5 dakikada max 3 kod
     const ejsKey = 'ejs_'+email;
@@ -3925,7 +3955,7 @@ async function submitRegister(){
     showLoginErr('');
     document.getElementById('regVerifyCode').focus();
   }catch(e){
-    showLoginErr('Mail gönderilemedi: '+e.text);
+    showLoginErr('Mail gönderilemedi: '+(e.text||e.message||'Bilinmeyen hata'));
     rstReg();
   }
 }
@@ -3961,6 +3991,11 @@ async function verifyRegCode(){
 
 async function resendRegCode(){
   if(!_regPending){return;}
+  const _ejsOk = window._EJS && window._EJS.pub && window._EJS.svc && window._EJS.tpl;
+  if(!_ejsOk){
+    showLoginErr('⚠️ E-posta özelliği şu an devre dışı.');
+    return;
+  }
   const newCode=String(Math.floor(100000+Math.random()*900000));
   _regPending.code=newCode;
   _regPending.exp=Date.now()+30*60*1000;
@@ -3971,7 +4006,7 @@ async function resendRegCode(){
       passcode:newCode
     });
     showLoginErr('Yeni kod gönderildi! ✅');
-  }catch(e){showLoginErr('Mail gönderilemedi: '+e.text);}
+  }catch(e){showLoginErr('Mail gönderilemedi: '+(e.text||e.message||'Bilinmeyen hata'));}
 }
 
 function _resetRegForm(){
@@ -5536,7 +5571,7 @@ function switchPickerTab(tab, isDesk){
 }
 
 // GIF API key — developers.giphy.com adresinden ücretsiz alınabilir
-const GIPHY_KEY = '1Yem50xXVbKpLQCCDioZiLIbfd7srdvy';
+const GIPHY_KEY = '';
 let _gifDebTimer = null;
 let _gifApiReady = true;
 
@@ -9740,15 +9775,47 @@ document.addEventListener('DOMContentLoaded',()=>{
         }catch(e){ console.warn('Otomatik giriş başarısız:',e); }
         localStorage.removeItem('sohbet_last_server');
         removeLoader();
+        // Başarısız otomatik girişte sunucu seçimine değil, Layla login ekranına dön
+        _activeServer = 'chat';
+        FB_CONFIG     = FB_SERVERS['chat'].config;
+        _FB_REST      = FB_SERVERS['chat'].config.databaseURL;
+        await fbInit().catch(()=>{});
         const ss=document.getElementById('serverSelectScreen');
-        if(ss) ss.classList.add('active');
-        renderServerSelect();
+        const ls=document.getElementById('loginScreen');
+        if(ss) ss.classList.remove('active');
+        if(ls) ls.classList.add('active');
+        if(typeof startTurkQuoteTimer === 'function') startTurkQuoteTimer();
       });
       return;
     }
   }
 
-  // Emergency fallback
+  // ── Varsayılan Sunucu: Layla (chat) ──
+  // Kayıtlı oturum yoksa sunucu seçim ekranını atla, doğrudan Layla'ya bağlan.
+  const _DEFAULT_SERVER = 'chat';
+  if(typeof FB_SERVERS !== 'undefined' && FB_SERVERS[_DEFAULT_SERVER]){
+    _activeServer = _DEFAULT_SERVER;
+    FB_CONFIG     = FB_SERVERS[_DEFAULT_SERVER].config;
+    _FB_REST      = FB_SERVERS[_DEFAULT_SERVER].config.databaseURL;
+
+    waitForFirebase(async ()=>{
+      try{
+        const ok = await fbInit();
+        if(!ok) throw new Error('fbInit başarısız');
+      }catch(e){
+        console.warn('Layla bağlantı hatası:', e);
+      }
+      // Giriş ekranını göster
+      const ls = document.getElementById('loginScreen');
+      const ss = document.getElementById('serverSelectScreen');
+      if(ss) ss.classList.remove('active');
+      if(ls) ls.classList.add('active');
+      if(typeof startTurkQuoteTimer === 'function') startTurkQuoteTimer();
+    });
+    return;
+  }
+
+  // Fallback: sunucu bulunamazsa seçim ekranı
   setTimeout(()=>{
     const anyActive=document.querySelector('.screen.active');
     if(!anyActive){
@@ -9758,7 +9825,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   },2000);
 
   waitForFirebase(()=>{});
-
   renderServerSelect();
 
   setTimeout(()=>{
@@ -16684,7 +16750,7 @@ async function runAiAssist() {
   if (!prompt) { showToast('Önce ne söylemek istediğini yaz!'); return; }
 
   // Gömülü API key (önce gömülü, sonra Firebase, sonra localStorage)
-  let apiKey = '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';
+  let apiKey = '';
   if (!apiKey) {
     try {
       const snap = await dbRef('settings/openrouterKey').once('value');
