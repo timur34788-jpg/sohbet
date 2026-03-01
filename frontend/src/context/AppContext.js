@@ -15,7 +15,7 @@ export const useApp = () => {
 export const AppProvider = ({ children }) => {
   const [currentServer, setCurrentServer] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [firebaseUser, setFirebaseUser] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [currentRoom, setCurrentRoom] = useState(null);
@@ -26,12 +26,30 @@ export const AppProvider = ({ children }) => {
   const [friendRequests, setFriendRequests] = useState([]);
   const [forumPosts, setForumPosts] = useState([]);
   const [notifications, setNotifications] = useState([]);
+  const [initialized, setInitialized] = useState(false);
 
   // Get Firebase instance for current server
   const getDb = useCallback(() => {
     if (!currentServer) return null;
     return getFirebaseInstance(currentServer).db;
   }, [currentServer]);
+
+  // Auto-initialize from saved server on mount
+  useEffect(() => {
+    const initFromStorage = async () => {
+      const savedServer = localStorage.getItem('selectedServer');
+      if (savedServer && SERVERS[savedServer]) {
+        await initServer(savedServer);
+      } else {
+        setIsLoading(false);
+      }
+      setInitialized(true);
+    };
+    
+    if (!initialized) {
+      initFromStorage();
+    }
+  }, [initialized]);
 
   // Initialize server with Firebase Auth
   const initServer = useCallback(async (serverId) => {
