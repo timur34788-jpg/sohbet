@@ -73,6 +73,7 @@ const Login = ({ onBack }) => {
     try {
       await login(loginUsername, loginPassword);
     } catch (err) {
+      console.error('Login error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
