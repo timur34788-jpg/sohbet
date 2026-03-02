@@ -667,15 +667,14 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   animation: popupFadeIn .15s ease;
 }
 @keyframes popupFadeIn { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:scale(1); } }
-/* popup sadece masaüstünde göster — mobilde hover olmaz ama touch tetiklenebilir, önce CSS ile kapat */
+/* popup sadece gerçek mouse olan masaüstünde göster */
 @media (hover: hover) and (pointer: fine) {
   .r-row:hover .room-preview-popup,
   .dsk-row:hover .room-preview-popup { display: block; }
 }
-/* Mobilde (touch cihaz) asla gösterme */
-@media (hover: none), (pointer: coarse) {
-  .r-row:hover .room-preview-popup,
-  .dsk-row:hover .room-preview-popup { display: none !important; }
+/* touch/mobil — kesinlikle gizle */
+@media (pointer: coarse), (hover: none) {
+  .room-preview-popup { display: none !important; visibility: hidden !important; }
 }
 .rpp-name { font-size:.78rem; font-weight:700; color:var(--text); margin-bottom:4px; }
 .rpp-msg  { font-size:.72rem; color:var(--muted); line-height:1.4; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
