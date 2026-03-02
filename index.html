@@ -3637,6 +3637,7 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
     <div class="atab" onclick="adminTab('security')"><span class="atab-icon" style="font-size:0;display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span>Güvenlik</div>
     <div class="atab" onclick="adminTab('ipbans')"><span class="atab-icon" style="font-size:0;display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg></span>IP Banlar</div>
     <div class="atab" onclick="adminTab('settings')"><span class="atab-icon" style="font-size:0;display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg></span>Ayarlar</div>
+    <div class="atab" onclick="adminTab('design')"><span class="atab-icon" style="font-size:0;display:inline-flex;align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="17.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M13.5 9v4.5M11 8l-4.5 8M16 8l4.5 8"/></svg></span>Tasarım</div>
     <div class="atab" onclick="adminTab('naturebot')"><span class="atab-icon">🤖</span>NatureBot</div>
     <div class="atab" onclick="adminTab('create_user')"><span class="atab-icon">➕</span>Üye Oluştur</div>
     <div class="atab" onclick="adminTab('invite')"><span class="atab-icon">🔗</span>Davet Link</div>
@@ -7130,7 +7131,7 @@ function adminTab(tab){
   if(IS_DESKTOP()){ deskAdminTab(tab); return; }
   _adminTab=tab;
   document.querySelectorAll('.atab').forEach((el,i)=>{
-    el.classList.toggle('act',['users','rooms','msgs','forum','announce','games','health','security','ipbans','settings','naturebot'][i]===tab);
+    el.classList.toggle('act',['users','rooms','msgs','forum','announce','games','health','security','ipbans','settings','naturebot','design'][i]===tab);
   });
   // Online sayısını güncelle
   const badge = document.getElementById('adminOnlineBadge');
@@ -7149,6 +7150,7 @@ function adminTab(tab){
   else if(tab==='security') loadAdminSecurity();
   else if(tab==='ipbans') loadAdminIPBans();
   else if(tab==='settings') loadAdminSettings();
+  else if(tab==='design') loadAdminDesign();
 }
 
 /* ── Admin: Users ── */
@@ -7755,6 +7757,443 @@ async function adminDeleteForumPost(key){
     showToast('Silindi.');loadAdminForum();
   }catch(e){showToast('Hata.');}
 }
+
+
+/* ── Admin: Design ── */
+async function loadAdminDesign(){
+  const body = document.getElementById('adminBody');
+  body.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
+  const d = await adminRestGet('settings/design').catch(()=>null)||{};
+
+  // ── Renk Tanımları ──
+  const colors = [
+    { key:'bg',         label:'Ana Arka Plan',       def:'#1a1e25' },
+    { key:'bg2',        label:'İkincil Arka Plan',   def:'#22262d' },
+    { key:'surface',    label:'Yüzey (Kartlar)',     def:'#2a303c' },
+    { key:'surface2',   label:'Yüzey 2',             def:'#333c4a' },
+    { key:'border',     label:'Kenarlık',            def:'#434c5e' },
+    { key:'text',       label:'Normal Yazı',         def:'#dde2ea' },
+    { key:'textHi',     label:'Başlık Yazı',         def:'#ffffff' },
+    { key:'muted',      label:'Soluk Yazı',          def:'#8f9ab0' },
+    { key:'accent',     label:'Vurgu Rengi',         def:'#4a9e7a' },
+    { key:'green',      label:'Yeşil (Online)',      def:'#2ecc71' },
+    { key:'red',        label:'Kırmızı (Hata)',      def:'#e05555' },
+    { key:'ownBg',      label:'Kendi Mesaj Balonu',  def:'#1f4a3a' },
+    { key:'incomingBg', label:'Gelen Mesaj Balonu',  def:'#1e2e35' },
+  ];
+
+  const fonts = [
+    { value:'DM Sans,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', label:'DM Sans (Varsayılan)' },
+    { value:'"Inter",sans-serif',       label:'Inter' },
+    { value:'"Roboto",sans-serif',      label:'Roboto' },
+    { value:'"Nunito",sans-serif',      label:'Nunito' },
+    { value:'"Poppins",sans-serif',     label:'Poppins' },
+    { value:'"Montserrat",sans-serif',  label:'Montserrat' },
+    { value:'monospace',                label:'Monospace' },
+  ];
+
+  const curFont    = d.fontFamily || fonts[0].value;
+  const curSize    = d.fontSize   || '15px';
+  const curRadius  = d.borderRadius !== undefined ? d.borderRadius : 12;
+
+  // Tab order & visibility
+  const defaultTabs = [
+    { id:'home',    label:'Ana Sayfa',  emoji:'🏠', action:"switchMainTab('home')" },
+    { id:'msgs',    label:'Mesajlar',   emoji:'💬', action:"openDMModal()" },
+    { id:'forum',   label:'Forum',      emoji:'📋', action:"switchMainTab('forum')" },
+    { id:'friends', label:'Arkadaşlar', emoji:'👥', action:"openFriendsModal()" },
+    { id:'watch',   label:'İzle',       emoji:'📺', action:"switchMainTab('watch')" },
+  ];
+  const savedTabOrder  = d.tabOrder   || defaultTabs.map(t=>t.id);
+  const hiddenTabs     = d.hiddenTabs || [];
+
+  // Icon sizes
+  const tabIconSize  = d.tabIconSize  || 20;
+  const tabLabelSize = d.tabLabelSize || 9;
+  const navIconSize  = d.navIconSize  || 19;
+
+  // Text sizes
+  const msgFontSize     = d.msgFontSize     || 14;
+  const sidebarFontSize = d.sidebarFontSize || 15;
+  const headerFontSize  = d.headerFontSize  || 18;
+  const inputFontSize   = d.inputFontSize   || 14;
+  const forumFontSize   = d.forumFontSize   || 14;
+
+  // Custom images / SVG emojis
+  const customImages = d.customImages || {};
+
+  const card = (title, inner, mb) =>
+    `<div class="admin-card" style="padding:16px;margin-bottom:${mb||12}px;">
+      <div class="admin-sec-title" style="margin-bottom:12px;">${title}</div>
+      ${inner}
+    </div>`;
+
+  let html = '<div class="admin-section">';
+  html += '<div class="admin-sec-title">🎨 Global Tasarım Yöneticisi</div>';
+  html += '<div style="font-size:.75rem;color:var(--muted);margin-bottom:14px;">Tüm değişiklikler Firebase\'e kaydedilir. Üyeler giriş yaptığında otomatik yeni tasarımı görür.</div>';
+
+  // ═══ 1. RENKLER ═══
+  let colHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  colors.forEach(c => {
+    const val = d['color_'+c.key] || c.def;
+    colHtml += `<div style="display:flex;flex-direction:column;gap:4px;">
+      <div style="font-size:.68rem;color:var(--muted);">${c.label}</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="color" id="dc_${c.key}" value="${val}" style="width:38px;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);flex-shrink:0;" oninput="document.getElementById('dc_${c.key}_txt').value=this.value;adminDesignPreview()">
+        <input type="text" id="dc_${c.key}_txt" value="${val}" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:.7rem;font-family:monospace;" oninput="document.getElementById('dc_${c.key}').value=this.value;adminDesignPreview()">
+      </div>
+    </div>`;
+  });
+  colHtml += '</div>';
+  html += card('🖌️ Renkler', colHtml);
+
+  // ═══ 2. YAZI TİPİ & BOYUTLAR ═══
+  let fontHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+
+  // Font family
+  fontHtml += `<div style="grid-column:1/-1;"><div style="font-size:.7rem;color:var(--muted);margin-bottom:5px;">Yazı Tipi (Tüm Uygulama)</div>
+    <select id="dc_font" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;" onchange="adminDesignPreview()">`;
+  fonts.forEach(f => { fontHtml += `<option value="${f.value}" ${curFont===f.value?'selected':''}>${f.label}</option>`; });
+  fontHtml += '</select></div>';
+
+  // Font sizes
+  const textSizes = [
+    { id:'dc_msgFontSize',     label:'💬 Mesaj Yazısı (px)',      val:msgFontSize,     min:11, max:20 },
+    { id:'dc_sidebarFontSize', label:'📋 Sidebar Yazısı (px)',    val:sidebarFontSize, min:11, max:20 },
+    { id:'dc_headerFontSize',  label:'🏷️ Başlık Yazısı (px)',     val:headerFontSize,  min:13, max:28 },
+    { id:'dc_inputFontSize',   label:'✏️ Mesaj Giriş Kutusu (px)',val:inputFontSize,   min:11, max:20 },
+    { id:'dc_forumFontSize',   label:'📰 Forum Yazısı (px)',      val:forumFontSize,   min:11, max:20 },
+  ];
+  textSizes.forEach(s => {
+    fontHtml += `<div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span></div>
+      <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
+        oninput="document.getElementById('${s.id}_val').textContent=this.value;adminDesignPreview()">
+    </div>`;
+  });
+
+  fontHtml += '</div>';
+  html += card('🔤 Yazı Tipi & Boyutlar', fontHtml);
+
+  // ═══ 3. İKON BOYUTLARI ═══
+  const iconSizeDefs = [
+    { id:'dc_tabIconSize',  label:'📱 Alt Tab İkon Boyutu (px)', val:tabIconSize,  min:14, max:32 },
+    { id:'dc_tabLabelSize', label:'📱 Alt Tab Etiket Boyutu (px)',val:tabLabelSize, min:7,  max:14 },
+    { id:'dc_navIconSize',  label:'🖥️ Sol Nav İkon Boyutu (px)',  val:navIconSize,  min:14, max:32 },
+  ];
+  let iconHtml = '<div style="display:flex;flex-direction:column;gap:12px;">';
+  iconSizeDefs.forEach(s => {
+    iconHtml += `<div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span>px</div>
+      <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
+        oninput="document.getElementById('${s.id}_val').textContent=this.value;adminDesignPreview()">
+    </div>`;
+  });
+  iconHtml += '</div>';
+  html += card('📐 İkon Boyutları', iconHtml);
+
+  // ═══ 4. TAB SIRASI & GÖRÜNÜRLÜKLERİ ═══
+  const orderedTabs = savedTabOrder.map(id => defaultTabs.find(t=>t.id===id)).filter(Boolean);
+  // Add any tabs not in savedTabOrder
+  defaultTabs.forEach(t => { if(!orderedTabs.find(o=>o.id===t.id)) orderedTabs.push(t); });
+
+  let tabHtml = `<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px;">Sekmeleri sürükle-bırak ile yeniden sırala. Gizlemek için göz ikonuna tıkla.</div>
+  <div id="dc_tab_list" style="display:flex;flex-direction:column;gap:6px;">`;
+  orderedTabs.forEach((t,i) => {
+    const hidden = hiddenTabs.includes(t.id);
+    tabHtml += `<div id="dctab_${t.id}" data-tab-id="${t.id}" draggable="true"
+      ondragstart="adminTabDragStart(event)" ondragover="adminTabDragOver(event)" ondrop="adminTabDrop(event)"
+      style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);cursor:grab;${hidden?'opacity:.45':''}">
+      <span style="font-size:1.1rem;">${t.emoji}</span>
+      <span style="flex:1;font-size:.85rem;font-weight:700;color:var(--text-hi);">${t.label}</span>
+      <span style="font-size:.7rem;color:var(--muted);">☰</span>
+      <button onclick="adminTabToggleVisibility('${t.id}',this)" title="${hidden?'Göster':'Gizle'}"
+        style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.75rem;color:${hidden?'var(--green)':'var(--muted)'};">
+        ${hidden?'👁 Göster':'🚫 Gizle'}
+      </button>
+    </div>`;
+  });
+  tabHtml += '</div>';
+  html += card('🗂️ Sekme Sırası & Görünürlük', tabHtml);
+
+  // ═══ 5. GÖRSELLER & SVG EMOJİLER ═══
+  const imageSlots = [
+    { key:'appLogo',       label:'🍃 Uygulama Logosu (SVG/URL)',       placeholder:'https://... veya SVG kodu' },
+    { key:'loginBg',       label:'🖼️ Giriş Ekranı Arka Planı (URL)',   placeholder:'https://resim-url.jpg' },
+    { key:'emptyRoomImg',  label:'📭 Boş Sohbet Görseli (URL/emoji)',  placeholder:'https://... veya 🌿' },
+    { key:'botAvatar',     label:'🤖 NatureBot Avatarı (URL)',          placeholder:'https://resim-url.png' },
+    { key:'customEmoji1',  label:'😊 Özel Emoji 1 (URL/SVG)',          placeholder:'https://... veya SVG' },
+    { key:'customEmoji2',  label:'😎 Özel Emoji 2 (URL/SVG)',          placeholder:'https://... veya SVG' },
+  ];
+  let imgHtml = '<div style="display:flex;flex-direction:column;gap:10px;">';
+  imageSlots.forEach(s => {
+    const val = customImages[s.key] || '';
+    imgHtml += `<div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="text" id="dci_${s.key}" value="${val.replace(/"/g,'&quot;')}" placeholder="${s.placeholder}"
+          style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:.75rem;">
+        <div id="dci_${s.key}_prev" style="width:36px;height:36px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:1px solid var(--border);overflow:hidden;">
+          ${val ? (val.startsWith('http')?`<img src="${val}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='?'">`:'📷') : '—'}
+        </div>
+      </div>
+    </div>`;
+  });
+  imgHtml += '</div>';
+  html += card('🖼️ Görseller & SVG Emojiler', imgHtml);
+
+  // ═══ 6. GENEL STİL ═══
+  const curBgStyle = d.bgStyle || 'solid';
+  let styleHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  styleHtml += `<div>
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Köşe Yuvarlaklığı: <span id="dc_radius_val">${curRadius}px</span></div>
+    <input type="range" id="dc_radius" min="0" max="24" value="${curRadius}" style="width:100%;"
+      oninput="document.getElementById('dc_radius_val').textContent=this.value+'px';adminDesignPreview()">
+  </div>`;
+  styleHtml += `<div>
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Arka Plan Stili</div>
+    <select id="dc_bgstyle" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;">
+      <option value="solid" ${curBgStyle==='solid'?'selected':''}>Düz Renk</option>
+      <option value="gradient" ${curBgStyle==='gradient'?'selected':''}>Yumuşak Gradyan</option>
+      <option value="deep" ${curBgStyle==='deep'?'selected':''}>Derin Karanlık</option>
+    </select>
+  </div>`;
+  styleHtml += '</div>';
+  html += card('⚙️ Genel Stil', styleHtml);
+
+  // ═══ Kaydet / Sıfırla ═══
+  html += `<div style="display:flex;gap:10px;margin-top:4px;">
+    <button onclick="saveAdminDesign()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.9rem;cursor:pointer;">💾 Tüm Üyelere Uygula & Kaydet</button>
+    <button onclick="resetAdminDesign()" style="padding:13px 16px;background:var(--surface2);color:var(--red);border:1px solid var(--red);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">↺ Sıfırla</button>
+  </div>`;
+  html += '</div>';
+  body.innerHTML = html;
+}
+
+// Tab sürükle-bırak
+let _dragTabId = null;
+function adminTabDragStart(e){ _dragTabId = e.currentTarget.dataset.tabId; e.currentTarget.style.opacity='.5'; }
+function adminTabDragOver(e){ e.preventDefault(); }
+function adminTabDrop(e){
+  e.preventDefault();
+  const targetId = e.currentTarget.dataset.tabId;
+  if(!_dragTabId || _dragTabId === targetId) { document.querySelectorAll('[id^=dctab_]').forEach(el=>el.style.opacity=''); return; }
+  const list = document.getElementById('dc_tab_list');
+  const dragEl = document.getElementById('dctab_'+_dragTabId);
+  const targetEl = document.getElementById('dctab_'+targetId);
+  if(dragEl && targetEl) {
+    const items = [...list.children];
+    const dragIdx = items.indexOf(dragEl);
+    const targetIdx = items.indexOf(targetEl);
+    if(dragIdx < targetIdx) list.insertBefore(dragEl, targetEl.nextSibling);
+    else list.insertBefore(dragEl, targetEl);
+  }
+  document.querySelectorAll('[id^=dctab_]').forEach(el=>el.style.opacity='');
+  _dragTabId = null;
+}
+
+function adminTabToggleVisibility(tabId, btn){
+  const row = document.getElementById('dctab_'+tabId);
+  const isHidden = row.style.opacity === '0.45';
+  row.style.opacity = isHidden ? '' : '0.45';
+  btn.textContent = isHidden ? '🚫 Gizle' : '👁 Göster';
+  btn.style.color = isHidden ? 'var(--muted)' : 'var(--green)';
+}
+
+function adminDesignPreview(){
+  const root = document.documentElement;
+  const g = id => document.getElementById(id);
+  const cv = key => g('dc_'+key) ? g('dc_'+key).value : null;
+  const colorMap = {
+    bg:'--bg', bg2:'--bg2', surface:'--surface', surface2:'--surface2',
+    border:'--border', text:'--text', textHi:'--text-hi', muted:'--muted',
+    accent:'--accent', green:'--green', red:'--red', ownBg:'--own-bg', incomingBg:'--incoming-bg'
+  };
+  Object.entries(colorMap).forEach(([k,v]) => { const c=cv(k); if(c) root.style.setProperty(v,c); });
+  const font = g('dc_font') ? g('dc_font').value : null;
+  if(font) document.body.style.fontFamily = font;
+  const radius = cv('radius');
+  if(radius) root.style.setProperty('--radius', radius+'px');
+
+  // Text sizes preview
+  const msgSz = g('dc_msgFontSize');
+  const sideSz = g('dc_sidebarFontSize');
+  const hdrSz = g('dc_headerFontSize');
+  const inpSz = g('dc_inputFontSize');
+  if(msgSz)  document.querySelectorAll('.msg-text,.msg-body,.m-text').forEach(el=>el.style.fontSize=msgSz.value+'px');
+  if(sideSz) document.querySelectorAll('.r-label,.sec-hdr').forEach(el=>el.style.fontSize=sideSz.value+'px');
+  if(hdrSz)  document.querySelectorAll('.ws-name,.chat-name').forEach(el=>el.style.fontSize=hdrSz.value+'px');
+  if(inpSz)  document.querySelectorAll('#msgInput,#chatInput,textarea.msg-inp').forEach(el=>el.style.fontSize=inpSz.value+'px');
+
+  // Icon sizes preview
+  const tabIcSz = g('dc_tabIconSize');
+  const tabLbSz = g('dc_tabLabelSize');
+  const navIcSz = g('dc_navIconSize');
+  if(tabIcSz) document.querySelectorAll('.tab-ic svg,.tab-ic').forEach(el=>{ el.style.width=tabIcSz.value+'px'; el.style.height=tabIcSz.value+'px'; });
+  if(tabLbSz) document.querySelectorAll('.tab-lb').forEach(el=>el.style.fontSize=tabLbSz.value+'px');
+  if(navIcSz) document.querySelectorAll('.rail-btn-ic svg,.rail-btn-ic').forEach(el=>{ el.style.width=navIcSz.value+'px'; el.style.height=navIcSz.value+'px'; });
+}
+
+async function saveAdminDesign(){
+  const g = id => document.getElementById(id);
+  const colorKeys = ['bg','bg2','surface','surface2','border','text','textHi','muted','accent','green','red','ownBg','incomingBg'];
+  const obj = { updatedAt: Date.now(), updatedBy: _cu };
+
+  // Renkler
+  colorKeys.forEach(k => { const el=g('dc_'+k); if(el) obj['color_'+k]=el.value; });
+
+  // Font
+  const fontEl = g('dc_font');
+  if(fontEl) obj.fontFamily = fontEl.value;
+
+  // Font sizes
+  const textFields = ['msgFontSize','sidebarFontSize','headerFontSize','inputFontSize','forumFontSize'];
+  textFields.forEach(k => { const el=g('dc_'+k); if(el) obj[k]=parseInt(el.value); });
+
+  // Icon sizes
+  const iconFields = ['tabIconSize','tabLabelSize','navIconSize'];
+  iconFields.forEach(k => { const el=g('dc_'+k); if(el) obj[k]=parseInt(el.value); });
+
+  // Radius & bgStyle
+  const radiusEl = g('dc_radius');
+  const bgEl = g('dc_bgstyle');
+  if(radiusEl) obj.borderRadius = parseInt(radiusEl.value);
+  if(bgEl)     obj.bgStyle      = bgEl.value;
+
+  // Tab order & visibility
+  const tabList = document.getElementById('dc_tab_list');
+  if(tabList){
+    obj.tabOrder = [...tabList.children].map(el=>el.dataset.tabId);
+    obj.hiddenTabs = [...tabList.children].filter(el=>el.style.opacity==='0.45').map(el=>el.dataset.tabId);
+  }
+
+  // Custom images
+  const imgKeys = ['appLogo','loginBg','emptyRoomImg','botAvatar','customEmoji1','customEmoji2'];
+  const customImages = {};
+  imgKeys.forEach(k => { const el=g('dci_'+k); if(el && el.value.trim()) customImages[k]=el.value.trim(); });
+  obj.customImages = customImages;
+
+  try {
+    await adminRestSet('settings/design', obj);
+    showToast('✅ Tasarım kaydedildi! Üyeler yenileyince görecek.');
+    applyGlobalDesign(obj);
+  } catch(e) {
+    showToast('❌ Kaydetme hatası: '+e.message);
+  }
+}
+
+async function resetAdminDesign(){
+  if(!confirm('Tasarımı varsayılana sıfırlamak istediğinizden emin misiniz?')) return;
+  try {
+    await adminRestSet('settings/design', null);
+    showToast('↺ Tasarım sıfırlandı.');
+    setTimeout(()=>location.reload(), 800);
+  } catch(e) { showToast('Hata: '+e.message); }
+}
+
+function applyGlobalDesign(d){
+  if(!d) return;
+  const root = document.documentElement;
+  const colorMap = {
+    color_bg:'--bg', color_bg2:'--bg2', color_surface:'--surface',
+    color_surface2:'--surface2', color_border:'--border', color_text:'--text',
+    color_textHi:'--text-hi', color_muted:'--muted', color_accent:'--accent',
+    color_green:'--green', color_red:'--red', color_ownBg:'--own-bg',
+    color_incomingBg:'--incoming-bg'
+  };
+  Object.entries(colorMap).forEach(([dKey,cssVar]) => { if(d[dKey]) root.style.setProperty(cssVar, d[dKey]); });
+  if(d.fontFamily) document.body.style.fontFamily = d.fontFamily;
+  if(d.borderRadius !== undefined) root.style.setProperty('--radius', d.borderRadius+'px');
+
+  // Text sizes
+  if(d.msgFontSize)     addDesignStyle('--d-msg-size',    d.msgFontSize+'px',     '.msg-text,.msg-body,.m-text');
+  if(d.sidebarFontSize) addDesignStyle('--d-side-size',   d.sidebarFontSize+'px', '.r-label');
+  if(d.headerFontSize)  addDesignStyle('--d-hdr-size',    d.headerFontSize+'px',  '.ws-name');
+  if(d.inputFontSize)   addDesignStyle('--d-inp-size',    d.inputFontSize+'px',   '#msgInput,textarea');
+
+  // Icon sizes
+  if(d.tabIconSize){
+    const tabCss = `.tab-ic svg { width:${d.tabIconSize}px!important; height:${d.tabIconSize}px!important; }`;
+    injectDesignCSS('nc-tab-icon-size', tabCss);
+  }
+  if(d.tabLabelSize){
+    injectDesignCSS('nc-tab-lb-size', `.tab-lb { font-size:${d.tabLabelSize}px!important; }`);
+  }
+  if(d.navIconSize){
+    injectDesignCSS('nc-nav-icon-size', `.rail-btn-ic svg { width:${d.navIconSize}px!important; height:${d.navIconSize}px!important; }`);
+  }
+
+  // Tab order & visibility
+  if(d.tabOrder && d.tabOrder.length){
+    const tabIdMap = { home:'tabHome', forum:'tabForum' };
+    document.querySelectorAll('.tab-bar').forEach(bar => {
+      const tabs = [...bar.children];
+      d.tabOrder.forEach((id, idx) => {
+        const el = tabs.find(t => {
+          const onclick = t.getAttribute('onclick')||'';
+          const tabId = t.id || '';
+          if(id==='home')    return tabId==='tabHome'    || onclick.includes("'home'");
+          if(id==='msgs')    return onclick.includes('openDMModal');
+          if(id==='forum')   return tabId==='tabForum'   || onclick.includes("'forum'");
+          if(id==='friends') return onclick.includes('openFriendsModal') || onclick.includes("'friends'");
+          if(id==='watch')   return onclick.includes("'watch'");
+          return false;
+        });
+        if(el) el.style.order = idx;
+      });
+      if(d.hiddenTabs) d.hiddenTabs.forEach(id => {
+        const el = tabs.find(t => {
+          const onclick = t.getAttribute('onclick')||'';
+          if(id==='home')    return t.id==='tabHome'    || onclick.includes("'home'");
+          if(id==='msgs')    return onclick.includes('openDMModal');
+          if(id==='forum')   return t.id==='tabForum'   || onclick.includes("'forum'");
+          if(id==='friends') return onclick.includes('openFriendsModal');
+          if(id==='watch')   return onclick.includes("'watch'");
+          return false;
+        });
+        if(el) el.style.display = 'none';
+      });
+    });
+  }
+
+  // Custom images
+  if(d.customImages){
+    const ci = d.customImages;
+    if(ci.appLogo){
+      document.querySelectorAll('#myAvatar,#deskRailUser').forEach(el=>{
+        if(ci.appLogo.startsWith('http')){ el.innerHTML=`<img src="${ci.appLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`; }
+        else { el.textContent=ci.appLogo; }
+      });
+    }
+    if(ci.botAvatar){
+      document.querySelectorAll('.naturebot-avatar,[id*="botAvatar"]').forEach(el=>{
+        el.innerHTML = ci.botAvatar.startsWith('http') ? `<img src="${ci.botAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : ci.botAvatar;
+      });
+    }
+  }
+}
+
+function addDesignStyle(varName, value, selector){
+  injectDesignCSS('nc-ds-'+varName.replace(/[^a-z0-9]/g,''), `${selector} { font-size:${value}!important; }`);
+}
+
+function injectDesignCSS(id, css){
+  let el = document.getElementById(id);
+  if(!el){ el=document.createElement('style'); el.id=id; document.head.appendChild(el); }
+  el.textContent = css;
+}
+
+// Sayfa yüklenince global tasarımı Firebase'den çekip uygula
+(function initGlobalDesign(){
+  setTimeout(async ()=>{
+    try {
+      const snap = await dbRef('settings/design').once('value');
+      const d = snap.val();
+      if(d) applyGlobalDesign(d);
+    } catch(e){}
+  }, 900);
+})();
+
 
 /* ── Admin: Settings ── */
 async function loadAdminSettings(){
