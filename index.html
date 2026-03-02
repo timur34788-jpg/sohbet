@@ -2798,7 +2798,7 @@ body::before {
 }
 /* Neon glow only on the ring itself, not the wrapper */
 .prof-av-ring {
-  box-shadow: 0 0 20px rgba(16,185,129,0.25), 0 4px 20px rgba(0,0,0,.5) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,.5) !important;
 }
 
 /* ─── DESKTOP RAIL ─── */
@@ -10517,6 +10517,24 @@ document.addEventListener('DOMContentLoaded',()=>{
             onLoginSuccess();
             return;
           }
+          // REST null ise ağ geçici hatası — kayıtlı kimliği ile giriş yaptır
+          if(!rootD){
+            _passwordHash=savedPass; _cu=savedUser; _isAdmin=false;
+            removeLoader();
+            onLoginSuccess();
+            // 6sn sonra arka planda doğrula: şifre değişmiş/ban varsa çıkış yaptır
+            setTimeout(async()=>{
+              try{
+                const check = await fbRestGet('users/'+savedUser).catch(()=>null);
+                if(check && (check.passwordHash!==savedPass || check.banned)){
+                  if(typeof logout==='function') logout();
+                }
+              }catch(e){}
+            }, 1500);
+            return;
+          }
+          // Şifre yanlış veya ban
+          throw new Error('invalid credentials');
         }catch(e){ console.warn('Otomatik giriş başarısız:',e); }
         localStorage.removeItem('sohbet_last_server');
         removeLoader();
@@ -17473,6 +17491,7 @@ window.nc_replaceIcons = runIconSystem;
   transform: translateX(105%);
   transition: transform .32s cubic-bezier(.4,0,.2,1);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 #profileDrawer.open { transform: translateX(0); }
 #profileDrawerOverlay {
@@ -17500,15 +17519,8 @@ window.nc_replaceIcons = runIconSystem;
 }
 .pdr-close:hover { background: rgba(255,255,255,0.14); }
 
-/* Avatar glow - reuses .prof-av-ring, adds neon glow */
-.prof-av-ring.neon-glow {
-  box-shadow:
-    0 0 0 3px rgba(var(--glow-rgb,91,155,213), 0.35),
-    0 0 20px rgba(var(--glow-rgb,91,155,213), 0.4),
-    0 0 50px rgba(var(--glow-rgb,91,155,213), 0.15),
-    0 4px 20px rgba(0,0,0,.5);
-}
-/* Accent color glow variables per theme */
+/* Avatar glow removed - no neon effects on avatars */
+.prof-av-ring.neon-glow { box-shadow: none; }
 [data-theme="dark"] .prof-av-ring.neon-glow { --glow-rgb: 91,155,213; }
 [data-theme="forest"] .prof-av-ring.neon-glow { --glow-rgb: 76,175,80; }
 [data-theme="ocean"] .prof-av-ring.neon-glow { --glow-rgb: 41,182,246; }
@@ -17695,7 +17707,7 @@ window.nc_replaceIcons = runIconSystem;
   <!-- Reuse existing profile structure -->
   <div style="padding:20px 20px 16px;text-align:center;">
     <div class="prof-av-wrap" style="display:inline-block;cursor:pointer;" onclick="triggerPhotoUpload()">
-      <div class="prof-av-ring neon-glow" id="drawerAvatar" style="width:80px;height:80px;border-radius:20px;font-size:2rem;margin:0 auto;"></div>
+      <div class="prof-av-ring" id="drawerAvatar" style="width:80px;height:80px;border-radius:20px;font-size:2rem;margin:0 auto;"></div>
       <div class="prof-status-dot"></div>
     </div>
     <div class="prof-display-name" id="drawerName" style="margin-top:10px;"></div>
