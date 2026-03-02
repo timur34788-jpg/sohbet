@@ -5634,6 +5634,16 @@ function openRoom(roomId){
         const inp=document.getElementById('chatInputRow');
         if(inp) inp.style.display='';
         document.getElementById('adminSpyBanner').style.display='none';
+        // Kilit kontrolü
+        const msgInp = document.getElementById('msgInp');
+        const sendBtn = document.getElementById('sendBtn');
+        if(room.locked && !_isAdmin){
+          if(msgInp){ msgInp.disabled=true; msgInp.placeholder='🔒 Bu oda kilitli'; }
+          if(sendBtn) sendBtn.disabled=true;
+        } else {
+          if(msgInp){ msgInp.disabled=false; msgInp.placeholder='Mesaj yaz...'; }
+          if(sendBtn) sendBtn.disabled=false;
+        }
       }
     }
   });
@@ -19104,6 +19114,11 @@ window.openTimeCapsule = function() {
 </script>
 <script>
 function openProfileDrawer() {
+  // Masaüstünde deskNav kullan
+  if (typeof IS_DESKTOP === 'function' && IS_DESKTOP()) {
+    if (typeof deskNav === 'function') deskNav('profile');
+    return;
+  }
   // Mevcut profil verilerini drawer'a kopyala
   const avatar = document.getElementById('profAvBig');
   const name   = document.getElementById('profName');
