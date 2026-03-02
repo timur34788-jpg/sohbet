@@ -19009,7 +19009,7 @@ window.openAmbiancePanel=function(){
   var gr=document.getElementById('amGrid');if(!gr)return;
   gr.innerHTML=aS.map(function(s,i){
     var on=aA===s[0];
-    return '<div onclick="toggleAm('"+s[0]+"')" style="background:'+(on?s[2]+'33':'var(--surface2)')+';border:1.5px solid '+(on?s[2]:'var(--border)')+';border-radius:12px;padding:11px 7px;text-align:center;cursor:pointer;transition:all .2s;">'
+    return '<div onclick="toggleAm(\''+s[0]+'\')" style="background:'+(on?s[2]+'33':'var(--surface2)')+';border:1.5px solid '+(on?s[2]:'var(--border)')+';border-radius:12px;padding:11px 7px;text-align:center;cursor:pointer;transition:all .2s;">'
       +'<div style="font-size:1.3rem;">'+aSE[i]+'</div>'
       +'<div style="font-size:.68rem;font-weight:700;color:'+(on?s[2]:'var(--text)')+';margin-top:3px;">'+s[1]+'</div></div>';
   }).join('');
@@ -19043,7 +19043,7 @@ window.openBotPersonality=function(){
   var l=document.getElementById('bpList');if(!l)return;
   l.innerHTML=bps.map(function(p){
     var on=bpa===p.id;
-    return '<div onclick="setBP(''+p.id+'')" style="display:flex;align-items:center;gap:11px;padding:10px;background:'+(on?p.c+'22':'var(--surface2)')+';border:1.5px solid '+(on?p.c:'var(--border)')+';border-radius:12px;cursor:pointer;margin-bottom:6px;transition:all .2s;">'
+    return '<div onclick="setBP(\''+p.id+'\')" style="display:flex;align-items:center;gap:11px;padding:10px;background:'+(on?p.c+'22':'var(--surface2)')+';border:1.5px solid '+(on?p.c:'var(--border)')+';border-radius:12px;cursor:pointer;margin-bottom:6px;transition:all .2s;">'
       +'<div style="font-size:1.3rem;">'+p.ic+'</div>'
       +'<div><div style="font-size:.82rem;font-weight:700;color:'+(on?p.c:'var(--text-hi)')+';">'+p.l+'</div><div style="font-size:.68rem;color:var(--muted);">'+p.d+'</div></div>'
       +(on?'<div style="margin-left:auto;color:'+p.c+';font-weight:900;font-size:1rem;">&#x2713;</div>':'')
@@ -19118,7 +19118,7 @@ window.triggerAC=function(v){
   b.style.display='block';
   b.innerHTML=mx.slice(0,5).map(function(m){
     var safe=m.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;');
-    return '<span class="acc" onclick="applyAC(this.getAttribute('data-v'))" data-v="'+safe+'">'+safe+'</span>';
+    return '<span class="acc" onclick="applyAC(this.getAttribute(\'data-v\'))" data-v="'+safe+'">'+safe+'</span>';
   }).join('');
 };
 window.applyAC=function(t){var i=document.getElementById('msgInp');if(!i)return;i.value=t;i.focus();document.getElementById('acBar').style.display='none';if(typeof autoResize==='function')autoResize(i);};
@@ -19133,7 +19133,7 @@ window._renderCreateUser=function(body){
     +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">Sifre *</label>'
     +'<div style="display:flex;gap:6px;">'
     +'<input id="cu_p" type="text" placeholder="sifre" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text-hi);font-family:inherit;font-size:.83rem;outline:none;">'
-    +'<button onclick="document.getElementById('cu_p').value=gpw()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--accent);font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap;">🎲 Uret</button>'
+    +'<button onclick="document.getElementById(\'cu_p\'\').value=gpw()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--accent);font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap;">🎲 Uret</button>'
     +'</div></div>'
     +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">E-posta (opsiyonel)</label>'
     +'<input id="cu_e" type="email" placeholder="email@ornek.com" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text-hi);font-family:inherit;font-size:.83rem;outline:none;box-sizing:border-box;"></div>'
@@ -19164,7 +19164,7 @@ window.doCU=async function(){
     await window._db.ref('users/'+u).set(ud);
     res.style.cssText='display:block;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:11px;';
     res.innerHTML='<b style="color:#2ecc71;">✓ Hesap olusturuldu!</b><br>👤 <b>'+u+'</b><br>🔑 <code style="background:var(--surface);padding:2px 6px;border-radius:4px;">'+p+'</code>'+(a?'<br>👑 Admin':'')
-      +'<br><button onclick="navigator.clipboard.writeText(''+u+' / '+p.replace(/'/g,"\'")+'')" style="margin-top:6px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 11px;font-size:.73rem;cursor:pointer;">📋 Kopyala</button>';
+      +'<br><button onclick="_cpDataV(this)" data-v="'+u+' / '+p+'" style="margin-top:6px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 11px;font-size:.73rem;cursor:pointer;">📋 Kopyala</button>';
     var hist=JSON.parse(localStorage.getItem('cu_hh')||'[]');hist.unshift({u:u,at:Date.now(),a:a});if(hist.length>10)hist.pop();localStorage.setItem('cu_hh',JSON.stringify(hist));rCUH();
   }catch(err){
     res.style.cssText='display:block;background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.2);border-radius:10px;padding:11px;';
@@ -19209,9 +19209,9 @@ function bLL(lnks){
       +'<button onclick="dL('+i+')" style="margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:.63rem;color:var(--red);cursor:pointer;">Sil</button></div>'
       +'<div style="font-size:.67rem;color:var(--muted);word-break:break-all;background:var(--surface);border-radius:6px;padding:5px 8px;margin-bottom:7px;">'+url+'</div>'
       +'<div style="display:flex;gap:5px;flex-wrap:wrap;">'
-      +'<button onclick="navigator.clipboard.writeText(''+url+'');ntk('Kopyalandi!')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:var(--text);cursor:pointer;">📋 Kopyala</button>'
+      +'<button onclick="_cpDataV(this)" data-v="'+url+'" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:var(--text);cursor:pointer;">📋 Kopyala</button>'
       +'<button onclick="tL('+i+')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:'+(act?'var(--red)':'#2ecc71')+';cursor:pointer;">'+(act?'Durdur':'Aktifles')+'</button>'
-      +'<button onclick="sR(''+l.code+'')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:var(--accent);cursor:pointer;">👥 '+regs.length+' Kayit</button>'
+      +'<button onclick="sR(\''+l.code+'\')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:var(--accent);cursor:pointer;">👥 '+regs.length+' Kayit</button>'
       +'</div>'+(l.nt?'<div style="font-size:.67rem;color:var(--muted);margin-top:4px;">📝 '+l.nt+'</div>':'')
       +'</div>';
   }).join('');
@@ -19230,10 +19230,7 @@ window.mkL=function(){
 };
 window.dL=function(i){var l=JSON.parse(localStorage.getItem('invl')||'[]');l.splice(i,1);localStorage.setItem('invl',JSON.stringify(l));document.getElementById('il_lst').innerHTML=bLL(l);};
 window.tL=function(i){var l=JSON.parse(localStorage.getItem('invl')||'[]');l[i].off=!l[i].off;localStorage.setItem('invl',JSON.stringify(l));document.getElementById('il_lst').innerHTML=bLL(l);};
-window.sR=function(code){var r=JSON.parse(localStorage.getItem('ir_'+code)||'[]');if(!r.length){ntk('Bu linkle henuz kayit yok');return;}alert('Kayit olanlar:
-
-'+r.map(function(x){return '- '+x.u+' ('+new Date(x.at).toLocaleDateString('tr-TR')+')';}).join('
-'));};
+window.sR=function(code){var r=JSON.parse(localStorage.getItem('ir_'+code)||'[]');if(!r.length){ntk('Bu linkle henuz kayit yok');return;}alert('Kayit olanlar:\n'+r.map(function(x){return '- '+x.u+' ('+new Date(x.at).toLocaleDateString('tr-TR')+')';}).join('\n'));};
 
 /* ADMİN TAB PATCH */
 var _oAT=window.adminTab;
@@ -19274,6 +19271,14 @@ function ntk(msg){
 }
 
 })();
+
+/* ── Kopyalama yardımcısı (syntax-safe) ── */
+window._cpDataV = function(el){ 
+  var v = el.getAttribute('data-v');
+  navigator.clipboard.writeText(v).then(function(){ 
+    if(typeof showToast==='function') showToast('📋 Kopyalandı!'); 
+  }).catch(function(){});
+};
 </script>
 
 </body>
