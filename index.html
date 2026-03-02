@@ -10816,6 +10816,8 @@ function deskLoadAdmin() {
     { key: 'security',   label: '🛡️ Güvenlik' },
     { key: 'settings',   label: '⚙️ Ayarlar' },
     { key: 'naturebot',  label: '🤖 NatureBot' },
+    { key: 'create_user', label: '➕ Üye Oluştur' },
+    { key: 'invite',      label: '🔗 Davet Link' },
   ];
   const tabsHTML = tabs.map(t =>
     `<div class="dsk-atab" data-key="${t.key}" onclick="deskAdminTab('${t.key}')">${t.label}</div>`
@@ -13365,7 +13367,9 @@ deskLoadAdmin = function(){
     { key:'growth',    label:'📈 Büyüme' },
     { key:'activity',  label:'🕐 Aktivite' },
     { key:'naturebot', label:'🤖 NatureBot' },
-    { key:'settings',  label:'⚙️ Ayarlar' },
+    { key:'settings',    label:'⚙️ Ayarlar' },
+    { key:'create_user', label:'➕ Üye Oluştur' },
+    { key:'invite',      label:'🔗 Davet Link' },
   ];
   panel.innerHTML = `
     <div style="display:flex;flex-direction:column;height:100%;overflow:hidden;">
@@ -13391,6 +13395,30 @@ deskLoadAdmin = function(){
 
 const _origDeskAdminTab = typeof deskAdminTab === 'function' ? deskAdminTab : null;
 deskAdminTab = function(tab){
+  if(tab==='create_user'){
+    const b=document.getElementById('adminBody');
+    if(b && typeof window._renderCreateUser==='function') window._renderCreateUser(b);
+    const tabBar=document.getElementById('deskAdminTabs');
+    if(tabBar) tabBar.querySelectorAll('div').forEach(el=>{
+      const act=el.dataset.key===tab;
+      el.style.color=act?'var(--text-hi)':'var(--muted)';
+      el.style.background=act?'var(--surface)':'transparent';
+      el.style.borderBottom=act?'2px solid var(--accent)':'2px solid transparent';
+    });
+    return;
+  }
+  if(tab==='invite'){
+    const b=document.getElementById('adminBody');
+    if(b && typeof window._renderInviteLinks==='function') window._renderInviteLinks(b);
+    const tabBar=document.getElementById('deskAdminTabs');
+    if(tabBar) tabBar.querySelectorAll('div').forEach(el=>{
+      const act=el.dataset.key===tab;
+      el.style.color=act?'var(--text-hi)':'var(--muted)';
+      el.style.background=act?'var(--surface)':'transparent';
+      el.style.borderBottom=act?'2px solid var(--accent)':'2px solid transparent';
+    });
+    return;
+  }
   _adminTab = tab;
   const tabBar = document.getElementById('deskAdminTabs');
   if(tabBar) tabBar.querySelectorAll('div').forEach(el=>{
