@@ -6592,6 +6592,7 @@ async function loadTrendingGifs(isDesk){
   if(!grid) return;
   if(!_gifApiReady){ showGifKeyPrompt(grid, isDesk); return; }
   grid.innerHTML = '<div class="gif-loading">Yükleniyor...</div>';
+function _playNotifAudio(id) {
   try {
     const r = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=21&rating=g`);
     const d = await r.json();
@@ -6605,6 +6606,7 @@ async function searchGifs(q, isDesk){
   if(!grid) return;
   if(!_gifApiReady){ showGifKeyPrompt(grid, isDesk); return; }
   grid.innerHTML = '<div class="gif-loading">Aranıyor...</div>';
+function _playNotifAudio(id) {
   try {
     const r = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=21&rating=g&lang=tr`);
     const d = await r.json();
@@ -6653,6 +6655,7 @@ async function loadTrendingGifsWithKey(isDesk, key){
   const grid = document.getElementById((isDesk?'desk':'mob')+'GifGrid');
   if(!grid) return;
   grid.innerHTML = '<div class="gif-loading">Yükleniyor...</div>';
+function _playNotifAudio(id) {
   try {
     const r = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${key}&limit=21&rating=g`);
     const d = await r.json();
@@ -6720,6 +6723,7 @@ async function saveCustomEmoji(){
   // Firebase'e kaydet
   const key = name + '_' + Date.now();
   const ceData = { name, url: _ceFileData, addedBy: _cu, ts: Date.now() };
+function _playNotifAudio(id) {
   try {
     await dbRef('customEmojis/' + key).set(ceData);
     showToast('✨ Emoji eklendi: :' + name + ':');
@@ -6734,6 +6738,7 @@ async function loadCustomEmojis(isDesk){
   const pfx = isDesk ? 'desk' : 'mob';
   const grid = document.getElementById(pfx + 'CustomEmojiGrid');
   if(!grid) return;
+function _playNotifAudio(id) {
   try {
     const snap = await dbRef('customEmojis').once('value');
     const data = snap.val();
@@ -8245,6 +8250,7 @@ async function saveAdminDesign(){
   imgKeys.forEach(k => { const el=g('dci_'+k); if(el && el.value.trim()) customImages[k]=el.value.trim(); });
   obj.customImages = customImages;
 
+function _playNotifAudio(id) {
   try {
     await adminRestSet('settings/design', obj);
     showToast('✅ Tasarım kaydedildi! Üyeler yenileyince görecek.');
@@ -8256,6 +8262,7 @@ async function saveAdminDesign(){
 
 async function resetAdminDesign(){
   if(!confirm('Tasarımı varsayılana sıfırlamak istediğinizden emin misiniz?')) return;
+function _playNotifAudio(id) {
   try {
     await adminRestSet('settings/design', null);
     showToast('↺ Tasarım sıfırlandı.');
@@ -10885,6 +10892,7 @@ function showPushNotification(title, body, icon){
     return;
   }
   // Fallback: doğrudan Notification API
+function _playNotifAudio(id) {
   try {
     const n = new Notification(title, {body, icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%232c3038"/><text y="44" x="32" text-anchor="middle" font-size="36">'+icon+'</text></svg>', badge:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%232c3038"/></svg>', vibrate:[200,100,200]});
     n.onclick=()=>{window.focus();n.close();};
@@ -11468,6 +11476,7 @@ async function initFCM(serverKey) {
   if (!vapidKey || vapidKey.includes('BURAYA')) return; // Henüz key girilmemiş
 
   let swReg;
+function _playNotifAudio(id) {
   try {
     swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
     await navigator.serviceWorker.ready;
@@ -11477,6 +11486,7 @@ async function initFCM(serverKey) {
   const ctrl = swReg.active || navigator.serviceWorker.controller;
   if (ctrl) ctrl.postMessage({ type: 'FCM_INIT', config: FB_CONFIG });
 
+function _playNotifAudio(id) {
   try {
     const existingApp = firebase.apps.find(a => a.name === '[DEFAULT]') || firebase.apps[0];
     if (!existingApp) return;
@@ -11508,6 +11518,7 @@ async function initFCM(serverKey) {
 // ── FCM Token DB'ye Kaydet ──
 async function _saveFCMToken(token) {
   if (!_db || !_cu || !token) return;
+function _playNotifAudio(id) {
   try {
     const platform = /Android/i.test(navigator.userAgent) ? 'android'
                    : /iPhone|iPad/i.test(navigator.userAgent) ? 'ios' : 'web';
@@ -11522,6 +11533,7 @@ async function _saveFCMToken(token) {
 }
 
 // ── HTML Audio bildirim sesi (AudioContext) ──
+function _playNotifAudio(id) {
 function _playNotifAudio(id) {
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
@@ -11614,6 +11626,7 @@ function _swAddRoom(roomId) {
   navigator.serviceWorker.controller.postMessage({ type:'NEW_ROOM', room: roomId });
 }
 
+function _playNotifAudio(id) {
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
@@ -12645,6 +12658,7 @@ async function deskSaveBio(){
 async function deskLoadProfileData(){
   if(!_cu||!_db) return;
   // Bio yükle
+function _playNotifAudio(id) {
   try {
     const bioSnap = await dbRef(wsPath('users/'+_cu+'/bio')).once('value');
     const bio = bioSnap.val()||'';
@@ -12658,6 +12672,7 @@ async function deskLoadProfileData(){
     }
   } catch(e){}
   // Katılım tarihi + mesaj sayısı
+function _playNotifAudio(id) {
   try {
     const userSnap = await dbRef('users/'+_cu).once('value');
     const u = userSnap.val()||{};
