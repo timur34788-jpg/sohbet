@@ -3003,297 +3003,68 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 </style>
 
 <style id="nc-ui-v2">
-/* ══════════════════════════════════════════════════════════
-   🌿 NATURE.CO UI v2 — Premium Mobile Redesign
-   Tüm ekranlar için geliştirilmiş arayüz
-══════════════════════════════════════════════════════════ */
+/* NATURE.CO UI v2 - Mockup Match */
+:root { --v2-green: #00e87a; --v2-teal: #00c9a0; }
 
-/* ── GENEL TOKEN'LAR ── */
-:root {
-  --v2-green:   #00e87a;
-  --v2-teal:    #00c9a0;
-  --v2-surface: rgba(255,255,255,0.055);
-  --v2-border:  rgba(255,255,255,0.08);
-  --v2-card:    rgba(14,22,28,0.85);
-  --v2-radius:  16px;
-}
+/* TAB BAR */
+.tab.act::before { top:auto !important; bottom:0 !important; width:22px !important; height:3px !important; border-radius:3px 3px 0 0 !important; background:var(--v2-green) !important; }
+.tab.act .tab-ic-wrap { background:rgba(0,232,122,0.12) !important; border-radius:12px !important; }
+.tab.act .tab-lb { color:var(--v2-green) !important; }
 
-/* ── TAB BAR — Alt gösterge çizgisi ── */
-.tab.act::before {
-  top: auto !important;
-  bottom: 0 !important;
-  width: 20px !important;
-  height: 3px !important;
-  border-radius: 3px 3px 0 0 !important;
-  background: var(--v2-green) !important;
-}
-.tab.act .tab-ic-wrap {
-  background: rgba(0,232,122,0.12) !important;
-  border-radius: 12px !important;
-}
-.tab.act .tab-lb { color: var(--v2-green) !important; }
+/* WATCH SCREEN CARDS */
+.watch-mob-grid { display:grid !important; grid-template-columns:repeat(2,1fr) !important; gap:12px !important; padding:14px !important; }
+.watch-mob-card { background:rgba(14,22,28,0.9) !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:18px !important; padding:18px 12px !important; display:flex !important; flex-direction:column !important; align-items:center !important; gap:9px !important; cursor:pointer !important; position:relative !important; overflow:hidden !important; transition:border-color 0.2s, transform 0.15s !important; }
+.watch-mob-card:active { transform:scale(0.97) !important; }
+.watch-mob-card::before { content:'' !important; position:absolute !important; inset:0 !important; background:linear-gradient(135deg,rgba(0,232,122,0.04),transparent 60%) !important; }
+.watch-mob-card .wmc-logo { width:54px !important; height:54px !important; border-radius:14px !important; background:rgba(255,255,255,0.07) !important; border:1px solid rgba(255,255,255,0.1) !important; display:flex !important; align-items:center !important; justify-content:center !important; font-size:1.65rem !important; }
+.watch-mob-card .wmc-name { font-family:'Syne',sans-serif !important; font-size:.88rem !important; font-weight:800 !important; color:rgba(255,255,255,0.92) !important; text-align:center !important; }
+.watch-mob-card .wmc-cat { font-size:.64rem !important; color:rgba(255,255,255,0.35) !important; background:rgba(255,255,255,0.07) !important; padding:2px 8px !important; border-radius:6px !important; font-weight:600 !important; }
 
-/* ── FORUM KARTLARI — Sol aksan çizgisi ── */
-.forum-card {
-  position: relative !important;
-  border-radius: 18px !important;
-  overflow: hidden !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  transition: border-color .2s, box-shadow .2s, transform .2s !important;
-}
-.forum-card::before {
-  content: '' !important;
-  position: absolute !important;
-  left: 0; top: 0; bottom: 0 !important;
-  width: 3px !important;
-  background: linear-gradient(to bottom, var(--v2-green), var(--v2-teal)) !important;
-  border-radius: 3px 0 0 3px !important;
-  display: block !important;
-}
-.forum-card:hover {
-  border-color: rgba(0,232,122,0.25) !important;
-  box-shadow: 0 6px 28px rgba(0,232,122,0.07) !important;
-  transform: translateY(-1px) !important;
-}
-.forum-card-body { padding-left: 14px !important; }
+/* MESSAGES DM ROW */
+.dm-row { display:flex !important; align-items:center !important; gap:12px !important; padding:10px 10px !important; border-radius:14px !important; margin:2px 0 !important; transition:background 0.15s !important; }
+.dm-row:active { background:rgba(255,255,255,0.06) !important; }
+.dm-av { width:42px !important; height:42px !important; border-radius:50% !important; font-size:.82rem !important; font-weight:900 !important; border:1.5px solid rgba(255,255,255,0.1) !important; }
+.dm-name { font-family:'Syne',sans-serif !important; font-size:.95rem !important; font-weight:800 !important; letter-spacing:-0.01em !important; }
+.dm-status { font-size:.75rem !important; color:rgba(148,200,188,0.5) !important; margin-top:1px !important; }
+#dmSearch { background:rgba(255,255,255,0.07) !important; border:1px solid rgba(255,255,255,0.1) !important; border-radius:14px !important; padding:10px 14px !important; font-size:.88rem !important; }
 
-/* Forum kategori badge */
-.forum-cat-tag, .forum-badge, [class*="cat-badge"] {
-  background: rgba(0,232,122,0.1) !important;
-  color: var(--v2-green) !important;
-  border: 1px solid rgba(0,232,122,0.2) !important;
-  border-radius: 100px !important;
-  font-size: .68rem !important;
-  font-weight: 700 !important;
-  padding: 2px 8px !important;
-}
+/* FRIENDS */
+.fr-row { background:rgba(14,22,28,0.8) !important; border:1px solid rgba(255,255,255,0.07) !important; border-radius:16px !important; padding:11px 14px !important; margin:5px 0 !important; transition:border-color 0.2s,background 0.15s !important; }
+.fr-row:active { background:rgba(255,255,255,0.05) !important; border-color:rgba(0,232,122,0.15) !important; }
+.fr-av { width:42px !important; height:42px !important; border-radius:50% !important; font-size:.82rem !important; font-weight:900 !important; }
+.fr-name { font-family:'Syne',sans-serif !important; font-size:.95rem !important; font-weight:800 !important; }
+.fr-btn.accept { background:rgba(0,232,122,0.12) !important; border:1px solid rgba(0,232,122,0.25) !important; color:var(--v2-green) !important; border-radius:10px !important; font-weight:700 !important; font-size:.78rem !important; padding:7px 14px !important; }
+.fr-btn:not(.accept):not(.reject) { background:rgba(255,255,255,0.07) !important; border:1px solid rgba(255,255,255,0.1) !important; color:rgba(255,255,255,0.8) !important; border-radius:10px !important; font-size:.78rem !important; padding:7px 14px !important; }
 
-/* Forum beğeni / yorum butonları */
-.forum-foot-btn, .forum-action-btn, [class*="forum-react"] {
-  background: rgba(255,255,255,0.05) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 100px !important;
-  padding: 4px 10px !important;
-  font-size: .72rem !important;
-  transition: background .15s, border-color .15s !important;
-}
-.forum-foot-btn:hover, .forum-action-btn:hover {
-  background: rgba(0,232,122,0.1) !important;
-  border-color: rgba(0,232,122,0.2) !important;
-  color: var(--v2-green) !important;
-}
+/* FORUM CARDS */
+.forum-card { position:relative !important; border-radius:18px !important; overflow:hidden !important; border:1px solid rgba(255,255,255,0.08) !important; transition:border-color .2s,transform .2s !important; margin-bottom:10px !important; }
+.forum-card::before { content:'' !important; position:absolute !important; left:0;top:0;bottom:0 !important; width:3px !important; background:linear-gradient(to bottom,var(--v2-green),var(--v2-teal)) !important; border-radius:3px 0 0 3px !important; display:block !important; z-index:1 !important; }
+.forum-card:hover { border-color:rgba(0,232,122,0.22) !important; transform:translateY(-1px) !important; }
+.forum-filter-btn,.forum-tab { border-radius:100px !important; font-size:.78rem !important; font-weight:600 !important; padding:6px 13px !important; border:1px solid rgba(255,255,255,0.08) !important; background:rgba(255,255,255,0.06) !important; transition:all .15s !important; cursor:pointer !important; }
+.forum-filter-btn.act,.forum-tab.act,.forum-filter-btn:hover,.forum-tab:hover { background:rgba(0,232,122,0.13) !important; color:var(--v2-green) !important; border-color:rgba(0,232,122,0.28) !important; }
+.forum-foot-btn { background:rgba(255,255,255,0.05) !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:100px !important; padding:4px 11px !important; font-size:.74rem !important; transition:background .15s,border-color .15s !important; cursor:pointer !important; }
+.forum-foot-btn:hover { background:rgba(0,232,122,0.1) !important; border-color:rgba(0,232,122,0.2) !important; color:var(--v2-green) !important; }
 
-/* Forum filtre chip'leri */
-.forum-filter-btn, .forum-tab, [class*="forum-chip"] {
-  border-radius: 100px !important;
-  font-size: .75rem !important;
-  font-weight: 600 !important;
-  padding: 5px 12px !important;
-  border: 1px solid var(--v2-border) !important;
-  background: var(--v2-surface) !important;
-  transition: all .15s !important;
-}
-.forum-filter-btn.act, .forum-tab.act, [class*="forum-chip"].act {
-  background: rgba(0,232,122,0.14) !important;
-  color: var(--v2-green) !important;
-  border-color: rgba(0,232,122,0.28) !important;
-}
+/* ANA SAYFA rooms */
+#roomsScreen .r-row { padding:10px 12px !important; border-radius:14px !important; margin:2px 0 !important; }
+#roomsScreen .r-av { width:38px !important; height:38px !important; border-radius:50% !important; font-size:.78rem !important; }
+#roomsScreen .r-label { font-family:'Syne',sans-serif !important; font-size:.92rem !important; font-weight:700 !important; }
 
-/* ── WATCH SCREEN — Hero kart + kanal ızgarası ── */
-/* Kanallar için daha temiz kartlar */
-.watch-item, .tv-item, .ch-card, [class*="channel-card"], [class*="watch-card"] {
-  background: rgba(14,22,28,0.7) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  border-radius: 16px !important;
-  transition: border-color .2s, transform .2s, box-shadow .2s !important;
-  overflow: hidden !important;
-}
-.watch-item:hover, .tv-item:hover, .ch-card:hover {
-  border-color: rgba(0,232,122,0.25) !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important;
-}
+/* UNREAD BADGE */
+.ubadge { background:linear-gradient(135deg,var(--v2-green),var(--v2-teal)) !important; color:#000 !important; border-radius:100px !important; font-size:.62rem !important; font-weight:800 !important; min-width:18px !important; height:18px !important; padding:0 5px !important; }
 
-/* Canlı badge */
-.live-badge, .live-tag, [class*="live-dot"], [class*="r-dot"].on::after {
-  background: rgba(255,60,60,0.15) !important;
-  color: #ff7070 !important;
-  border: 1px solid rgba(255,60,60,0.28) !important;
-  border-radius: 100px !important;
-  font-size: .65rem !important;
-  font-weight: 700 !important;
-  letter-spacing: .06em !important;
-  padding: 2px 7px !important;
-}
+/* ONLINE DOT */
+.r-dot.on, .sdot { background:var(--v2-green) !important; box-shadow:none !important; animation:none !important; }
 
-/* Canlı kırmızı nokta animasyonu */
-@keyframes live-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+/* HEADERS */
+.ws-name { font-family:'Syne',sans-serif !important; font-weight:800 !important; letter-spacing:-0.02em !important; font-size:1.15rem !important; }
+.sec-hdr { font-size:.65rem !important; font-weight:900 !important; letter-spacing:.1em !important; color:rgba(255,255,255,0.35) !important; }
 
-/* ── ARKADAŞLAR / FRİENDS — Premium kart ── */
-.friend-item, .fr-item, [class*="friend-row"], [class*="fr-card"] {
-  background: rgba(14,22,28,0.7) !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
-  border-radius: 16px !important;
-  padding: 12px 14px !important;
-  margin: 4px 0 !important;
-  transition: border-color .2s, background .2s !important;
-}
-.friend-item:hover, .fr-item:hover {
-  background: rgba(255,255,255,0.05) !important;
-  border-color: rgba(0,232,122,0.18) !important;
-}
+/* MODAL */
+.bs-panel { border-radius:28px 28px 0 0 !important; }
 
-/* Online göstergesi — daha net */
-.ws-av .sdot, .prof-status-dot, .r-dot.on {
-  background: var(--v2-green) !important;
-  width: 10px !important; height: 10px !important;
-  border: 2px solid var(--bg, #070d1a) !important;
-  border-radius: 50% !important;
-}
-
-/* Arkadaş ekle butonu */
-.fr-btn.accept, .fr-btn-add, [class*="add-friend-btn"] {
-  background: rgba(0,232,122,0.12) !important;
-  border: 1px solid rgba(0,232,122,0.25) !important;
-  color: var(--v2-green) !important;
-  border-radius: 10px !important;
-  font-weight: 700 !important;
-  font-size: .78rem !important;
-  padding: 6px 12px !important;
-}
-/* Mesaj butonu */
-.fr-btn:not(.accept), [class*="msg-friend-btn"] {
-  background: rgba(255,255,255,0.06) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  border-radius: 10px !important;
-  font-size: .78rem !important;
-  padding: 6px 12px !important;
-}
-
-/* ── MESAJ LİSTESİ / DM — Modernize ── */
-.r-row, .dm-row {
-  border-radius: 14px !important;
-  padding: 10px 10px !important;
-  margin: 2px 0 !important;
-  transition: background .15s, transform .1s !important;
-}
-
-/* Okunmamış badge */
-.ubadge, .unread-badge, [class*="unread-count"] {
-  background: linear-gradient(135deg, var(--v2-green), var(--v2-teal)) !important;
-  color: #000 !important;
-  border-radius: 100px !important;
-  font-size: .62rem !important;
-  font-weight: 800 !important;
-  min-width: 18px !important;
-  height: 18px !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  padding: 0 5px !important;
-}
-
-/* ── SECTION HEADER'LAR — Daha güçlü ── */
-.sec-hdr, [class*="section-title"], [class*="sec-title"] {
-  font-family: 'Syne', sans-serif !important;
-  font-weight: 700 !important;
-  font-size: .68rem !important;
-  letter-spacing: .1em !important;
-  text-transform: uppercase !important;
-  color: rgba(255,255,255,0.35) !important;
-}
-
-/* ── AVATARLAR — Gradient ── */
-.ws-av, .r-av, .msg-av, [class*="avatar"]:not(img) {
-  border-radius: 50% !important;
-  font-weight: 800 !important;
-  font-family: 'Syne', sans-serif !important;
-}
-
-/* ── KATEGORİ BADGE'LERİ — İzle ekranı ── */
-.cat-tag, .ch-tag, [class*="category-tag"] {
-  font-size: .65rem !important;
-  color: rgba(255,255,255,0.4) !important;
-  background: rgba(255,255,255,0.06) !important;
-  border-radius: 6px !important;
-  padding: 2px 7px !important;
-}
-
-/* ── ARAMA ÇUBUĞU — Daha net ── */
-.search-row, [class*="search-bar"] {
-  border-radius: 14px !important;
-  background: rgba(255,255,255,0.07) !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  transition: border-color .2s, background .2s !important;
-}
-.search-row:focus-within, [class*="search-bar"]:focus-within {
-  border-color: rgba(0,232,122,0.28) !important;
-  background: rgba(255,255,255,0.09) !important;
-}
-
-/* ── HEADER — Daha şık ── */
-.ws-header, .c-header {
-  padding-bottom: 10px !important;
-}
-.ws-name, .c-hdr-name {
-  font-family: 'Syne', sans-serif !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.02em !important;
-}
-
-/* ── CHAT EKRANI — Mesaj kutusu ── */
-.inp-box {
-  margin: 8px 10px !important;
-  border-radius: 18px !important;
-}
-
-/* ── MODALLER — Daha premium ── */
-.bs-panel {
-  border-radius: 28px 28px 0 0 !important;
-}
-.bs-modal-title, [class*="modal-title"] {
-  font-family: 'Syne', sans-serif !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.02em !important;
-}
-
-/* ── PROFIL — Banner ve kart ── */
-.prof-banner {
-  background: linear-gradient(135deg, #052a18, #0a3d25, #063020) !important;
-}
-
-/* ── SCROLL DAVRANIŞI ── */
-* {
-  -webkit-overflow-scrolling: touch !important;
-  scroll-behavior: smooth !important;
-}
-
-/* ── GEÇİŞ ANİMASYONLARI ── */
-.screen {
-  transition: opacity .2s ease !important;
-}
-
-/* ── CO2 BADGE (Ana sayfa header) ── */
-[class*="co2"], [class*="carbon"] {
-  background: rgba(0,232,122,0.1) !important;
-  border: 1px solid rgba(0,232,122,0.2) !important;
-  color: var(--v2-green) !important;
-  border-radius: 100px !important;
-  font-size: .7rem !important;
-  font-weight: 600 !important;
-  padding: 3px 8px !important;
-}
-
-/* ── GENEL BUTTON HOVER EFEKTLERİ ── */
-button, [role="button"], .ui-btn {
-  transition: opacity .15s, transform .1s !important;
-}
-button:active, [role="button"]:active {
-  transform: scale(0.96) !important;
-}
+/* SCROLLBAR */
+::-webkit-scrollbar { width:0; height:0; }
 
 </style>
 
