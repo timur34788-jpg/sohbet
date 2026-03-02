@@ -11418,7 +11418,18 @@ if('serviceWorker'in navigator){const sw=`const C='sb-v8';self.addEventListener(
 /* ══════════════════════════════════════════
    DESKTOP ENGINE
 ══════════════════════════════════════════ */
-const IS_DESKTOP = () => window.innerWidth >= 768;
+// IS_DESKTOP: gerçek masaüstü/tablet tespiti
+// Telefon yatayda döndüğünde yanlış desktop moda GEÇMESİN
+// Math.min(screen.width, screen.height) → cihazın portrait genişliği
+// Telefon: 320-430px → < 768 = ASLA masaüstü
+// iPad/Tablet: 768px+ → masaüstü olabilir
+// Desktop: her zaman >= 768
+const IS_DESKTOP = () => {
+  const minScreenDim = Math.min(screen.width || 0, screen.height || 0);
+  // Eğer cihaz gerçekten küçükse (telefon) → her zaman mobil
+  if (minScreenDim > 0 && minScreenDim < 600) return false;
+  return window.innerWidth >= 768;
+};
 
 let _deskRoom = null;
 let _deskNav = 'home';
@@ -12669,16 +12680,28 @@ window.addEventListener('resize', () => {
       if (_deskRoom) deskOpenRoom(_deskRoom);
       else deskLoadRoomList();
     } else if (!nowDesktop) {
-      document.getElementById('desktopShell').style.display = 'none';
+      // --- Mobile restore ---
+      const shell = document.getElementById('desktopShell');
+      if (shell) shell.style.display = 'none';
+
       if (_cu) {
-        // Always restore to a safe mobile tab — never use _deskNav directly
-        const safeTab = ['home','forum','watch','msgs','friends'].includes(_lastMobileTab) ? _lastMobileTab : 'home';
+        // Force-hide ALL screens first
+        ['roomsScreen','forumScreen','msgsScreen','friendsScreen','profileScreen',
+         'chatScreen','adminPanel','gamesScreen','watchScreen'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) { el.classList.remove('active'); el.style.display = ''; }
+        });
+
+        // Restore to a safe tab — never profile/chat/admin
+        const safeTab = ['home','forum','watch','msgs','friends'].includes(_lastMobileTab)
+          ? _lastMobileTab
+          : 'home';
         switchMainTab(safeTab);
       } else {
         showScreen('loginScreen');
       }
     }
-  }, 250); // 250ms debounce — ignores keyboard/soft keyboard resize
+  }, 200);
 });
 
 // Also update room list when online status changes
