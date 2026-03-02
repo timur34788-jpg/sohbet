@@ -3561,6 +3561,65 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
       </div>
     </div>
 
+    <!-- ══ MOBİL UYGULAMA BANNERS ══ -->
+    <div id="installBanners" style="margin-top:18px;">
+      <!-- divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+        <span style="color:rgba(255,255,255,0.2);font-size:0.6rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;white-space:nowrap;">Mobil Uygulama</span>
+        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07);"></div>
+      </div>
+      <!-- Android Banner -->
+      <div id="androidInstallBanner" style="display:none;background:linear-gradient(135deg,#071a10,#0a2016);border:1px solid rgba(0,232,122,0.2);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;box-shadow:0 2px 20px rgba(0,232,122,0.06);margin-bottom:10px;">
+        <div style="position:absolute;top:-40px;right:-40px;width:130px;height:130px;background:radial-gradient(circle,rgba(0,232,122,0.12) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
+          <div style="width:46px;height:46px;border-radius:13px;background:rgba(0,232,122,0.1);border:1px solid rgba(0,232,122,0.22);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10z" fill="#00e87a"/><path d="M3.5 8C2.67 8 2 8.67 2 9.5v7c0 .83.67 1.5 1.5 1.5S5 17.33 5 16.5v-7C5 8.67 4.33 8 3.5 8zM20.5 8c-.83 0-1.5.67-1.5 1.5v7c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-7c0-.83-.67-1.5-1.5-1.5z" fill="#00e87a" opacity=".7"/><path d="M15.53 2.16l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C14.05 1.23 13.54 1 13 1h-2c-.54 0-1.05.23-1.64.63L7.88.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.3 1.3C7.9 2.79 7.5 3.82 7.5 5H16.5c0-1.18-.4-2.21-1.03-2.84z" fill="#00e87a"/><circle cx="10" cy="4" r=".8" fill="#071a10"/><circle cx="14" cy="4" r=".8" fill="#071a10"/></svg>
+          </div>
+          <div style="color:#dff5ea;font-weight:800;font-size:0.88rem;flex:1;">Android Uygulaması</div>
+          <button id="apkDownloadBtn" onclick="downloadAPK()" style="background:linear-gradient(135deg,#00e87a,#00bf62);color:#001a08;border:none;border-radius:10px;padding:10px 14px;font-weight:800;font-size:0.76rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;gap:6px;box-shadow:0 4px 14px rgba(0,232,122,0.3);white-space:nowrap;transition:all 0.35s;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>APK İndir
+          </button>
+        </div>
+        <div style="display:flex;gap:5px;padding-left:60px;">
+          <span style="background:rgba(0,232,122,0.09);border:1px solid rgba(0,232,122,0.18);color:rgba(160,230,190,0.7);font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Ücretsiz</span>
+          <span style="background:rgba(0,232,122,0.09);border:1px solid rgba(0,232,122,0.18);color:rgba(160,230,190,0.7);font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Android 5.0+</span>
+        </div>
+      </div>
+      <!-- iOS Banner -->
+      <div id="iosInstallBanner" style="display:none;background:linear-gradient(135deg,#081624,#0a1a2e);border:1px solid rgba(91,155,213,0.2);border-radius:16px;padding:14px 16px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-25px;right:-25px;width:110px;height:110px;background:radial-gradient(circle,rgba(91,155,213,0.1) 0%,transparent 70%);pointer-events:none;"></div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;" id="iosRow1">
+          <div style="width:46px;height:46px;border-radius:13px;background:rgba(91,155,213,0.1);border:1px solid rgba(91,155,213,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" fill="#5b9bd5"/></svg>
+          </div>
+          <div style="color:#dce8f5;font-weight:800;font-size:0.88rem;flex:1;">iPhone / iPad</div>
+          <button onclick="toggleIOSSteps()" id="iosHowBtn" style="background:linear-gradient(135deg,#5b9bd5,#3a7ab8);color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:800;font-size:0.76rem;cursor:pointer;flex-shrink:0;white-space:nowrap;box-shadow:0 4px 14px rgba(91,155,213,0.25);transition:all 0.3s;">Nasıl Yapılır?</button>
+        </div>
+        <div id="iosBadges" style="display:flex;gap:5px;justify-content:center;">
+          <span style="background:rgba(91,155,213,0.09);border:1px solid rgba(91,155,213,0.18);color:rgba(140,185,230,0.7);font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Ana Ekrana Ekle</span>
+          <span style="background:rgba(91,155,213,0.09);border:1px solid rgba(91,155,213,0.18);color:rgba(140,185,230,0.7);font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">3 Adım</span>
+          <span style="background:rgba(91,155,213,0.09);border:1px solid rgba(91,155,213,0.18);color:rgba(140,185,230,0.7);font-size:0.6rem;font-weight:700;padding:2px 8px;border-radius:100px;white-space:nowrap;">Safari</span>
+        </div>
+        <div id="iosSteps" style="display:none;margin-top:10px;">
+          <div style="display:flex;flex-direction:column;gap:7px;">
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(91,155,213,0.05);border:1px solid rgba(91,155,213,0.1);border-radius:10px;padding:10px 12px;">
+              <div style="width:22px;height:22px;border-radius:7px;background:rgba(91,155,213,0.16);color:#5b9bd5;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.66rem;flex-shrink:0;">1</div>
+              <div><div style="color:#bdd5ee;font-size:0.78rem;font-weight:700;">Safari'de aç</div><div style="color:rgba(120,160,200,0.4);font-size:0.65rem;margin-top:1px;">Chrome çalışmaz</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(91,155,213,0.05);border:1px solid rgba(91,155,213,0.1);border-radius:10px;padding:10px 12px;">
+              <div style="width:22px;height:22px;border-radius:7px;background:rgba(91,155,213,0.16);color:#5b9bd5;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.66rem;flex-shrink:0;">2</div>
+              <div><div style="color:#bdd5ee;font-size:0.78rem;font-weight:700;">Paylaş butonuna bas</div><div style="color:rgba(120,160,200,0.4);font-size:0.65rem;margin-top:1px;">Alt ortadaki kare + ok ikonu</div></div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;background:rgba(91,155,213,0.05);border:1px solid rgba(91,155,213,0.1);border-radius:10px;padding:10px 12px;">
+              <div style="width:22px;height:22px;border-radius:7px;background:rgba(91,155,213,0.16);color:#5b9bd5;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:0.66rem;flex-shrink:0;">3</div>
+              <div><div style="color:#bdd5ee;font-size:0.78rem;font-weight:700;">"Ana Ekrana Ekle" → Ekle</div><div style="color:rgba(120,160,200,0.4);font-size:0.65rem;margin-top:1px;">Hazır! Uygulama gibi açılır 🎉</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -4563,6 +4622,69 @@ function loginBack(){
   const p=document.getElementById('loginPass');
   if(p) p.value='';
 }
+/* ── Install Banners ── */
+(function(){
+  const ua = navigator.userAgent;
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+  const isDesktop = !isAndroid && !isIOS;
+
+  function initBanners(){
+    if(isDesktop) return; // masaüstünde gösterme
+    const androidBanner = document.getElementById('androidInstallBanner');
+    const iosBanner = document.getElementById('iosInstallBanner');
+    if(isAndroid && androidBanner) androidBanner.style.display = 'block';
+    if(isIOS && iosBanner) iosBanner.style.display = 'block';
+  }
+
+  // DOM hazır olunca
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initBanners);
+  } else {
+    initBanners();
+  }
+})();
+
+function downloadAPK(){
+  const btn = document.getElementById('apkDownloadBtn');
+  if(!btn) return;
+  btn.innerHTML = '<div style="width:12px;height:12px;border:2px solid rgba(0,26,8,0.3);border-top:2px solid #001a08;border-radius:50%;animation:spin .8s linear infinite"></div>İndiriliyor';
+  btn.style.opacity = '0.8';
+  btn.style.cursor = 'default';
+  // APK indirmeyi başlat
+  const a = document.createElement('a');
+  a.href = 'https://natureco.me/app.apk';
+  a.download = 'natureco.apk';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>{
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>İndirildi';
+    btn.style.background = 'rgba(0,232,122,0.1)';
+    btn.style.color = '#00e87a';
+    btn.style.border = '1px solid rgba(0,232,122,0.25)';
+    btn.style.boxShadow = 'none';
+    btn.style.opacity = '1';
+  }, 1500);
+}
+
+function toggleIOSSteps(){
+  const steps = document.getElementById('iosSteps');
+  const badges = document.getElementById('iosBadges');
+  const btn = document.getElementById('iosHowBtn');
+  if(!steps) return;
+  const isOpen = steps.style.display !== 'none';
+  steps.style.display = isOpen ? 'none' : 'block';
+  if(badges) badges.style.display = isOpen ? 'flex' : 'none';
+  if(btn){
+    btn.textContent = isOpen ? 'Nasıl Yapılır?' : 'Kapat ✕';
+    btn.style.background = isOpen ? 'linear-gradient(135deg,#5b9bd5,#3a7ab8)' : 'rgba(91,155,213,0.1)';
+    btn.style.color = isOpen ? '#fff' : '#5b9bd5';
+    btn.style.border = isOpen ? 'none' : '1px solid rgba(91,155,213,0.25)';
+    btn.style.boxShadow = isOpen ? '0 4px 14px rgba(91,155,213,0.25)' : 'none';
+  }
+}
+
 function showLoginTab(tab){
   // Giriş formunu step1'e sıfırla
   const s1=document.getElementById('loginStep1');
