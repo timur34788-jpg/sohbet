@@ -93,7 +93,16 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
   --accent:#8b4513; --accent2:#d2691e; --own-bg:#d2691e; --incoming-bg:#c8b898;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;-webkit-font-smoothing:antialiased;}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;font-size:15px;}
+html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
+/* Android Chrome DPR düzeltmesi — yüksek DPR ekranlarda font/eleman boyutlarını iOS ile eşitle */
+@media screen and (min-resolution:2dppx) and (hover:none) and (pointer:coarse) and (not (-webkit-touch-callout:default)){
+  html,body{font-size:13.5px;}
+  .tab-lb{font-size:.54rem !important;}
+  .ws-header,.c-header,.ws-name{font-size:.9rem;}
+  .r-row{padding:5px 12px;}
+  .mb{padding:3px 34px 3px 34px;}
+}
 
 /* ── Yan Dönme Engelleme ── */
 #orientationBlock {
@@ -1667,7 +1676,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .watch-now-sub { font-size: .75rem; color: var(--muted); margin-top: 1px; }
 /* Mobile watch screen */
 .watch-mob-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; padding: 14px; }
-.watch-mob-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: background .1s; }
+.watch-mob-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: background .1s; touch-action: manipulation; -webkit-tap-highlight-color: rgba(0,232,122,.15); user-select: none; -webkit-user-select: none; }
 .watch-mob-card:active { background: var(--surface2); }
 .watch-mob-card .wmc-logo { width: 52px; height: 52px; border-radius: 12px; background: var(--surface2); display: flex; align-items: center; justify-content: center; font-size: 1.6rem; overflow: hidden; }
 .watch-mob-card .wmc-logo img { width: 100%; height: 100%; object-fit: contain; }
@@ -4254,20 +4263,19 @@ function switchMainTab(tab){
     if (window.innerWidth < 768) {
       const bot = window._natureBotInstance;
       if (tab === 'watch') {
-        // Robot watchScreenBody içine taşı - ev görünümü
-        const watchBody = document.getElementById('watchScreenBody');
-        if (watchBody && !watchBody.contains(bot.el)) {
-          watchBody.appendChild(bot.el);
-          bot.el.style.position = 'absolute';
-          bot.el.style.left = '50%';
-          bot.el.style.top = '35%';
-          bot.el.style.transform = 'translateX(-50%)';
-          bot.el.style.width = '64px';
-          bot.el.style.height = '80px';
-          bot.el.style.zIndex = '10';
-          bot.isAtHome = true;
-          bot.el.classList.add('at-home');
-        }
+        // Bot'u watchScreenBody'e TAŞIMA — loadWatchPanel innerHTML'i sıfırlar ve botu yok eder
+        // Bunun yerine botu overlay olarak body'de tut
+        bot.el.style.position = 'fixed';
+        bot.el.style.left = '50%';
+        bot.el.style.top = '30%';
+        bot.el.style.transform = 'translateX(-50%)';
+        bot.el.style.width = '64px';
+        bot.el.style.height = '80px';
+        bot.el.style.zIndex = '10';
+        bot.el.style.pointerEvents = 'none';
+        bot.isAtHome = true;
+        bot.el.classList.add('at-home');
+        if (!document.body.contains(bot.el)) document.body.appendChild(bot.el);
       } else {
         // Diğer sekmelerde header slotuna geri taşı
         const slot = document.getElementById('mobileRobotSlot');
@@ -13010,9 +13018,14 @@ function _playHlsStream(videoEl, url) {
 function loadWatchPanel() {
   const body = document.getElementById('watchScreenBody');
   if (!body) return;
+  // natureBotHomeZone'u kaldır (varsa) — aksi hâlde grid'in üstünde kalır
+  const homeZone = document.getElementById('natureBotHomeZone');
+  if (homeZone) homeZone.style.display = 'none';
+
   let h = '<div class="watch-mob-grid">';
   TV_CHANNELS.forEach(ch => {
-    h += `<div class="watch-mob-card" onclick="openMobTv('${ch.id}')">
+    // data-ch-id ile onclick yerine event delegation kullan (Android uyumu)
+    h += `<div class="watch-mob-card" data-ch-id="${ch.id}" role="button" tabindex="0" aria-label="${ch.name}">
       <div class="wmc-logo">${ch.emoji}</div>
       <div class="wmc-name">${ch.name}</div>
       <div class="wmc-cat">${ch.cat}</div>
@@ -13020,8 +13033,26 @@ function loadWatchPanel() {
   });
   h += '</div>';
   body.innerHTML = h;
-  // Load hls.js if not loaded
+
+  // Event delegation: hem click hem touchend (Android güvencesi)
+  body.addEventListener('click', _watchGridDelegate, { passive: true });
+  body.addEventListener('touchend', _watchGridDelegate, { passive: true });
+
+  // hls.js'i önceden yükle (kanal açılışını hızlandır)
   _ensureHlsJs();
+}
+
+function _watchGridDelegate(e) {
+  // Closest ile kart bul (alt elemanlara tıklamayı da yakala)
+  const card = e.target.closest ? e.target.closest('.watch-mob-card') : null;
+  if (!card) return;
+  const id = card.getAttribute('data-ch-id');
+  if (id) {
+    // touchend'de çift tetiklenmeyi önle
+    if (e.type === 'touchend') { e._watchHandled = true; }
+    if (e.type === 'click' && e._watchHandled) return;
+    openMobTv(id);
+  }
 }
 
 function _ensureHlsJs(cb) {
@@ -13045,24 +13076,38 @@ function openMobTv(id) {
   }
   p.innerHTML = `
     <div class="watch-mob-player-header">
-      <div class="watch-mob-close" onclick="closeMobTv()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
+      <div class="watch-mob-close" id="watchMobCloseBtn" style="touch-action:manipulation;cursor:pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
       <div style="flex:1">
         <div style="font-size:.95rem;font-weight:900;color:#fff;">${ch.name}</div>
         <div style="font-size:.7rem;color:rgba(255,255,255,.5);">${ch.cat} · Canlı Yayın</div>
       </div>
       <span class="watch-live-badge">CANLI</span>
     </div>
-    <video id="watchMobVideo" style="width:100%;height:100%;object-fit:contain;background:#000;" controls playsinline></video>
-    <div class="watch-stream-err" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;text-align:center;padding:20px;">
+    <video id="watchMobVideo" style="width:100%;height:100%;object-fit:contain;background:#000;" controls playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" x5-video-player-fullscreen="false"></video>
+    <div class="watch-stream-err" id="watchStreamErr" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;flex-direction:column;gap:8px;color:#fff;text-align:center;padding:20px;">
       <div style="font-size:2.5rem;">📡</div>
       <div style="font-size:.95rem;font-weight:700;">Yayın yüklenemedi</div>
       <div style="font-size:.78rem;opacity:.6;">Kanal geçici olarak erişilemez olabilir</div>
+      <button onclick="closeMobTv()" style="margin-top:12px;padding:8px 20px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;color:#fff;font-size:.85rem;cursor:pointer;">Kapat</button>
     </div>`;
-  p.style.display = 'flex';
+  p.style.cssText = 'position:fixed;inset:0;background:#000;z-index:99999;display:flex;flex-direction:column;';
+
+  // Kapatma butonuna her iki event'i de bağla (Android güvencesi)
+  const closeBtn = document.getElementById('watchMobCloseBtn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeMobTv);
+    closeBtn.addEventListener('touchend', function(e){ e.preventDefault(); closeMobTv(); });
+  }
+
   _ensureHlsJs(() => {
     const v = document.getElementById('watchMobVideo');
     if (v) _playHlsStream(v, ch.m3u8);
   });
+  // hls.js zaten yüklüyse doğrudan çal
+  if (typeof Hls !== 'undefined') {
+    const v = document.getElementById('watchMobVideo');
+    if (v) _playHlsStream(v, ch.m3u8);
+  }
 }
 
 function closeMobTv() {
@@ -13719,7 +13764,7 @@ setTimeout(()=>{
     <span class="watch-live-badge">CANLI</span>
     <div class="ws-av" onclick="openProfile()"><div class="sdot"></div></div>
   </div>
-  <div id="watchScreenBody" style="flex:1;overflow-y:auto;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+  <div id="watchScreenBody" style="flex:1;overflow-y:auto;position:relative;">
     <!-- NatureBot Ev Alanı -->
     <div id="natureBotHomeZone" style="
       display:none;flex-direction:column;
