@@ -2296,6 +2296,8 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
         </div>
         <!-- Zil + Profil -->
         <div style="display:flex;align-items:center;gap:4px;">
+          <div onclick="openCarbonModal()" title="Karbon" style="display:flex;align-items:center;gap:3px;background:rgba(46,204,113,.13);border:1px solid rgba(46,204,113,.3);border-radius:100px;padding:2px 8px;cursor:pointer;flex-shrink:0;margin-right:2px;"><span style="font-size:.72rem;">🌿</span><span id="deskCarbonCount" style="font-size:.63rem;font-weight:900;color:#2ecc71;">CO₂</span></div>
+          <div onclick="openAmbiancePanel()" title="Doğa Sesleri" style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;font-size:.9rem;flex-shrink:0;" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background=''">🎵</div>
           <div id="deskBellBtn" onclick="openNotifCenter(this)" title="Bildirimler" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;position:relative;color:rgba(255,255,255,.7);transition:background .15s;flex-shrink:0;" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='transparent'">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <div id="deskNotifDot" style="display:none;position:absolute;top:3px;right:3px;width:6px;height:6px;background:#e05555;border-radius:50%;border:1.5px solid #222529;"></div>
@@ -2605,9 +2607,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   <div id="ptr-indicator">↻</div>
   <div class="ws-header">
     <div class="ws-name" id="wsHeaderName" onclick="showServerSwitchModal()" style="cursor:pointer;" title="Sunucu değiştir">Nature.co</div>
-    <div id="carbonWidget" onclick="openCarbonModal()" title="Karbon Ayak İzi" style="display:flex;align-items:center;gap:4px;background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.25);border-radius:100px;padding:3px 10px;cursor:pointer;flex-shrink:0;transition:background .2s;" onmouseover="this.style.background='rgba(46,204,113,.22)'" onmouseout="this.style.background='rgba(46,204,113,.12)'">
-      <span style="font-size:.8rem;">🌿</span><span id="carbonCount" style="font-size:.68rem;font-weight:900;color:#2ecc71;">0g CO₂</span>
-    </div>
+    <div id="carbonWidget" onclick="openCarbonModal()" title="Karbon" style="display:flex;align-items:center;gap:4px;background:rgba(46,204,113,.13);border:1px solid rgba(46,204,113,.3);border-radius:100px;padding:3px 9px;cursor:pointer;flex-shrink:0;"><span style="font-size:.75rem;">🌿</span><span id="carbonCount" style="font-size:.66rem;font-weight:900;color:#2ecc71;">0g CO₂</span></div>
     <div style="display:flex;align-items:center;gap:8px;">
       <div onclick="openNotifCenter()" title="Bildirimler" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;position:relative;color:rgba(255,255,255,.7);transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.08)'" onmouseout="this.style.background='transparent'">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -2616,7 +2616,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
       <div class="ws-av" id="myAvatar" onclick="openProfile()"><div class="sdot"></div></div>
       <!-- Robot yuvası: bell → profil → robot sırası -->
       <div id="mobileRobotSlot" style="width:40px;height:44px;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;"></div>
-      <div onclick="openAmbiancePanel()" title="Doğa Sesleri" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:1rem;flex-shrink:0;transition:background .15s;" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='transparent'">🎵</div>
+      <div onclick="openAmbiancePanel()" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:1rem;flex-shrink:0;" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background=''">🎵</div>
     </div>
   </div>
   <div class="search-row" onclick="openGlobalSearch()" style="cursor:pointer;">
@@ -2779,9 +2779,9 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   </div>
   <div id="emojiPicker"></div>
   <div class="inp-wrap" id="chatInputRow">
-    <div id="autocompleteBar" style="display:none;overflow-x:auto;white-space:nowrap;padding:5px 10px 3px;scrollbar-width:none;"></div>
+    <div id="acBar" style="display:none;overflow-x:auto;padding:5px 10px 2px;white-space:nowrap;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
     <div class="inp-box">
-      <textarea id="msgInp" rows="1" placeholder="Mesaj yaz..." oninput="autoResize(this);triggerAutocomplete(this.value)" onkeydown="onMsgKey(event)"></textarea>
+      <textarea id="msgInp" rows="1" placeholder="Mesaj yaz..." oninput="autoResize(this);triggerAC(this.value)" onkeydown="onMsgKey(event)"></textarea>
       <div class="inp-btm">
         <div class="ii" onclick="toggleEmoji()">😊</div>
         <div class="ii" onclick="pickFile()">📎</div>
@@ -2972,23 +2972,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
           <div id="compactModeKnob" style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);"></div>
         </div>
       </div>
-
-      <!-- 🎨 Özel Tema Motoru -->
-      <div style="margin-top:18px;">
-        <div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;align-items:center;gap:4px;">🎨 Özel Tema Oluştur</div>
-        <div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:14px;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-            <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;">Ana Renk</div><input type="color" id="ct-accent" value="#5b9bd5" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div>
-            <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;">Arka Plan</div><input type="color" id="ct-bg" value="#141618" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div>
-            <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;">Yüzey</div><input type="color" id="ct-surface" value="#252830" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div>
-            <div><div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;">Kendi Mesajı</div><input type="color" id="ct-own" value="#2a4a7a" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="applyCustomTheme()" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px;font-size:.8rem;font-weight:700;cursor:pointer;">✓ Uygula</button>
-            <button onclick="resetCustomTheme()" style="flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:.8rem;font-weight:700;cursor:pointer;">↺ Sıfırla</button>
-          </div>
-        </div>
-      </div>
+      <div style="margin-top:18px;"><div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🎨 Özel Tema Oluştur</div><div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:14px;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Ana Renk</div><input type="color" id="ct-accent" value="#5b9bd5" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Arka Plan</div><input type="color" id="ct-bg" value="#141618" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Yüzey</div><input type="color" id="ct-surface" value="#252830" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Mesaj Rengi</div><input type="color" id="ct-own" value="#2a4a7a" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div></div><div style="display:flex;gap:8px;"><button onclick="applyCustomTheme()" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px;font-size:.79rem;font-weight:700;cursor:pointer;">✓ Uygula</button><button onclick="resetCustomTheme()" style="flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:.79rem;font-weight:700;cursor:pointer;">↺ Sıfırla</button></div></div></div>
     </div>
 
     <!-- TAB: Sesler -->
@@ -10728,6 +10712,7 @@ function deskLoadProfile() {
     '<div><div style="font-size:.85rem;font-weight:700;color:var(--text-hi);">SVG İkon Seti</div><div style="font-size:.72rem;color:var(--muted);">Vektörel ikonlar aktif</div></div>' +
     '<span style="background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.2);font-size:.68rem;font-weight:700;border-radius:100px;padding:3px 10px;">✓ Aktif</span>' +
     '</div>' +
+    '<div style="margin-top:18px;"><div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🎨 Özel Tema Oluştur</div><div style="background:var(--surface);border-radius:12px;border:1px solid var(--border);padding:14px;"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;"><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Ana Renk</div><input type="color" id="ct-accent" value="#5b9bd5" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Arka Plan</div><input type="color" id="ct-bg" value="#141618" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Yüzey</div><input type="color" id="ct-surface" value="#252830" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div><div><div style="font-size:.67rem;color:var(--muted);margin-bottom:4px;">Mesaj Rengi</div><input type="color" id="ct-own" value="#2a4a7a" style="width:100%;height:34px;border-radius:8px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"></div></div><div style="display:flex;gap:8px;"><button onclick="applyCustomTheme()" style="flex:1;background:var(--accent);color:#fff;border:none;border-radius:8px;padding:8px;font-size:.79rem;font-weight:700;cursor:pointer;">✓ Uygula</button><button onclick="resetCustomTheme()" style="flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px;font-size:.79rem;font-weight:700;cursor:pointer;">↺ Sıfırla</button></div></div></div>' +
     '</div>' +
     // Tab: Sesler
     '<div id="dppanel-sounds" style="padding:20px;display:none;">' +
@@ -10741,6 +10726,8 @@ function deskLoadProfile() {
     '<div style="display:flex;flex-direction:column;gap:8px;">' +
     (isAdmin ? '<div onclick="deskNav(\'admin\')" style="background:var(--surface2);border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'var(--surface2)\'"><div style="font-size:1.2rem;">👑</div><div style="font-size:.9rem;font-weight:700;color:var(--text-hi);">Admin Paneli</div></div>' : '') +
     '<div onclick="openChangePassword()" style="background:var(--surface2);border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'var(--surface2)\'"><div style="font-size:1.2rem;">🔑</div><div style="font-size:.9rem;font-weight:700;color:var(--text-hi);">Şifre Değiştir</div></div>' +
+    '<div onclick="openBotPersonality()" style="background:rgba(91,155,213,.08);border:1px solid rgba(91,155,213,.2);border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;"><div style="font-size:1.2rem;">🤖</div><div style="font-size:.9rem;font-weight:700;color:var(--text-hi);">Bot Kişiliği</div></div>' +
+    '<div onclick="openTimeCapsule()" style="background:rgba(156,39,176,.08);border:1px solid rgba(156,39,176,.2);border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;"><div style="font-size:1.2rem;">🧬</div><div style="font-size:.9rem;font-weight:700;color:var(--text-hi);">Zaman Kapsülü</div></div>' +
     '<div onclick="deskDoLogout()" style="background:rgba(224,30,90,.1);border-radius:10px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;" onmouseover="this.style.background=\'rgba(224,30,90,.2)\'" onmouseout="this.style.background=\'rgba(224,30,90,.1)\'"><div style="font-size:1.2rem;">🚪</div><div style="font-size:.9rem;font-weight:700;color:#e01e5a;">Çıkış Yap</div></div>' +
     '</div></div>' +
     '</div>';
@@ -18916,273 +18903,369 @@ window._i18n = { apply: applyI18n, t: () => _activeT, lang: () => _activeLang, d
 </script>
 
 
+<!-- ═══ YENİ ÖZELLİKLER: MODALS ═══ -->
 
-<!-- ══════════ MODALS ══════════ -->
-
-<!-- KARBON MODAL -->
-<div id="carbonModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:22px;max-width:340px;width:100%;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-      <span style="font-size:1.8rem;">🌿</span>
-      <div><div style="font-size:.95rem;font-weight:900;color:var(--text-hi);">Karbon Ayak İzi</div><div style="font-size:.7rem;color:var(--muted);">Nature.co ekolojik katkınız</div></div>
-      <button onclick="document.getElementById('carbonModal').style.display='none'" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">✕</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);border-radius:12px;padding:12px;text-align:center;"><div style="font-size:1.3rem;font-weight:900;color:#2ecc71;" id="carbonTotal">0g</div><div style="font-size:.66rem;color:var(--muted);margin-top:2px;">CO₂ Tasarrufu</div></div>
-      <div style="background:rgba(91,155,213,.1);border:1px solid rgba(91,155,213,.2);border-radius:12px;padding:12px;text-align:center;"><div style="font-size:1.3rem;font-weight:900;color:var(--accent);" id="carbonMsgs">0</div><div style="font-size:.66rem;color:var(--muted);margin-top:2px;">Mesaj Gönderildi</div></div>
-      <div style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);border-radius:12px;padding:12px;text-align:center;"><div style="font-size:1.3rem;font-weight:900;color:#f0c040;" id="carbonStreak">0</div><div style="font-size:.66rem;color:var(--muted);margin-top:2px;">Gün Serisi</div></div>
-      <div style="background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.2);border-radius:12px;padding:12px;text-align:center;"><div style="font-size:1.1rem;font-weight:900;color:#e05555;" id="carbonTree">🌱 0</div><div style="font-size:.66rem;color:var(--muted);margin-top:2px;">Fidan Eşdeğeri</div></div>
-    </div>
-    <div style="font-size:.7rem;color:var(--muted);text-align:center;line-height:1.5;">Her mesaj tarayıcıda işlenir — sunucu CO₂ tasarrufu sağlanır! 🌍</div>
+<!-- KARBON -->
+<div id="carbonModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:22px;max-width:320px;width:100%;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span style="font-size:1.8rem;">&#x1F33F;</span><div><div style="font-size:.9rem;font-weight:900;color:var(--text-hi);">Karbon Ayak İzi</div><div style="font-size:.67rem;color:var(--muted);">Nature.co ekolojik katkınız</div></div><button onclick="document.getElementById('carbonModal').style.display='none'" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">&#x2715;</button></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+    <div style="background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);border-radius:12px;padding:12px;text-align:center;"><div id="cT" style="font-size:1.2rem;font-weight:900;color:#2ecc71;">0g</div><div style="font-size:.63rem;color:var(--muted);margin-top:2px;">CO&#x2082; Tasarrufu</div></div>
+    <div style="background:rgba(91,155,213,.1);border:1px solid rgba(91,155,213,.2);border-radius:12px;padding:12px;text-align:center;"><div id="cM" style="font-size:1.2rem;font-weight:900;color:var(--accent);">0</div><div style="font-size:.63rem;color:var(--muted);margin-top:2px;">Mesaj Gönderildi</div></div>
+    <div style="background:rgba(240,192,64,.1);border:1px solid rgba(240,192,64,.2);border-radius:12px;padding:12px;text-align:center;"><div id="cK" style="font-size:1.2rem;font-weight:900;color:#f0c040;">0</div><div style="font-size:.63rem;color:var(--muted);margin-top:2px;">Gün Serisi</div></div>
+    <div style="background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.2);border-radius:12px;padding:12px;text-align:center;"><div id="cF" style="font-size:1rem;font-weight:900;color:#e05555;">&#x1F331; 0</div><div style="font-size:.63rem;color:var(--muted);margin-top:2px;">Fidan Eşdeğeri</div></div>
   </div>
-</div>
+  <div style="font-size:.68rem;color:var(--muted);text-align:center;">Her mesaj tarayıcıda işlenir - sunucu CO&#x2082; tasarrufu! &#x1F30D;</div>
+</div></div>
 
-<!-- AMBIYANS MODAL -->
-<div id="ambianceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeAmbiancePanel()">
-  <div style="background:var(--surface);border-radius:18px 18px 0 0;border:1px solid var(--border);padding:20px;width:100%;max-width:480px;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-      <span style="font-size:1.2rem;">🎵</span><div style="font-size:.9rem;font-weight:900;color:var(--text-hi);">Doğa Ambiyansı</div>
-      <button onclick="closeAmbiancePanel()" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">✕</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;" id="ambianceGrid"></div>
-    <div id="ambiVolRow" style="display:none;margin-top:12px;">
-      <div style="font-size:.7rem;color:var(--muted);margin-bottom:5px;">🔊 Ses Seviyesi</div>
-      <input type="range" id="ambiVol" min="0" max="100" value="50" oninput="setAmbiVol(this.value)" style="width:100%;accent-color:var(--accent);">
-    </div>
-  </div>
-</div>
+<!-- AMBIYANS -->
+<div id="ambianceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)closeAP()">
+<div style="background:var(--surface);border-radius:18px 18px 0 0;border:1px solid var(--border);padding:18px;width:100%;max-width:480px;">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span style="font-size:1.1rem;">&#x1F3B5;</span><div style="font-size:.88rem;font-weight:900;color:var(--text-hi);">Doğa Ambiyansı</div><button onclick="closeAP()" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">&#x2715;</button></div>
+  <div id="amGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;"></div>
+  <div id="amVolR" style="display:none;margin-top:10px;"><div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;">&#x1F50A; Ses Seviyesi</div><input type="range" id="amVol" min="0" max="100" value="50" oninput="setAV(this.value)" style="width:100%;accent-color:var(--accent);"></div>
+</div></div>
 
-<!-- BOT KİŞİLİK MODAL -->
-<div id="botPersonalityModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:22px;max-width:340px;width:100%;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-      <span style="font-size:1.4rem;">🤖</span><div style="font-size:.9rem;font-weight:900;color:var(--text-hi);">Bot Kişiliği</div>
-      <button onclick="document.getElementById('botPersonalityModal').style.display='none'" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">✕</button>
-    </div>
-    <div id="botPersonalityList" style="display:flex;flex-direction:column;gap:8px;"></div>
-  </div>
-</div>
+<!-- BOT KİŞİLİK -->
+<div id="botPersonalityModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:22px;max-width:320px;width:100%;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span style="font-size:1.3rem;">&#x1F916;</span><div style="font-size:.88rem;font-weight:900;color:var(--text-hi);">Bot Kişiliği</div><button onclick="document.getElementById('botPersonalityModal').style.display='none'" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">&#x2715;</button></div>
+  <div id="bpList"></div>
+</div></div>
 
-<!-- ZAMAN KAPSÜLÜ MODAL -->
-<div id="timeCapsuleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9999;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:22px;max-width:400px;width:100%;max-height:88vh;overflow-y:auto;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
-      <span style="font-size:1.4rem;">🧬</span><div style="font-size:.9rem;font-weight:900;color:var(--text-hi);">Zaman Kapsülü</div>
-      <button onclick="document.getElementById('timeCapsuleModal').style.display='none'" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">✕</button>
-    </div>
-    <textarea id="capsuleMsg" placeholder="Geleceğe mesajınızı yazın..." rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text-hi);font-family:inherit;font-size:.85rem;resize:none;outline:none;margin-bottom:10px;"></textarea>
-    <div style="margin-bottom:10px;"><div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">📅 Açılma Tarihi</div>
-    <input type="datetime-local" id="capsuleDate" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text-hi);font-family:inherit;font-size:.83rem;outline:none;"></div>
-    <button onclick="saveCapsule()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-size:.85rem;font-weight:700;cursor:pointer;margin-bottom:16px;">🧬 Kapsülü Kilitle</button>
-    <div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Kapsüllerim</div>
-    <div id="capsuleList"></div>
-  </div>
-</div>
+<!-- ZAMAN KAPSÜLÜ -->
+<div id="timeCapsuleModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px;" onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--surface);border-radius:18px;border:1px solid var(--border);padding:22px;max-width:380px;width:100%;max-height:88vh;overflow-y:auto;">
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;"><span style="font-size:1.3rem;">&#x1F9EC;</span><div style="font-size:.88rem;font-weight:900;color:var(--text-hi);">Zaman Kapsülü</div><button onclick="document.getElementById('timeCapsuleModal').style.display='none'" style="margin-left:auto;background:var(--surface2);border:none;border-radius:8px;padding:5px 10px;color:var(--text);cursor:pointer;">&#x2715;</button></div>
+  <textarea id="capMsg" placeholder="Geleceğe mesajınızı yazın..." rows="4" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;color:var(--text-hi);font-family:inherit;font-size:.83rem;resize:none;outline:none;margin-bottom:9px;box-sizing:border-box;"></textarea>
+  <div style="margin-bottom:9px;"><div style="font-size:.68rem;color:var(--muted);margin-bottom:3px;">&#x1F4C5; Açılma Tarihi</div><input type="datetime-local" id="capDate" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:9px 11px;color:var(--text-hi);font-family:inherit;font-size:.8rem;outline:none;box-sizing:border-box;"></div>
+  <button onclick="saveCap()" style="width:100%;background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-size:.83rem;font-weight:700;cursor:pointer;margin-bottom:14px;">&#x1F9EC; Kapsülü Kilitle</button>
+  <div style="font-size:.7rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px;">Kapsüllerim</div>
+  <div id="capList"></div>
+</div></div>
 
 <style>
-#autocompleteBar::-webkit-scrollbar{display:none;}
-.ac-chip{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:4px 12px;font-size:.76rem;color:var(--text);cursor:pointer;white-space:nowrap;margin-right:5px;transition:background .15s;}
-.ac-chip:hover,.ac-chip:active{background:var(--accent);color:#fff;border-color:var(--accent);}
+#acBar::-webkit-scrollbar{display:none}
+.acc{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:4px 11px;font-size:.75rem;color:var(--text);cursor:pointer;white-space:nowrap;margin-right:4px;margin-bottom:2px;transition:background .15s;}
+.acc:active,.acc:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
 </style>
 
 <script>
-/* ══ KARBON TRACKER ══ */
-var _C={s:+localStorage.getItem('c_s')||0,m:+localStorage.getItem('c_m')||0,ld:localStorage.getItem('c_ld')||'',k:+localStorage.getItem('c_k')||0};
-function _Cupd(){var e=document.getElementById('carbonCount');if(e)e.textContent=(_C.s>=1000?(_C.s/1000).toFixed(2)+'kg':_C.s.toFixed(1)+'g')+' CO₂';}
-function _Cadd(){_C.s+=0.3+Math.random()*0.2;_C.m++;var t=new Date().toDateString();if(t!==_C.ld){_C.k=_C.ld?_C.k+1:1;_C.ld=t;}localStorage.setItem('c_s',_C.s.toFixed(2));localStorage.setItem('c_m',_C.m);localStorage.setItem('c_ld',_C.ld);localStorage.setItem('c_k',_C.k);_Cupd();}
-_Cupd();
+(function(){
+
+/* KARBON */
+var cs=+localStorage.getItem('cs')||0,cm_=+localStorage.getItem('cm_')||0,ck=+localStorage.getItem('ck')||0,cd=localStorage.getItem('cd')||'';
+function updC(){
+  var f=cs>=1000?(cs/1000).toFixed(2)+'kg':cs.toFixed(1)+'g';
+  var e1=document.getElementById('carbonCount');if(e1)e1.textContent=f+' CO2';
+  var e2=document.getElementById('deskCarbonCount');if(e2)e2.textContent=f;
+}
+updC();
 window.openCarbonModal=function(){
   var m=document.getElementById('carbonModal');if(!m)return;
-  document.getElementById('carbonTotal').textContent=_C.s>=1000?(_C.s/1000).toFixed(2)+'kg CO₂':_C.s.toFixed(1)+'g CO₂';
-  document.getElementById('carbonMsgs').textContent=_C.m;
-  document.getElementById('carbonStreak').textContent=_C.k;
-  document.getElementById('carbonTree').textContent='🌱 '+Math.floor(_C.s/50);
+  document.getElementById('cT').textContent=cs>=1000?(cs/1000).toFixed(2)+'kg CO2':cs.toFixed(1)+'g CO2';
+  document.getElementById('cM').textContent=cm_;
+  document.getElementById('cK').textContent=ck;
+  document.getElementById('cF').textContent='Fidan: '+Math.floor(cs/50);
   m.style.display='flex';
 };
-(function(){var o=window.sendMsg;window.sendMsg=function(){_Cadd();return o&&o.apply(this,arguments);};})();
-
-/* ══ DOĞA AMBIYANS ══ */
-var _AC=null,_AN={},_AA=null;
-var _AS=[{id:'rain',lb:'🌧️ Yağmur',c:'#29b6f6'},{id:'forest',lb:'🌲 Orman',c:'#4caf50'},{id:'ocean',lb:'🌊 Okyanus',c:'#0288d1'},{id:'fire',lb:'🔥 Şömine',c:'#ff7043'},{id:'wind',lb:'💨 Rüzgar',c:'#90a4ae'},{id:'night',lb:'🌙 Gece',c:'#7e57c2'}];
-function _MkN(t){if(!_AC)_AC=new(window.AudioContext||window.webkitAudioContext)();var b=_AC.createBuffer(1,_AC.sampleRate*3,_AC.sampleRate),d=b.getChannelData(0);for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;var s=_AC.createBufferSource();s.buffer=b;s.loop=true;var g=_AC.createGain();g.gain.value=0;var f=_AC.createBiquadFilter();if(t==='rain'){f.type='bandpass';f.frequency.value=3000;f.Q.value=0.5;}else if(t==='forest'){f.type='lowpass';f.frequency.value=1200;}else if(t==='ocean'){f.type='lowpass';f.frequency.value=400;}else if(t==='wind'){f.type='bandpass';f.frequency.value=600;f.Q.value=0.3;}else if(t==='night'){f.type='lowpass';f.frequency.value=200;}else{f.type='lowpass';f.frequency.value=800;}s.connect(f);f.connect(g);g.connect(_AC.destination);s.start();return{g:g};}
-window.openAmbiancePanel=function(){
-  var gr=document.getElementById('ambianceGrid');if(!gr)return;
-  gr.innerHTML=_AS.map(function(s){var on=_AA===s.id;return'<div onclick="toggleAmbiance(''+s.id+'')" style="background:'+(on?s.c+'33':'var(--surface2)')+';border:1.5px solid '+(on?s.c:'var(--border)')+';border-radius:12px;padding:12px 8px;text-align:center;cursor:pointer;transition:all .2s;"><div style="font-size:1.3rem;">'+s.lb.split(' ')[0]+'</div><div style="font-size:.7rem;font-weight:700;color:'+(on?s.c:'var(--text)')+';margin-top:3px;">'+s.lb.split(' ').slice(1).join(' ')+'</div></div>';}).join('');
-  document.getElementById('ambianceModal').style.display='flex';
-  document.getElementById('ambiVolRow').style.display=_AA?'block':'none';
+var _oSend=window.sendMsg;
+window.sendMsg=function(){
+  cs+=0.3+Math.random()*0.2;cm_++;
+  var td=new Date().toDateString();
+  if(td!==cd){ck=cd?ck+1:1;cd=td;}
+  localStorage.setItem('cs',cs.toFixed(2));localStorage.setItem('cm_',cm_);localStorage.setItem('ck',ck);localStorage.setItem('cd',cd);
+  updC();
+  return _oSend&&_oSend.apply(this,arguments);
 };
-window.toggleAmbiance=function(id){if(_AA===id){if(_AN[id])_AN[id].g.gain.setTargetAtTime(0,_AC.currentTime,0.3);_AA=null;}else{if(_AA&&_AN[_AA])_AN[_AA].g.gain.setTargetAtTime(0,_AC.currentTime,0.3);if(!_AN[id])_AN[id]=_MkN(id);var v=document.getElementById('ambiVol');_AN[id].g.gain.setTargetAtTime((v?v.value:50)/100*0.6,_AC.currentTime,0.5);_AA=id;}window.openAmbiancePanel();};
-window.setAmbiVol=function(v){if(_AA&&_AN[_AA])_AN[_AA].g.gain.setTargetAtTime(v/100*0.6,_AC.currentTime,0.1);};
-window.closeAmbiancePanel=function(){document.getElementById('ambianceModal').style.display='none';};
 
-/* ══ BOT KİŞİLİK ══ */
-var _BP=[{id:'friendly',lb:'😊 Arkadaşça',dc:'Sıcak, samimi, emojili',c:'#4caf50'},{id:'professional',lb:'💼 Profesyonel',dc:'Resmi, saygılı, net',c:'#5b9bd5'},{id:'funny',lb:'😄 Esprili',dc:'Neşeli, şakacı',c:'#f0c040'},{id:'wise',lb:'🦉 Bilge',dc:'Felsefi, düşünceli',c:'#9c27b0'},{id:'nature',lb:'🌿 Doğa Ruhu',dc:'Sakin, huzurlu',c:'#2ecc71'}];
-var _BPA=localStorage.getItem('bot_pers')||'friendly';
+/* AMBIYANS */
+var aC=null,aN={},aA=null;
+var aS=[['rain','Yagmur','#29b6f6'],['forest','Orman','#4caf50'],['ocean','Okyanus','#0288d1'],['fire','Somine','#ff7043'],['wind','Ruzgar','#90a4ae'],['night','Gece','#7e57c2']];
+var aSE=['🌧️','🌲','🌊','🔥','💨','🌙'];
+function mkN(t){
+  if(!aC)aC=new(window.AudioContext||window.webkitAudioContext)();
+  var b=aC.createBuffer(1,aC.sampleRate*3,aC.sampleRate),d=b.getChannelData(0);
+  for(var i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  var s=aC.createBufferSource();s.buffer=b;s.loop=true;
+  var g=aC.createGain();g.gain.value=0;
+  var f=aC.createBiquadFilter();
+  var cfgs={rain:{type:'bandpass',freq:3000},forest:{type:'lowpass',freq:1200},ocean:{type:'lowpass',freq:400},wind:{type:'bandpass',freq:600},night:{type:'lowpass',freq:200}};
+  var cfg=cfgs[t]||{type:'lowpass',freq:800};
+  f.type=cfg.type;f.frequency.value=cfg.freq;
+  s.connect(f);f.connect(g);g.connect(aC.destination);s.start();
+  return g;
+}
+window.openAmbiancePanel=function(){
+  var gr=document.getElementById('amGrid');if(!gr)return;
+  gr.innerHTML=aS.map(function(s,i){
+    var on=aA===s[0];
+    return '<div onclick="toggleAm(''+s[0]+'')" style="background:'+(on?s[2]+'33':'var(--surface2)')+';border:1.5px solid '+(on?s[2]:'var(--border)')+';border-radius:12px;padding:11px 7px;text-align:center;cursor:pointer;transition:all .2s;">'
+      +'<div style="font-size:1.3rem;">'+aSE[i]+'</div>'
+      +'<div style="font-size:.68rem;font-weight:700;color:'+(on?s[2]:'var(--text)')+';margin-top:3px;">'+s[1]+'</div></div>';
+  }).join('');
+  document.getElementById('ambianceModal').style.display='flex';
+  document.getElementById('amVolR').style.display=aA?'block':'none';
+};
+window.toggleAm=function(id){
+  if(aA===id){if(aN[id])aN[id].gain.setTargetAtTime(0,aC.currentTime,.3);aA=null;}
+  else{
+    if(aA&&aN[aA])aN[aA].gain.setTargetAtTime(0,aC.currentTime,.3);
+    if(!aN[id])aN[id]=mkN(id);
+    var v=document.getElementById('amVol');
+    aN[id].gain.setTargetAtTime((v?+v.value:50)/100*.6,aC.currentTime,.5);
+    aA=id;
+  }
+  window.openAmbiancePanel();
+};
+window.setAV=function(v){if(aA&&aN[aA])aN[aA].gain.setTargetAtTime(v/100*.6,aC.currentTime,.1);};
+window.closeAP=function(){document.getElementById('ambianceModal').style.display='none';};
+
+/* BOT KİŞİLİK */
+var bps=[
+  {id:'friendly',l:'Arkadasca',ic:'😊',d:'Sicak, samimi',c:'#4caf50'},
+  {id:'professional',l:'Profesyonel',ic:'💼',d:'Resmi, net',c:'#5b9bd5'},
+  {id:'funny',l:'Esprili',ic:'😄',d:'Neşeli, şakacı',c:'#f0c040'},
+  {id:'wise',l:'Bilge',ic:'🦉',d:'Felsefi, derin',c:'#9c27b0'},
+  {id:'nature',l:'Doga Ruhu',ic:'🌿',d:'Sakin, huzurlu',c:'#2ecc71'}
+];
+var bpa=localStorage.getItem('bpa')||'friendly';
 window.openBotPersonality=function(){
-  var l=document.getElementById('botPersonalityList');if(!l)return;
-  l.innerHTML=_BP.map(function(p){var on=_BPA===p.id;return'<div onclick="setBotP(''+p.id+'')" style="display:flex;align-items:center;gap:12px;padding:11px;background:'+(on?p.c+'22':'var(--surface2)')+';border:1.5px solid '+(on?p.c:'var(--border)')+';border-radius:12px;cursor:pointer;transition:all .2s;"><div style="font-size:1.4rem;">'+p.lb.split(' ')[0]+'</div><div><div style="font-size:.83rem;font-weight:700;color:'+(on?p.c:'var(--text-hi)')+';">'+p.lb.split(' ').slice(1).join(' ')+'</div><div style="font-size:.68rem;color:var(--muted);">'+p.dc+'</div></div>'+(on?'<div style="margin-left:auto;color:'+p.c+';font-weight:900;">✓</div>':'')+'</div>';}).join('');
+  var l=document.getElementById('bpList');if(!l)return;
+  l.innerHTML=bps.map(function(p){
+    var on=bpa===p.id;
+    return '<div onclick="setBP(''+p.id+'')" style="display:flex;align-items:center;gap:11px;padding:10px;background:'+(on?p.c+'22':'var(--surface2)')+';border:1.5px solid '+(on?p.c:'var(--border)')+';border-radius:12px;cursor:pointer;margin-bottom:6px;transition:all .2s;">'
+      +'<div style="font-size:1.3rem;">'+p.ic+'</div>'
+      +'<div><div style="font-size:.82rem;font-weight:700;color:'+(on?p.c:'var(--text-hi)')+';">'+p.l+'</div><div style="font-size:.68rem;color:var(--muted);">'+p.d+'</div></div>'
+      +(on?'<div style="margin-left:auto;color:'+p.c+';font-weight:900;font-size:1rem;">&#x2713;</div>':'')
+      +'</div>';
+  }).join('');
   document.getElementById('botPersonalityModal').style.display='flex';
 };
-window.setBotP=function(id){_BPA=id;localStorage.setItem('bot_pers',id);window.openBotPersonality();};
+window.setBP=function(id){bpa=id;localStorage.setItem('bpa',id);window.openBotPersonality();};
 
-/* ══ ZAMAN KAPSÜLÜ ══ */
+/* ZAMAN KAPSÜLÜ */
 window.openTimeCapsule=function(){
   var m=document.getElementById('timeCapsuleModal');if(!m)return;
-  var di=document.getElementById('capsuleDate');if(!di.value)di.value=new Date(Date.now()+86400000*30).toISOString().slice(0,16);
+  var di=document.getElementById('capDate');
+  if(!di.value)di.value=new Date(Date.now()+86400000*30).toISOString().slice(0,16);
   di.min=new Date(Date.now()+3600000).toISOString().slice(0,16);
-  _renderCaps();m.style.display='flex';
+  rCaps();m.style.display='flex';
 };
-window.saveCapsule=function(){
-  var msg=document.getElementById('capsuleMsg').value.trim();
-  var dt=document.getElementById('capsuleDate').value;
-  if(!msg){_toast('Mesaj yazın!');return;}if(!dt||new Date(dt)<=new Date()){_toast('Gelecek tarih seçin!');return;}
-  var c=JSON.parse(localStorage.getItem('t_caps')||'[]');
+window.saveCap=function(){
+  var msg=document.getElementById('capMsg').value.trim();
+  var dt=document.getElementById('capDate').value;
+  if(!msg){ntk('Mesaj yazin!');return;}
+  if(!dt||new Date(dt)<=new Date()){ntk('Gelecek tarih secin!');return;}
+  var c=JSON.parse(localStorage.getItem('tcaps')||'[]');
   c.push({id:Date.now(),msg:msg,at:new Date(dt).getTime()});
-  localStorage.setItem('t_caps',JSON.stringify(c));
-  document.getElementById('capsuleMsg').value='';
-  _renderCaps();_toast('🧬 Kapsül kilitlendi!');
+  localStorage.setItem('tcaps',JSON.stringify(c));
+  document.getElementById('capMsg').value='';
+  rCaps();ntk('Kapsul kilitlendi!');
 };
-function _renderCaps(){
-  var el=document.getElementById('capsuleList');if(!el)return;
-  var c=JSON.parse(localStorage.getItem('t_caps')||'[]');
-  if(!c.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:.78rem;padding:14px;">Henüz kapsül yok</div>';return;}
-  var now=Date.now();
+function rCaps(){
+  var el=document.getElementById('capList');if(!el)return;
+  var c=JSON.parse(localStorage.getItem('tcaps')||'[]'),now=Date.now();
+  if(!c.length){el.innerHTML='<div style="text-align:center;color:var(--muted);font-size:.77rem;padding:12px;">Henuz kapsul yok</div>';return;}
   el.innerHTML=c.map(function(x,i){
-    var u=now>=x.at;
-    var lb=new Date(x.at).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
-    return'<div style="background:var(--surface2);border:1px solid '+(u?'#2ecc71':'var(--border)')+';border-radius:12px;padding:11px;margin-bottom:8px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:'+(u?'8':'0')+'px;"><span>'+(u?'🔓':'🔒')+'</span><span style="font-size:.7rem;color:'+(u?'#2ecc71':'var(--muted)')+';">'+(u?'✨ Açıldı':'📅 '+lb+' açılacak')+'</span><button onclick="delCap('+i+')" style="margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:.66rem;color:var(--red);cursor:pointer;">Sil</button></div>'+(u?'<div style="font-size:.83rem;color:var(--text-hi);line-height:1.5;background:rgba(46,204,113,.08);border-radius:8px;padding:10px;">'+x.msg+'</div>':'')+'</div>';
+    var u=now>=x.at,lb=new Date(x.at).toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
+    return '<div style="background:var(--surface2);border:1px solid '+(u?'#2ecc71':'var(--border)')+';border-radius:11px;padding:10px;margin-bottom:7px;">'
+      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:'+(u?'7':'2')+'px;">'
+      +'<span>'+(u?'🔓':'🔒')+'</span>'
+      +'<span style="font-size:.68rem;color:'+(u?'#2ecc71':'var(--muted)')+';">'+(u?'Acildi!':lb+' acilacak')+'</span>'
+      +'<button onclick="delCap('+i+')" style="margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:.63rem;color:var(--red);cursor:pointer;">Sil</button></div>'
+      +(u?'<div style="font-size:.82rem;color:var(--text-hi);line-height:1.5;background:rgba(46,204,113,.08);border-radius:8px;padding:9px;">'+x.msg+'</div>':'')
+      +'</div>';
   }).join('');
 }
-window.delCap=function(i){var c=JSON.parse(localStorage.getItem('t_caps')||'[]');c.splice(i,1);localStorage.setItem('t_caps',JSON.stringify(c));_renderCaps();};
+window.delCap=function(i){var c=JSON.parse(localStorage.getItem('tcaps')||'[]');c.splice(i,1);localStorage.setItem('tcaps',JSON.stringify(c));rCaps();};
 
-/* ══ DİNAMİK TEMA ══ */
-function _shade(h,a){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);r=Math.max(0,Math.min(255,r+a));g=Math.max(0,Math.min(255,g+a));b=Math.max(0,Math.min(255,b+a));return'#'+[r,g,b].map(function(v){return v.toString(16).padStart(2,'0');}).join('');}
+/* DİNAMİK TEMA */
+function sh(h,a){var r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);r=Math.max(0,Math.min(255,r+a));g=Math.max(0,Math.min(255,g+a));b=Math.max(0,Math.min(255,b+a));return'#'+[r,g,b].map(function(v){return v.toString(16).padStart(2,'0');}).join('');}
 window.applyCustomTheme=function(){
-  var a=document.getElementById('ct-accent').value,bg=document.getElementById('ct-bg').value,sf=document.getElementById('ct-surface').value,ow=document.getElementById('ct-own').value;
-  var r=document.documentElement;
-  r.style.setProperty('--accent',a);r.style.setProperty('--bg',bg);r.style.setProperty('--bg2',_shade(bg,15));r.style.setProperty('--surface',sf);r.style.setProperty('--surface2',_shade(sf,15));r.style.setProperty('--own-bg',ow);r.style.setProperty('--accent2',_shade(ow,-20));
-  localStorage.setItem('ctheme',JSON.stringify({a:a,bg:bg,sf:sf,ow:ow}));
-  _toast('🎨 Tema uygulandı!');
+  var a=document.getElementById('ct-accent').value,bg=document.getElementById('ct-bg').value,sf=document.getElementById('ct-surface').value,ow=document.getElementById('ct-own').value,r=document.documentElement;
+  r.style.setProperty('--accent',a);r.style.setProperty('--bg',bg);r.style.setProperty('--bg2',sh(bg,15));
+  r.style.setProperty('--surface',sf);r.style.setProperty('--surface2',sh(sf,15));
+  r.style.setProperty('--own-bg',ow);r.style.setProperty('--accent2',sh(ow,-20));
+  localStorage.setItem('cth',JSON.stringify({a:a,bg:bg,sf:sf,ow:ow}));ntk('Tema uygulandi!');
 };
-window.resetCustomTheme=function(){['--accent','--bg','--bg2','--surface','--surface2','--own-bg','--accent2'].forEach(function(v){document.documentElement.style.removeProperty(v);});localStorage.removeItem('ctheme');_toast('↺ Tema sıfırlandı');};
-(function(){var t=localStorage.getItem('ctheme');if(!t)return;try{var o=JSON.parse(t),r=document.documentElement;r.style.setProperty('--accent',o.a);r.style.setProperty('--bg',o.bg);r.style.setProperty('--bg2',_shade(o.bg,15));r.style.setProperty('--surface',o.sf);r.style.setProperty('--surface2',_shade(o.sf,15));r.style.setProperty('--own-bg',o.ow);r.style.setProperty('--accent2',_shade(o.ow,-20));}catch(e){}})();
+window.resetCustomTheme=function(){
+  ['--accent','--bg','--bg2','--surface','--surface2','--own-bg','--accent2'].forEach(function(v){document.documentElement.style.removeProperty(v);});
+  localStorage.removeItem('cth');ntk('Tema sifirlandi');
+};
+(function(){
+  var t=localStorage.getItem('cth');if(!t)return;
+  try{var o=JSON.parse(t),r=document.documentElement;r.style.setProperty('--accent',o.a);r.style.setProperty('--bg',o.bg);r.style.setProperty('--bg2',sh(o.bg,15));r.style.setProperty('--surface',o.sf);r.style.setProperty('--surface2',sh(o.sf,15));r.style.setProperty('--own-bg',o.ow);r.style.setProperty('--accent2',sh(o.ow,-20));}catch(e){}
+})();
 
-/* ══ AKILLI TAMAMLAMA ══ */
-var _ACD={mer:['Merhaba!','Merhaba nasılsın?','Merhabalar 👋'],slm:['Selam!','Selam, ne var ne yok?','Selam 👋'],nas:['Nasılsın?','Nasıl gidiyor?'],iyi:['İyi günler!','İyiyim teşekkürler 😊'],tşk:['Teşekkürler!','Teşekkür ederim 🙏','Çok teşekkürler!'],thk:['Teşekkürler!','Teşekkür ederim'],gece:['Gece yarısı 🌙','Geceniz hayırlı olsun!'],gün:['Günaydın! ☀️','Günler güzel geçsin!'],akş:['Akşamlar hayırlı!','İyi akşamlar 🌆'],evet:['Evet, haklısın!','Evet tabii ki 👍'],nap:['Napıyorsun?','Napıyorsunuz?'],gor:['Görüşürüz! 👋','Görüşmek üzere!'],'ok ':['Okay! 👍','Okeyy 🙌'],hmm:['Hmm, düşüneyim...','Hmm, ilginç!']};
-window.triggerAutocomplete=function(v){
-  var b=document.getElementById('autocompleteBar');if(!b)return;
+/* AKILLI TAMAMLAMA */
+var acd={'mer':['Merhaba!','Merhaba nasilsin?'],'slm':['Selam!','Selam, ne var ne yok?'],'nas':['Nasilsin?','Nasil gidiyor?'],'iyi':['Iyi gunler!','Iyiyim tesekkurler'],'tsk':['Tesekkurler!','Tesekkur ederim'],'gece':['Gece yarisı','Geceniz hayirli olsun!'],'gun':['Gunaydin!'],'gun':['Gunaydin! ☀️','Gunler guzel gecsin!'],'evet':['Evet, haklisın!','Evet tabii ki 👍'],'nap':['Napiyorsun?'],'gor':['Gorusuriz! 👋'],'ok ':['Okay! 👍','Okeyy 🙌'],'hmm':['Hmm, ilginc!','Hmm, dusuneyim...']};
+window.triggerAC=function(v){
+  var b=document.getElementById('acBar');if(!b)return;
   if(!v||v.length<2){b.style.display='none';return;}
   var lo=v.toLowerCase(),mx=[];
-  for(var k in _ACD){if(lo.endsWith(k)||lo.includes(k))mx=mx.concat(_ACD[k]);}
+  for(var k in acd){if(lo.endsWith(k)||lo.includes(k))mx=mx.concat(acd[k]);}
   if(!mx.length){b.style.display='none';return;}
   b.style.display='block';
-  b.innerHTML=mx.slice(0,5).map(function(m){return'<span class="ac-chip" onclick="applyAC(''+m.replace(/\/g,'\\').replace(/'/g,"\'")+'')">' +m+'</span>';}).join('');
+  b.innerHTML=mx.slice(0,5).map(function(m){
+    var safe=m.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/'/g,'&#39;');
+    return '<span class="acc" onclick="applyAC(this.getAttribute('data-v'))" data-v="'+safe+'">'+safe+'</span>';
+  }).join('');
 };
-window.applyAC=function(t){var i=document.getElementById('msgInp');if(!i)return;i.value=t;i.focus();document.getElementById('autocompleteBar').style.display='none';if(typeof autoResize==='function')autoResize(i);};
+window.applyAC=function(t){var i=document.getElementById('msgInp');if(!i)return;i.value=t;i.focus();document.getElementById('acBar').style.display='none';if(typeof autoResize==='function')autoResize(i);};
 
-/* ══ ADMİN: ÜYE OLUŞTUR ══ */
+/* ADMİN: ÜYE OLUŞTUR */
 window._renderCreateUser=function(body){
-  body.innerHTML='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">'
-  +'<p style="font-size:.78rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0;">Yeni Üye Oluştur</p>'
-  +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">Kullanıcı Adı *</label><input id="cu_u" type="text" placeholder="kullanici_adi" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-hi);font-family:inherit;font-size:.85rem;outline:none;"></div>'
-  +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">Şifre *</label><div style="display:flex;gap:6px;"><input id="cu_p" type="text" placeholder="şifre" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-hi);font-family:inherit;font-size:.85rem;outline:none;"><button onclick="document.getElementById('cu_p').value=_genp()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--accent);font-size:.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">🎲 Üret</button></div></div>'
-  +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">E-posta (opsiyonel)</label><input id="cu_e" type="email" placeholder="email@ornek.com" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-hi);font-family:inherit;font-size:.85rem;outline:none;"></div>'
-  +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;"><input type="checkbox" id="cu_a" style="width:16px;height:16px;accent-color:var(--accent);"><span style="font-size:.83rem;color:var(--text);">Admin yetkisi ver</span></label>'
-  +'<button onclick="_doCreateUser()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:11px;font-size:.85rem;font-weight:700;cursor:pointer;">✓ Hesap Oluştur</button>'
-  +'<div id="cu_res" style="display:none;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:12px;"></div>'
-  +'<p style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:4px 0 0;">Son Oluşturulan Hesaplar</p>'
-  +'<div id="cu_hist"></div></div>';
-  _renderCUH();
+  body.innerHTML=''
+    +'<div style="padding:14px;display:flex;flex-direction:column;gap:11px;">'
+    +'<div style="font-size:.75rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Yeni Uye Olustur</div>'
+    +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">Kullanici Adi *</label>'
+    +'<input id="cu_u" type="text" placeholder="kullanici_adi" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text-hi);font-family:inherit;font-size:.83rem;outline:none;box-sizing:border-box;"></div>'
+    +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">Sifre *</label>'
+    +'<div style="display:flex;gap:6px;">'
+    +'<input id="cu_p" type="text" placeholder="sifre" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text-hi);font-family:inherit;font-size:.83rem;outline:none;">'
+    +'<button onclick="document.getElementById('cu_p').value=gpw()" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--accent);font-size:.76rem;font-weight:700;cursor:pointer;white-space:nowrap;">🎲 Uret</button>'
+    +'</div></div>'
+    +'<div><label style="font-size:.7rem;color:var(--muted);display:block;margin-bottom:3px;">E-posta (opsiyonel)</label>'
+    +'<input id="cu_e" type="email" placeholder="email@ornek.com" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text-hi);font-family:inherit;font-size:.83rem;outline:none;box-sizing:border-box;"></div>'
+    +'<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">'
+    +'<input type="checkbox" id="cu_a" style="width:16px;height:16px;accent-color:var(--accent);">'
+    +'<span style="font-size:.82rem;color:var(--text);">Admin yetkisi ver</span></label>'
+    +'<button onclick="doCU()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-size:.83rem;font-weight:700;cursor:pointer;">✓ Hesap Olustur</button>'
+    +'<div id="cu_r" style="display:none;border-radius:10px;padding:11px;"></div>'
+    +'<div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Son Olusturulanlar</div>'
+    +'<div id="cu_h"></div>'
+    +'</div>';
+  rCUH();
 };
-window._genp=function(){var c='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';return Array.from({length:12},function(){return c[Math.floor(Math.random()*c.length)];}).join('');};
-window._doCreateUser=async function(){
-  var u=document.getElementById('cu_u').value.trim();
-  var p=document.getElementById('cu_p').value;
-  var e=document.getElementById('cu_e').value.trim();
+function gpw(){var c='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';return Array.from({length:12},function(){return c[Math.floor(Math.random()*c.length)];}).join('');}
+window.doCU=async function(){
+  var u=(document.getElementById('cu_u').value||'').trim();
+  var p=document.getElementById('cu_p').value||'';
+  var e=(document.getElementById('cu_e').value||'').trim();
   var a=document.getElementById('cu_a').checked;
-  var res=document.getElementById('cu_res');
-  if(!u||!p){_toast('Kullanıcı adı ve şifre zorunlu!');return;}
-  if(!/^[a-zA-Z0-9_]{3,20}$/.test(u)){_toast('3-20 karakter, harf/rakam/alt çizgi');return;}
+  var res=document.getElementById('cu_r');
+  if(!u||!p){ntk('Kullanici adi ve sifre zorunlu!');return;}
+  if(!/^[a-zA-Z0-9_]{3,20}$/.test(u)){ntk('3-20 karakter, harf/rakam/alt cizgi!');return;}
+  res.style.display='block';res.innerHTML='<div style="color:var(--muted);font-size:.8rem;">Olusturuluyor...</div>';
   try{
-    var h=await _sha256(p+u);
-    var ud={username:u,passwordHash:h,createdAt:Date.now(),lastSeen:Date.now(),isAdmin:a||false,banned:false,bio:'',avatar:'',createdBy:(window._currentUser&&window._currentUser.username)||'admin'};
+    var hh=await _sha256(p+u);
+    var ud={username:u,passwordHash:hh,createdAt:Date.now(),lastSeen:Date.now(),isAdmin:a||false,banned:false,bio:'',avatar:''};
     if(e)ud.email=e;
     await window._db.ref('users/'+u).set(ud);
-    res.style.display='block';res.style.background='rgba(46,204,113,.1)';res.style.borderColor='rgba(46,204,113,.2)';
-    res.innerHTML='<b style="color:#2ecc71;">✓ Hesap oluşturuldu!</b><br>👤 <b>'+u+'</b><br>🔑 <code style="background:var(--surface);padding:2px 6px;border-radius:4px;">'+p+'</code>'+(a?'<br>👑 Admin yetkisi verildi':'')+'<br><button onclick="navigator.clipboard.writeText(''+u+' / '+p+'')" style="margin-top:6px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 12px;font-size:.75rem;cursor:pointer;">📋 Kopyala</button>';
-    var h2=JSON.parse(localStorage.getItem('cu_h')||'[]');h2.unshift({u:u,at:Date.now(),a:a});if(h2.length>10)h2.pop();localStorage.setItem('cu_h',JSON.stringify(h2));_renderCUH();
-  }catch(err){res.style.display='block';res.style.background='rgba(224,85,85,.1)';res.style.borderColor='rgba(224,85,85,.2)';res.innerHTML='<b style="color:var(--red);">✗ '+err.message+'</b>';}
+    res.style.cssText='display:block;background:rgba(46,204,113,.1);border:1px solid rgba(46,204,113,.2);border-radius:10px;padding:11px;';
+    res.innerHTML='<b style="color:#2ecc71;">✓ Hesap olusturuldu!</b><br>👤 <b>'+u+'</b><br>🔑 <code style="background:var(--surface);padding:2px 6px;border-radius:4px;">'+p+'</code>'+(a?'<br>👑 Admin':'')
+      +'<br><button onclick="navigator.clipboard.writeText(''+u+' / '+p.replace(/'/g,"\'")+'')" style="margin-top:6px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:4px 11px;font-size:.73rem;cursor:pointer;">📋 Kopyala</button>';
+    var hist=JSON.parse(localStorage.getItem('cu_hh')||'[]');hist.unshift({u:u,at:Date.now(),a:a});if(hist.length>10)hist.pop();localStorage.setItem('cu_hh',JSON.stringify(hist));rCUH();
+  }catch(err){
+    res.style.cssText='display:block;background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.2);border-radius:10px;padding:11px;';
+    res.innerHTML='<b style="color:var(--red);">✗ '+err.message+'</b>';
+  }
 };
-function _renderCUH(){var el=document.getElementById('cu_hist');if(!el)return;var h=JSON.parse(localStorage.getItem('cu_h')||'[]');if(!h.length){el.innerHTML='<div style="font-size:.74rem;color:var(--muted);text-align:center;padding:8px;">Henüz hesap oluşturulmadı</div>';return;}el.innerHTML=h.map(function(r){return'<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span>'+(r.a?'👑':'👤')+'</span><span style="font-size:.82rem;font-weight:700;color:var(--text-hi);">'+r.u+'</span><span style="font-size:.66rem;color:var(--muted);margin-left:auto;">'+new Date(r.at).toLocaleDateString('tr-TR')+'</span></div>';}).join('');}
+function rCUH(){
+  var el=document.getElementById('cu_h');if(!el)return;
+  var hist=JSON.parse(localStorage.getItem('cu_hh')||'[]');
+  if(!hist.length){el.innerHTML='<div style="font-size:.72rem;color:var(--muted);text-align:center;padding:6px;">Henuz olusturulmadi</div>';return;}
+  el.innerHTML=hist.map(function(r){return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 11px;display:flex;align-items:center;gap:8px;margin-bottom:5px;"><span>'+(r.a?'👑':'👤')+'</span><span style="font-size:.8rem;font-weight:700;color:var(--text-hi);">'+r.u+'</span><span style="font-size:.64rem;color:var(--muted);margin-left:auto;">'+new Date(r.at).toLocaleDateString('tr-TR')+'</span></div>';}).join('');
+}
 
-/* ══ ADMİN: DAVETİYE LİNKLERİ ══ */
+/* ADMİN: DAVETİYE */
 window._renderInviteLinks=function(body){
-  var lnks=JSON.parse(localStorage.getItem('inv_l')||'[]');
-  body.innerHTML='<div style="padding:16px;display:flex;flex-direction:column;gap:12px;">'
-  +'<p style="font-size:.78rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:0;">Yeni Davet Linki</p>'
-  +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
-  +'<div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px;">Etiket</label><input id="il_l" type="text" placeholder="Instagram" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.8rem;outline:none;font-family:inherit;"></div>'
-  +'<div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px;">Maks. Kullanım</label><input id="il_m" type="number" placeholder="Sınırsız" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.8rem;outline:none;font-family:inherit;"></div>'
-  +'<div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px;">Son Kullanma</label><input id="il_e" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.8rem;outline:none;font-family:inherit;"></div>'
-  +'<div><label style="font-size:.68rem;color:var(--muted);display:block;margin-bottom:3px;">Not</label><input id="il_n" type="text" placeholder="Açıklama" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.8rem;outline:none;font-family:inherit;"></div>'
-  +'</div>'
-  +'<button onclick="_mkLink()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-size:.83rem;font-weight:700;cursor:pointer;">🔗 Link Oluştur</button>'
-  +'<p style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:4px 0 0;">Linkler</p>'
-  +'<div id="il_list">'+_buildLL(lnks)+'</div></div>';
+  var lnks=JSON.parse(localStorage.getItem('invl')||'[]');
+  body.innerHTML=''
+    +'<div style="padding:14px;display:flex;flex-direction:column;gap:11px;">'
+    +'<div style="font-size:.75rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Yeni Davet Linki</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
+    +'<div><label style="font-size:.67rem;color:var(--muted);display:block;margin-bottom:3px;">Etiket</label><input id="il_l" type="text" placeholder="Instagram" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.79rem;outline:none;font-family:inherit;box-sizing:border-box;"></div>'
+    +'<div><label style="font-size:.67rem;color:var(--muted);display:block;margin-bottom:3px;">Maks. Kullanim</label><input id="il_m" type="number" placeholder="Sinirsiz" min="1" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.79rem;outline:none;font-family:inherit;box-sizing:border-box;"></div>'
+    +'<div><label style="font-size:.67rem;color:var(--muted);display:block;margin-bottom:3px;">Son Kullanma</label><input id="il_e" type="date" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.79rem;outline:none;font-family:inherit;box-sizing:border-box;"></div>'
+    +'<div><label style="font-size:.67rem;color:var(--muted);display:block;margin-bottom:3px;">Not</label><input id="il_n" type="text" placeholder="Aciklama" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-hi);font-size:.79rem;outline:none;font-family:inherit;box-sizing:border-box;"></div>'
+    +'</div>'
+    +'<button onclick="mkL()" style="background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px;font-size:.82rem;font-weight:700;cursor:pointer;">🔗 Link Olustur</button>'
+    +'<div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;">Linkler</div>'
+    +'<div id="il_lst">'+bLL(lnks)+'</div>'
+    +'</div>';
 };
-function _buildLL(lnks){
-  if(!lnks.length)return'<div style="font-size:.74rem;color:var(--muted);text-align:center;padding:8px;">Henüz link yok</div>';
+function bLL(lnks){
+  if(!lnks.length)return'<div style="font-size:.72rem;color:var(--muted);text-align:center;padding:8px;">Henuz link yok</div>';
   var base=location.origin+location.pathname;
   return lnks.map(function(l,i){
     var url=base+'?invite='+l.code;
     var regs=JSON.parse(localStorage.getItem('ir_'+l.code)||'[]');
-    var exp=l.exp&&Date.now()>l.exp;
-    var ful=l.mx&&regs.length>=l.mx;
-    var act=!l.off&&!exp&&!ful;
-    return'<div style="background:var(--surface2);border:1px solid '+(act?'var(--border)':'rgba(224,85,85,.3)')+';border-radius:12px;padding:11px;margin-bottom:6px;">'
-    +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">'
-    +'<span style="font-size:.82rem;font-weight:900;color:var(--text-hi);">'+(l.lb||'Link '+l.code)+'</span>'
-    +'<span style="font-size:.63rem;border-radius:100px;padding:2px 8px;font-weight:700;background:'+(act?'rgba(46,204,113,.15)':'rgba(224,85,85,.12)')+';color:'+(act?'#2ecc71':'var(--red)')+';">'+(act?'✓ Aktif':exp?'⏰ Doldu':ful?'👥 Dolu':'⛔ Durdu')+'</span>'
-    +'<button onclick="_delLink('+i+')" style="margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:.66rem;color:var(--red);cursor:pointer;">Sil</button></div>'
-    +'<div style="font-size:.7rem;color:var(--muted);word-break:break-all;background:var(--surface);border-radius:7px;padding:5px 9px;margin-bottom:7px;">'+url+'</div>'
-    +'<div style="display:flex;gap:5px;flex-wrap:wrap;">'
-    +'<button onclick="navigator.clipboard.writeText(''+url+'');_toast('📋 Kopyalandı!')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-size:.7rem;color:var(--text);cursor:pointer;">📋 Kopyala</button>'
-    +'<button onclick="_togLink('+i+')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-size:.7rem;color:'+(act?'var(--red)':'#2ecc71')+';cursor:pointer;">'+(act?'⛔ Durdur':'▶ Aktifleştir')+'</button>'
-    +'<button onclick="_showRegs(''+l.code+'')" style="background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:4px 9px;font-size:.7rem;color:var(--accent);cursor:pointer;">👥 '+regs.length+' Kayıt</button>'
-    +'</div>'+(l.nt?'<div style="font-size:.68rem;color:var(--muted);margin-top:5px;">📝 '+l.nt+'</div>':'')+'</div>';
+    var exp=l.exp&&Date.now()>l.exp,ful=l.mx&&regs.length>=l.mx,act=!l.off&&!exp&&!ful;
+    return '<div style="background:var(--surface2);border:1px solid '+(act?'var(--border)':'rgba(224,85,85,.3)')+';border-radius:11px;padding:10px;margin-bottom:6px;">'
+      +'<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px;">'
+      +'<span style="font-size:.8rem;font-weight:900;color:var(--text-hi);">'+(l.lb||'Link')+'</span>'
+      +'<span style="font-size:.62rem;border-radius:100px;padding:1px 7px;background:'+(act?'rgba(46,204,113,.15)':'rgba(224,85,85,.1)')+';color:'+(act?'#2ecc71':'var(--red)')+';">'+(act?'Aktif':exp?'Suresi doldu':ful?'Dolu':'Durduruldu')+'</span>'
+      +'<button onclick="dL('+i+')" style="margin-left:auto;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-size:.63rem;color:var(--red);cursor:pointer;">Sil</button></div>'
+      +'<div style="font-size:.67rem;color:var(--muted);word-break:break-all;background:var(--surface);border-radius:6px;padding:5px 8px;margin-bottom:7px;">'+url+'</div>'
+      +'<div style="display:flex;gap:5px;flex-wrap:wrap;">'
+      +'<button onclick="navigator.clipboard.writeText(''+url+'');ntk('Kopyalandi!')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:var(--text);cursor:pointer;">📋 Kopyala</button>'
+      +'<button onclick="tL('+i+')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:'+(act?'var(--red)':'#2ecc71')+';cursor:pointer;">'+(act?'Durdur':'Aktifles')+'</button>'
+      +'<button onclick="sR(''+l.code+'')" style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 9px;font-size:.68rem;color:var(--accent);cursor:pointer;">👥 '+regs.length+' Kayit</button>'
+      +'</div>'+(l.nt?'<div style="font-size:.67rem;color:var(--muted);margin-top:4px;">📝 '+l.nt+'</div>':'')
+      +'</div>';
   }).join('');
 }
-window._mkLink=function(){
-  var lb=document.getElementById('il_l').value.trim()||'Davet';
+window.mkL=function(){
+  var lb=(document.getElementById('il_l').value||'').trim()||'Davet';
   var mx=parseInt(document.getElementById('il_m').value)||null;
   var ex=document.getElementById('il_e').value;
-  var nt=document.getElementById('il_n').value.trim();
+  var nt=(document.getElementById('il_n').value||'').trim();
   var code=Math.random().toString(36).slice(2,10).toUpperCase();
-  var lnks=JSON.parse(localStorage.getItem('inv_l')||'[]');
+  var lnks=JSON.parse(localStorage.getItem('invl')||'[]');
   lnks.unshift({code:code,lb:lb,mx:mx,exp:ex?new Date(ex).getTime():null,nt:nt,off:false,at:Date.now()});
-  localStorage.setItem('inv_l',JSON.stringify(lnks));
-  document.getElementById('il_list').innerHTML=_buildLL(lnks);_toast('🔗 Link oluşturuldu!');
+  localStorage.setItem('invl',JSON.stringify(lnks));
+  document.getElementById('il_lst').innerHTML=bLL(lnks);
+  ntk('Link olusturuldu!');
 };
-window._delLink=function(i){var l=JSON.parse(localStorage.getItem('inv_l')||'[]');l.splice(i,1);localStorage.setItem('inv_l',JSON.stringify(l));document.getElementById('il_list').innerHTML=_buildLL(l);};
-window._togLink=function(i){var l=JSON.parse(localStorage.getItem('inv_l')||'[]');l[i].off=!l[i].off;localStorage.setItem('inv_l',JSON.stringify(l));document.getElementById('il_list').innerHTML=_buildLL(l);};
-window._showRegs=function(code){var r=JSON.parse(localStorage.getItem('ir_'+code)||'[]');if(!r.length){_toast('Bu linkle henüz kayıt yok');return;}alert('Kayıt olanlar:
+window.dL=function(i){var l=JSON.parse(localStorage.getItem('invl')||'[]');l.splice(i,1);localStorage.setItem('invl',JSON.stringify(l));document.getElementById('il_lst').innerHTML=bLL(l);};
+window.tL=function(i){var l=JSON.parse(localStorage.getItem('invl')||'[]');l[i].off=!l[i].off;localStorage.setItem('invl',JSON.stringify(l));document.getElementById('il_lst').innerHTML=bLL(l);};
+window.sR=function(code){var r=JSON.parse(localStorage.getItem('ir_'+code)||'[]');if(!r.length){ntk('Bu linkle henuz kayit yok');return;}alert('Kayit olanlar:
 
-'+r.map(function(x){return'• '+x.u+' ('+new Date(x.at).toLocaleDateString('tr-TR')+')';}).join('
+'+r.map(function(x){return '- '+x.u+' ('+new Date(x.at).toLocaleDateString('tr-TR')+')';}).join('
 '));};
 
-/* ══ ADMİN TAB PATCH ══ */
-(function(){var o=window.adminTab;window.adminTab=function(tab){
+/* ADMİN TAB PATCH */
+var _oAT=window.adminTab;
+window.adminTab=function(tab){
   document.querySelectorAll('.atab').forEach(function(t){t.classList.remove('act');});
-  if(tab==='create_user'){document.querySelectorAll('.atab').forEach(function(t){if(t.textContent.includes('Üye Oluştur'))t.classList.add('act');});var b=document.getElementById('adminBody');if(b)_renderCreateUser(b);return;}
-  if(tab==='invite'){document.querySelectorAll('.atab').forEach(function(t){if(t.textContent.includes('Davet'))t.classList.add('act');});var b=document.getElementById('adminBody');if(b)_renderInviteLinks(b);return;}
-  return o&&o.apply(this,arguments);
-};})();
+  if(tab==='create_user'){
+    document.querySelectorAll('.atab').forEach(function(t){if(t.textContent.indexOf('Uye')>=0||t.textContent.indexOf('Üye')>=0)t.classList.add('act');});
+    var b=document.getElementById('adminBody');if(b)window._renderCreateUser(b);
+    return;
+  }
+  if(tab==='invite'){
+    document.querySelectorAll('.atab').forEach(function(t){if(t.textContent.indexOf('Davet')>=0)t.classList.add('act');});
+    var b=document.getElementById('adminBody');if(b)window._renderInviteLinks(b);
+    return;
+  }
+  return _oAT&&_oAT.apply(this,arguments);
+};
 
-/* ══ DAVET KODU ══ */
-(function(){try{var code=new URL(location.href).searchParams.get('invite');if(!code)return;var lnks=JSON.parse(localStorage.getItem('inv_l')||'[]');var lnk=lnks.find(function(l){return l.code===code;});if(!lnk||lnk.off)return;if(lnk.exp&&Date.now()>lnk.exp)return;var regs=JSON.parse(localStorage.getItem('ir_'+code)||'[]');if(lnk.mx&&regs.length>=lnk.mx)return;window._activeInvite=code;}catch(e){}})();
+/* DAVET AUTOFILL */
+(function(){
+  try{
+    var code=new URL(location.href).searchParams.get('invite');
+    if(!code)return;
+    window._activeInvite=code;
+  }catch(e){}
+})();
 
-/* ══ TOAST ══ */
-window._toast=function(msg){var t=document.getElementById('_t');if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#222;color:#fff;border-radius:100px;padding:8px 20px;font-size:.82rem;font-weight:700;z-index:99999;pointer-events:none;opacity:0;transition:opacity .3s;';document.body.appendChild(t);}t.textContent=msg;t.style.opacity='1';clearTimeout(t._x);t._x=setTimeout(function(){t.style.opacity='0';},2500);};
+/* TOAST */
+function ntk(msg){
+  var t=document.getElementById('_ntk');
+  if(!t){
+    t=document.createElement('div');t.id='_ntk';
+    t.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1a1a2e;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:100px;padding:8px 20px;font-size:.82rem;font-weight:700;z-index:99999;pointer-events:none;opacity:0;transition:opacity .3s;white-space:nowrap;max-width:90vw;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._x);t._x=setTimeout(function(){t.style.opacity='0';},2500);
+}
+
+})();
 </script>
+
 </body>
 </html>
