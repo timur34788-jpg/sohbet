@@ -2049,12 +2049,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   background-image: radial-gradient(rgba(74,143,64,.12) 1px, transparent 1px);
   background-size: 22px 22px;
 }
-#chatMsgs[data-bg="grid"],
-#deskMsgs[data-bg="grid"] {
-  background-image: linear-gradient(rgba(74,143,64,.06) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(74,143,64,.06) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
+/* grid pattern removed */
 #chatMsgs[data-bg="cross"],
 #deskMsgs[data-bg="cross"] {
   background-image: radial-gradient(circle, rgba(91,155,213,.08) 2px, transparent 2px);
@@ -14810,7 +14805,8 @@ function playDeleteSound(){
   }
   function getChatBg(){ 
     const v = localStorage.getItem(BG_KEY)||'none';
-    return v === 'grid' ? 'none' : v;
+    if (v === 'grid') { localStorage.setItem(BG_KEY, 'none'); return 'none'; }
+    return v;
   }
   window.getChatBg = getChatBg;
   window.applyBg = applyBg;
@@ -17278,6 +17274,7 @@ window.nc_replaceIcons = runIconSystem;
 
 })();
 
+<style>
 /* ═══════════════════════════════════════════════════
    🎨 UI UPGRADE PACK
    1. Profil Glass Drawer
@@ -17623,6 +17620,7 @@ window.nc_replaceIcons = runIconSystem;
   </div>
 </div>
 
+<style>
 /* ══════════════════════════════════════════════
    🌿 KARBON AYAK İZİ MODALİ
 ══════════════════════════════════════════════ */
@@ -17923,7 +17921,8 @@ function playAmbiance(id) {
   _ambiAudio.loop = true;
   _ambiAudio.volume = _ambiVol;
   _ambiAudio.play().catch(() => {
-    if (typeof showToast === 'function') showToast('🎵 Ses yüklenemedi, bağlantıyı kontrol et.');
+    const fn = window.showToast || ((m) => console.warn(m));
+    fn('🎵 Ses yüklenemedi, bağlantıyı kontrol et.');
     _ambiTrackId = null;
   });
   renderAmbianceTracks();
