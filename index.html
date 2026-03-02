@@ -6393,13 +6393,19 @@ const MSG_RATE_MS = 1200; // mesajlar arası min süre (ms)
 const MSG_BURST_LIMIT = 8; // 10 saniyede max mesaj
 const MSG_BURST_WINDOW = 10000;
 
-function sendMsg(){
+async function sendMsg(){
   if(!checkRateLimit('sendMsg', 15)){
     showToast('⚠️ Çok hızlı mesaj gönderiyorsunuz.');
     return;
   }
   const inp=document.getElementById('msgInp');const t=inp.value.trim();
   if(!t||!_cRoom||!_cu)return;
+  // ── Oda kilit kontrolü ──
+  try{
+    const _rSnap = await dbRef('rooms/'+_cRoom).once('value');
+    const _rData = _rSnap.val()||{};
+    if(_rData.locked && !_isAdmin){ showToast('🔒 Bu oda kilitli.'); return; }
+  }catch(e){}
   // Slash bot komutu kontrolü
   if(t.startsWith('/') && typeof checkBotCommand==='function' && checkBotCommand(t)){
     inp.value='';if(inp._autoResize)inp._autoResize();else{inp.style.height='';} return;
@@ -8375,6 +8381,128 @@ function injectDesignCSS(id, css){
 
 
 /* ── Admin: Settings ── */
+/* ── Admin: Üye Oluştur ── */
+window._renderCreateUser = async function(body) {
+  body.innerHTML = '<div class="ld"><span></span><span></span><span></span></div>';
+  body.innerHTML = `
+    <div class="admin-section">
+      <div class="admin-sec-title">➕ Yeni Üye Oluştur</div>
+      <div style="display:flex;flex-direction:column;gap:12px;max-width:420px;">
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">Kullanıcı Adı</div>
+          <input class="admin-inp" id="cu_username" placeholder="kullanici_adi" style="width:100%;">
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">Şifre</div>
+          <input class="admin-inp" id="cu_password" type="password" placeholder="••••••••" style="width:100%;">
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:4px;">Rol</div>
+          <select class="admin-inp" id="cu_role" style="width:100%;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 10px;">
+            <option value="user">👤 Üye</option>
+            <option value="mod">🛡️ Moderatör</option>
+            <option value="admin">👑 Admin</option>
+          </select>
+        </div>
+        <button onclick="adminCreateUserSubmit()" style="padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.88rem;cursor:pointer;margin-top:4px;">
+          ✅ Üye Oluştur
+        </button>
+        <div id="cu_result" style="font-size:.82rem;color:var(--muted);"></div>
+      </div>
+    </div>`;
+};
+
+async function adminCreateUserSubmit() {
+  const username = (document.getElementById('cu_username')?.value||'').trim();
+  const password = (document.getElementById('cu_password')?.value||'').trim();
+  const role = document.getElementById('cu_role')?.value || 'user';
+  const res = document.getElementById('cu_result');
+  if(!username || !password){ if(res) res.textContent='❌ Kullanıcı adı ve şifre zorunlu.'; return; }
+  if(username.length < 3){ if(res) res.textContent='❌ Kullanıcı adı en az 3 karakter olmalı.'; return; }
+  if(password.length < 6){ if(res) res.textContent='❌ Şifre en az 6 karakter olmalı.'; return; }
+  try {
+    const existing = await adminRestGet('users/'+username).catch(()=>null);
+    if(existing){ if(res) res.textContent='❌ Bu kullanıcı adı zaten alınmış.'; return; }
+    const userData = {
+      username, role,
+      password: btoa(password),
+      createdAt: Date.now(),
+      createdBy: _cu,
+      online: false,
+      avatar: '', bio: ''
+    };
+    await adminRestSet('users/'+username, userData);
+    if(res) res.innerHTML = '<span style="color:var(--green)">✅ '+username+' kullanıcısı oluşturuldu!</span>';
+    document.getElementById('cu_username').value='';
+    document.getElementById('cu_password').value='';
+  } catch(e) {
+    if(res) res.textContent = '❌ Hata: ' + (e.message||e);
+  }
+}
+
+/* ── Admin: Davet Linkleri ── */
+window._renderInviteLinks = async function(body) {
+  body.innerHTML = '<div class="ld"><span></span><span></span><span></span></div>';
+  const settings = await adminRestGet('settings').catch(()=>null)||{};
+  const inviteCode = settings.inviteCode || '';
+  const regOpen = (settings.registration||'open') === 'open';
+  const baseUrl = window.location.origin + window.location.pathname;
+
+  body.innerHTML = `
+    <div class="admin-section">
+      <div class="admin-sec-title">🔗 Davet Linkleri</div>
+      <div style="display:flex;flex-direction:column;gap:16px;max-width:520px;">
+        
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">📋 Kayıt Durumu</div>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:${regOpen?'var(--green)':'var(--red)'}"></div>
+            <span style="font-size:.88rem;font-weight:700;color:var(--text-hi);">${regOpen?'Kayıt Açık':'Kayıt Kapalı'}</span>
+          </div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">🔑 Davet Kodu</div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input class="admin-inp" id="inv_code" value="${inviteCode}" placeholder="Davet kodu (boş = kod gerekmez)" style="flex:1;">
+            <button onclick="adminSaveInviteCode()" style="padding:9px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap;">Kaydet</button>
+          </div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:6px;">Boş bırakılırsa davet kodu sorulmaz.</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
+          <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">🌐 Davet Linki</div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:.8rem;color:var(--text);word-break:break-all;font-family:monospace;" id="inv_link_display">
+            ${inviteCode ? baseUrl+'?invite='+inviteCode : baseUrl}
+          </div>
+          <button onclick="adminCopyInviteLink()" style="margin-top:8px;padding:8px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">📋 Kopyala</button>
+        </div>
+
+        <div id="inv_result" style="font-size:.82rem;color:var(--muted);"></div>
+      </div>
+    </div>`;
+};
+
+async function adminSaveInviteCode() {
+  const code = (document.getElementById('inv_code')?.value||'').trim();
+  const res = document.getElementById('inv_result');
+  try {
+    await adminRestSet('settings/inviteCode', code || null);
+    const baseUrl = window.location.origin + window.location.pathname;
+    const display = document.getElementById('inv_link_display');
+    if(display) display.textContent = code ? baseUrl+'?invite='+code : baseUrl;
+    if(res) res.innerHTML = '<span style="color:var(--green)">✅ Davet kodu kaydedildi.</span>';
+  } catch(e) {
+    if(res) res.textContent = '❌ Hata: ' + (e.message||e);
+  }
+}
+
+function adminCopyInviteLink() {
+  const display = document.getElementById('inv_link_display');
+  if(!display) return;
+  navigator.clipboard.writeText(display.textContent.trim()).then(()=>showToast('📋 Link kopyalandı!'));
+}
+
 async function loadAdminSettings(){
   const body = document.getElementById('adminBody');
   body.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
