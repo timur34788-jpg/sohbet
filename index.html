@@ -7839,8 +7839,8 @@ async function loadAdminDesign(){
     colHtml += `<div style="display:flex;flex-direction:column;gap:4px;">
       <div style="font-size:.68rem;color:var(--muted);">${c.label}</div>
       <div style="display:flex;gap:6px;align-items:center;">
-        <input type="color" id="dc_${c.key}" value="${val}" style="width:38px;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);flex-shrink:0;" oninput="document.getElementById('dc_${c.key}_txt').value=this.value;adminDesignPreview()">
-        <input type="text" id="dc_${c.key}_txt" value="${val}" placeholder="#rrggbb" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:.7rem;font-family:monospace;" oninput="const v=this.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v)){document.getElementById('dc_${c.key}').value=v;adminDesignPreview();}">
+        <input type="color" id="dc_${c.key}" value="${val}" style="width:38px;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);flex-shrink:0;" oninput="document.getElementById('dc_${c.key}_txt').value=this.value">
+        <input type="text" id="dc_${c.key}_txt" value="${val}" placeholder="#rrggbb" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:.7rem;font-family:monospace;" oninput="const v=this.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v)){document.getElementById('dc_${c.key}').value=v;}">
       </div>
     </div>`;
   });
@@ -7852,7 +7852,7 @@ async function loadAdminDesign(){
 
   // Font family
   fontHtml += `<div style="grid-column:1/-1;"><div style="font-size:.7rem;color:var(--muted);margin-bottom:5px;">Yazı Tipi (Tüm Uygulama)</div>
-    <select id="dc_font" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;" onchange="adminDesignPreview()">`;
+    <select id="dc_font" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;" onchange="void 0">`;
   fonts.forEach(f => { fontHtml += `<option value="${f.value}" ${curFont===f.value?'selected':''}>${f.label}</option>`; });
   fontHtml += '</select></div>';
 
@@ -7868,7 +7868,7 @@ async function loadAdminDesign(){
     fontHtml += `<div>
       <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span></div>
       <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
-        oninput="document.getElementById('${s.id}_val').textContent=this.value;adminDesignPreview()">
+        oninput="document.getElementById('${s.id}_val').textContent=this.value">
     </div>`;
   });
 
@@ -7886,7 +7886,7 @@ async function loadAdminDesign(){
     iconHtml += `<div>
       <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span>px</div>
       <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
-        oninput="document.getElementById('${s.id}_val').textContent=this.value;adminDesignPreview()">
+        oninput="document.getElementById('${s.id}_val').textContent=this.value">
     </div>`;
   });
   iconHtml += '</div>';
@@ -7948,7 +7948,7 @@ async function loadAdminDesign(){
   styleHtml += `<div>
     <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Köşe Yuvarlaklığı: <span id="dc_radius_val">${curRadius}px</span></div>
     <input type="range" id="dc_radius" min="0" max="24" value="${curRadius}" style="width:100%;"
-      oninput="document.getElementById('dc_radius_val').textContent=this.value+'px';adminDesignPreview()">
+      oninput="document.getElementById('dc_radius_val').textContent=this.value+'px'">
   </div>`;
   styleHtml += `<div>
     <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Arka Plan Stili</div>
@@ -7962,7 +7962,8 @@ async function loadAdminDesign(){
   html += card('⚙️ Genel Stil', styleHtml);
 
   // ═══ Kaydet / Sıfırla ═══
-  html += `<div style="display:flex;gap:10px;margin-top:4px;">
+  html += `<div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
+    <button onclick="adminDesignPreview()" style="padding:13px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">👁 Önizle</button>
     <button onclick="saveAdminDesign()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.9rem;cursor:pointer;">💾 Tüm Üyelere Uygula & Kaydet</button>
     <button onclick="resetAdminDesign()" style="padding:13px 16px;background:var(--surface2);color:var(--red);border:1px solid var(--red);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">↺ Sıfırla</button>
   </div>`;
