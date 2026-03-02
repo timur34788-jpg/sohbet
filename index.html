@@ -2813,8 +2813,6 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   <div id="adminSrvSwitcher" style="display:flex;gap:6px;padding:8px 10px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;"></div>
   <div class="admin-tabs">
     <div class="atab act" onclick="adminTab('users')"><span class="atab-icon">👥</span>Üyeler</div>
-    <div class="atab" onclick="adminTab('createuser')"><span class="atab-icon">➕</span>Üye Oluştur</div>
-    <div class="atab" onclick="adminTab('invitelinks')"><span class="atab-icon">🔗</span>Davet Link</div>
     <div class="atab" onclick="adminTab('rooms')"><span class="atab-icon">📢</span>Odalar</div>
     <div class="atab" onclick="adminTab('msgs')"><span class="atab-icon">💬</span>Mesajlar</div>
     <div class="atab" onclick="adminTab('forum')"><span class="atab-icon">📋</span>Forum</div>
@@ -3145,13 +3143,14 @@ const FB_SERVERS = {
     color: '#5b9bd5',
     description: 'Genel sohbet odaları',
     config: {
-      apiKey:"AIzaSyCluGUx9dqi4R_Udd4teG4A7T5aL-xgO8U",
-      authDomain:"sohbet-cfe7f.firebaseapp.com",
-      databaseURL:"https://sohbet-cfe7f-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId:"sohbet-cfe7f",
-      storageBucket:"sohbet-cfe7f.firebasestorage.app",
-      messagingSenderId:"672228058338",
-      appId:"1:672228058338:web:9bd002534b9bf2e51caabb"
+      apiKey:"AIzaSyCHQwiv2ylnm12nYejLd2TOI1agHZ6cD6U",
+      authDomain:"layla-d3710.firebaseapp.com",
+      databaseURL:"https://layla-d3710-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId:"layla-d3710",
+      storageBucket:"layla-d3710.firebasestorage.app",
+      messagingSenderId:"750610889276",
+      appId:"1:750610889276:web:b414f7ed165ff7b1dda139",
+      measurementId:"G-V46C4Y02WS"
     }
   },
   chat: {
@@ -3603,7 +3602,7 @@ function showLoginTab(tab){
 }
 
 /* ── Firebase REST yardımcıları (WebSocket yerine HTTP fetch - mobilde çok daha güvenilir) ── */
-let _FB_REST='https://lisa-518f0-default-rtdb.europe-west1.firebasedatabase.app'; // selectServer() içinde güncellenir
+let _FB_REST='https://layla-d3710-default-rtdb.europe-west1.firebasedatabase.app'; // selectServer() içinde güncellenir
 /* ── Firebase REST Auth Token Yardımcısı ── */
 async function getFbAuthToken(){
   try{
@@ -3760,7 +3759,7 @@ async function submitLogin(){
         const adminData = await fbRestGet('users/'+user).catch(()=>null);
         const phLegacy  = hashStrSync(pass+user);
         if(!adminData){
-          showLoginErr('Admin hesabı bulunamadı. Firebase DB\'ye users/admin kaydı ekleyin.');
+          showLoginErr('Admin hesabı bulunamadı. Firebase DB\'ye users/'+user+' kaydı ekleyin.');
           resetBtn(); return;
         }
         const storedHash = adminData.passwordHash || '';
@@ -6262,7 +6261,7 @@ function adminTab(tab){
   if(IS_DESKTOP()){ deskAdminTab(tab); return; }
   _adminTab=tab;
   document.querySelectorAll('.atab').forEach((el,i)=>{
-    el.classList.toggle('act',['users','createuser','invitelinks','rooms','msgs','forum','announce','games','health','security','ipbans','settings','naturebot'][i]===tab);
+    el.classList.toggle('act',['users','rooms','msgs','forum','announce','games','health','security','ipbans','settings','naturebot'][i]===tab);
   });
   // Online sayısını güncelle
   const badge = document.getElementById('adminOnlineBadge');
@@ -6281,8 +6280,6 @@ function adminTab(tab){
   else if(tab==='security') loadAdminSecurity();
   else if(tab==='ipbans') loadAdminIPBans();
   else if(tab==='settings') loadAdminSettings();
-  else if(tab==='createuser') loadAdminCreateUser();
-  else if(tab==='invitelinks') loadAdminInviteLinks();
 }
 
 /* ── Admin: Users ── */
@@ -10781,18 +10778,16 @@ function deskSwitchProfTab(tab){
 function deskLoadAdmin() {
   const panel = document.getElementById('deskPanelContent');
   const tabs = [
-    { key: 'users',       label: '👥 Kullanıcı' },
-    { key: 'createuser',  label: '➕ Üye Oluştur' },
-    { key: 'invitelinks', label: '🔗 Davet Link' },
-    { key: 'rooms',       label: '📢 Oda' },
-    { key: 'msgs',        label: '💬 Mesaj' },
-    { key: 'forum',       label: '📋 Forum' },
-    { key: 'announce',    label: '📣 Duyuru' },
-    { key: 'games',       label: '🎮 Oyunlar' },
-    { key: 'health',      label: '📊 Sistem Sağlığı' },
-    { key: 'security',    label: '🛡️ Güvenlik' },
-    { key: 'settings',    label: '⚙️ Ayarlar' },
-    { key: 'naturebot',   label: '🤖 NatureBot' },
+    { key: 'users',      label: '👥 Kullanıcı' },
+    { key: 'rooms',      label: '📢 Oda' },
+    { key: 'msgs',       label: '💬 Mesaj' },
+    { key: 'forum',      label: '📋 Forum' },
+    { key: 'announce',   label: '📣 Duyuru' },
+    { key: 'games',      label: '🎮 Oyunlar' },
+    { key: 'health',     label: '📊 Sistem Sağlığı' },
+    { key: 'security',   label: '🛡️ Güvenlik' },
+    { key: 'settings',   label: '⚙️ Ayarlar' },
+    { key: 'naturebot',  label: '🤖 NatureBot' },
   ];
   const tabsHTML = tabs.map(t =>
     `<div class="dsk-atab" data-key="${t.key}" onclick="deskAdminTab('${t.key}')">${t.label}</div>`
@@ -13395,8 +13390,6 @@ deskAdminTab = function(tab){
   else if(tab==='activity') loadAdminActivityFull();
   else if(tab==='settings') loadAdminSettings();
   else if(tab==='naturebot') loadAdminNatureBot();
-  else if(tab==='createuser') loadAdminCreateUser();
-  else if(tab==='invitelinks') loadAdminInviteLinks();
 };
 
 /* ── 📡 YAYIM (Broadcast) ── */
@@ -18892,473 +18885,3 @@ window._i18n = { apply: applyI18n, t: () => _activeT, lang: () => _activeLang, d
 
 </body>
 </html>
-
-<script>
-/* ══════════════════════════════════════════════════════
-   ➕ ADMİN: DOĞRUDAN ÜYE OLUŞTUR
-══════════════════════════════════════════════════════ */
-async function loadAdminCreateUser() {
-  const body = document.getElementById('adminBody');
-  if (!body) return;
-  body.innerHTML = `
-    <div class="admin-section">
-      <div class="admin-sec-title">➕ Yeni Üye Oluştur</div>
-      <div class="admin-card" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-        <div style="font-size:.75rem;color:var(--muted);">Kullanıcı adı ve şifre belirleyerek direkt hesap oluşturabilirsiniz. Kullanıcıya bilgileri ayrıca iletmeniz gerekir.</div>
-
-        <div>
-          <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">Kullanıcı Adı *</div>
-          <input class="admin-inp" id="cu_username" placeholder="kullanici_adi" autocomplete="off" style="margin-bottom:0;">
-        </div>
-        <div>
-          <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">Şifre *</div>
-          <div style="display:flex;gap:8px;">
-            <input class="admin-inp" id="cu_password" type="text" placeholder="Güçlü bir şifre girin" style="margin-bottom:0;flex:1;">
-            <button class="a-btn" style="background:var(--surface2);" onclick="generateRandomPassword()">🎲 Üret</button>
-          </div>
-        </div>
-        <div>
-          <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">E-posta (opsiyonel)</div>
-          <input class="admin-inp" id="cu_email" type="email" placeholder="ornek@email.com" style="margin-bottom:0;">
-        </div>
-        <div>
-          <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">Bio (opsiyonel)</div>
-          <input class="admin-inp" id="cu_bio" placeholder="Kullanıcı biyografisi..." style="margin-bottom:0;">
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:.82rem;color:var(--text);">
-            <input type="checkbox" id="cu_isAdmin" style="width:16px;height:16px;">
-            Admin yetkisi ver
-          </label>
-        </div>
-
-        <div style="display:flex;gap:8px;">
-          <button class="a-btn blue" style="flex:1;padding:11px;font-size:.88rem;" onclick="adminCreateUserNow()">➕ Hesabı Oluştur</button>
-          <button class="a-btn" style="background:var(--surface2);" onclick="document.getElementById('cu_username').value='';document.getElementById('cu_password').value='';document.getElementById('cu_email').value='';document.getElementById('cu_bio').value='';">Temizle</button>
-        </div>
-
-        <div id="cu_result" style="display:none;"></div>
-      </div>
-    </div>
-
-    <div class="admin-section" style="margin-top:12px;">
-      <div class="admin-sec-title">📋 Son Oluşturulan Hesaplar</div>
-      <div class="admin-card" style="padding:14px;" id="cu_recentList">
-        <div style="color:var(--muted);font-size:.78rem;">Yükleniyor...</div>
-      </div>
-    </div>
-  `;
-  loadRecentCreatedUsers();
-}
-
-function generateRandomPassword() {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
-  let pw = '';
-  for (let i = 0; i < 12; i++) pw += chars[Math.floor(Math.random() * chars.length)];
-  const inp = document.getElementById('cu_password');
-  if (inp) { inp.value = pw; inp.type = 'text'; }
-}
-
-async function adminCreateUserNow() {
-  const username = (document.getElementById('cu_username')?.value || '').trim().toLowerCase();
-  const password = (document.getElementById('cu_password')?.value || '').trim();
-  const email    = (document.getElementById('cu_email')?.value || '').trim();
-  const bio      = (document.getElementById('cu_bio')?.value || '').trim();
-  const isAdmin  = document.getElementById('cu_isAdmin')?.checked || false;
-  const result   = document.getElementById('cu_result');
-
-  if (!username) { showToast('Kullanıcı adı zorunludur.'); return; }
-  if (username.length < 3) { showToast('Kullanıcı adı en az 3 karakter olmalıdır.'); return; }
-  if (!/^[a-z0-9_]+$/.test(username)) { showToast('Kullanıcı adı sadece harf, rakam ve _ içerebilir.'); return; }
-  if (!password || password.length < 6) { showToast('Şifre en az 6 karakter olmalıdır.'); return; }
-
-  // Check if user exists
-  const existing = await adminRestGet('users/' + username).catch(() => null);
-  if (existing) { showToast('Bu kullanıcı adı zaten alınmış!'); return; }
-
-  // Hash password
-  let hash = '';
-  try {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password + username);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    hash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-  } catch(e) { showToast('Hash oluşturulamadı: ' + e.message); return; }
-
-  const now = Date.now();
-  const userData = {
-    username,
-    createdAt: now,
-    lastSeen: now,
-    passwordHash: hash,
-    banned: false,
-    isAdmin: isAdmin,
-    bio: bio || '',
-    msgCount: 0,
-    badge: isAdmin ? 'admin' : '',
-    createdBy: _cu || 'admin',
-    createdByAdmin: true
-  };
-  if (email) userData.email = email;
-
-  try {
-    await adminRestSet('users/' + username, userData);
-    if (isAdmin) await adminRestSet('admins/' + username, true);
-
-    // Log to admin-created list
-    await adminRestSet('admin_created_users/' + username, {
-      username, createdAt: now, createdBy: _cu || 'admin', isAdmin
-    });
-
-    if (result) {
-      result.style.display = 'block';
-      result.innerHTML = `
-        <div style="background:rgba(46,204,113,.12);border:1px solid rgba(46,204,113,.3);border-radius:10px;padding:14px;">
-          <div style="font-size:.88rem;font-weight:800;color:#4ade80;margin-bottom:8px;">✅ Hesap oluşturuldu!</div>
-          <div style="font-size:.78rem;color:var(--text);line-height:1.8;">
-            <b>Kullanıcı adı:</b> ${username}<br>
-            <b>Şifre:</b> <span style="font-family:monospace;background:var(--bg);padding:2px 6px;border-radius:4px;">${password}</span><br>
-            ${email ? '<b>E-posta:</b> ' + email + '<br>' : ''}
-            ${isAdmin ? '<b>Yetki:</b> <span style="color:#f0c040;">👑 Admin</span><br>' : ''}
-          </div>
-          <button onclick="copyToClipboard('Kullanıcı adı: ${username}\\nŞifre: ${password}')" style="margin-top:10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.75rem;font-weight:700;padding:6px 12px;cursor:pointer;">📋 Bilgileri Kopyala</button>
-        </div>`;
-    }
-    document.getElementById('cu_username').value = '';
-    document.getElementById('cu_password').value = '';
-    document.getElementById('cu_email').value = '';
-    document.getElementById('cu_bio').value = '';
-    loadRecentCreatedUsers();
-  } catch(e) {
-    showToast('Hata: ' + (e.message || e));
-  }
-}
-
-async function loadRecentCreatedUsers() {
-  const container = document.getElementById('cu_recentList');
-  if (!container) return;
-  const data = await adminRestGet('admin_created_users').catch(() => null) || {};
-  const list = Object.values(data).sort((a,b) => (b.createdAt||0) - (a.createdAt||0)).slice(0, 20);
-  if (!list.length) { container.innerHTML = '<div style="color:var(--muted);font-size:.78rem;">Henüz admin tarafından oluşturulan hesap yok.</div>'; return; }
-  container.innerHTML = list.map(u => `
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
-      <div style="width:32px;height:32px;border-radius:9px;background:${strColor(u.username)};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0;">${initials(u.username)}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);">${esc(u.username)} ${u.isAdmin ? '<span style="font-size:.65rem;background:rgba(240,192,64,.15);color:#f0c040;border-radius:4px;padding:1px 5px;">👑 Admin</span>' : ''}</div>
-        <div style="font-size:.68rem;color:var(--muted);">Oluşturan: ${esc(u.createdBy||'?')} · ${u.createdAt ? new Date(u.createdAt).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</div>
-      </div>
-      <button class="a-btn red" style="font-size:.72rem;padding:5px 10px;" onclick="adminDeleteUser('${u.username}');this.closest('div[style]').remove();">Sil</button>
-    </div>
-  `).join('');
-}
-
-/* ══════════════════════════════════════════════════════
-   🔗 ADMİN: DAVET LİNKLERİ
-══════════════════════════════════════════════════════ */
-async function loadAdminInviteLinks() {
-  const body = document.getElementById('adminBody');
-  if (!body) return;
-
-  const baseUrl = window.location.origin + window.location.pathname;
-
-  body.innerHTML = `
-    <div class="admin-section">
-      <div class="admin-sec-title">🔗 Davet Linki Oluştur</div>
-      <div class="admin-card" style="padding:16px;display:flex;flex-direction:column;gap:12px;">
-        <div style="font-size:.75rem;color:var(--muted);">Her davet linkinin benzersiz kodu vardır. Kimler bu linkle kaydoldu takip edebilirsiniz.</div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div>
-            <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">Link Adı / Etiket *</div>
-            <input class="admin-inp" id="il_label" placeholder="Örn: Instagram, Twitter, Arkadaşlar" style="margin-bottom:0;">
-          </div>
-          <div>
-            <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">Maksimum Kullanım</div>
-            <input class="admin-inp" id="il_maxuse" type="number" value="100" min="1" placeholder="Sınırsız için boş bırak" style="margin-bottom:0;">
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          <div>
-            <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">Son Kullanım Tarihi</div>
-            <input class="admin-inp" id="il_expiry" type="date" style="margin-bottom:0;">
-          </div>
-          <div>
-            <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:5px;">Notlar</div>
-            <input class="admin-inp" id="il_notes" placeholder="İç not..." style="margin-bottom:0;">
-          </div>
-        </div>
-
-        <button class="a-btn blue" style="padding:11px;font-size:.88rem;" onclick="createInviteLink()">🔗 Davet Linki Oluştur</button>
-        <div id="il_result" style="display:none;"></div>
-      </div>
-    </div>
-
-    <div class="admin-section" style="margin-top:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-        <div class="admin-sec-title" style="margin:0;">📊 Tüm Davet Linkleri</div>
-        <button class="a-btn" style="background:var(--surface2);font-size:.72rem;" onclick="loadAdminInviteLinks()">🔄 Yenile</button>
-      </div>
-      <div id="il_list">
-        <div style="color:var(--muted);font-size:.78rem;">Yükleniyor...</div>
-      </div>
-    </div>
-  `;
-  renderInviteLinks(baseUrl);
-}
-
-async function createInviteLink() {
-  const label   = (document.getElementById('il_label')?.value || '').trim();
-  const maxuse  = parseInt(document.getElementById('il_maxuse')?.value) || 0;
-  const expiry  = document.getElementById('il_expiry')?.value || '';
-  const notes   = (document.getElementById('il_notes')?.value || '').trim();
-  const result  = document.getElementById('il_result');
-
-  if (!label) { showToast('Link adı zorunludur.'); return; }
-
-  const code = generateInviteCode();
-  const now = Date.now();
-  const baseUrl = window.location.origin + window.location.pathname;
-  const link = baseUrl + '?invite=' + code;
-
-  const linkData = {
-    code, label, notes,
-    createdAt: now,
-    createdBy: _cu || 'admin',
-    maxuse: maxuse || 0,
-    useCount: 0,
-    expiry: expiry ? new Date(expiry).getTime() : 0,
-    active: true,
-    url: link
-  };
-
-  try {
-    await adminRestSet('invite_links/' + code, linkData);
-
-    if (result) {
-      result.style.display = 'block';
-      result.innerHTML = `
-        <div style="background:rgba(91,155,213,.12);border:1px solid rgba(91,155,213,.3);border-radius:10px;padding:14px;">
-          <div style="font-size:.88rem;font-weight:800;color:var(--accent);margin-bottom:8px;">✅ Davet linki oluşturuldu!</div>
-          <div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;">${esc(label)}</div>
-          <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px;font-family:monospace;font-size:.78rem;color:var(--text-hi);word-break:break-all;margin-bottom:8px;">${link}</div>
-          <div style="display:flex;gap:6px;">
-            <button onclick="copyToClipboard('${link}')" style="flex:1;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:.78rem;font-weight:700;padding:8px;cursor:pointer;">📋 Linki Kopyala</button>
-            <button onclick="shareInviteLink('${link}','${label}')" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.78rem;font-weight:700;padding:8px;cursor:pointer;">📤 Paylaş</button>
-          </div>
-        </div>`;
-    }
-    document.getElementById('il_label').value = '';
-    document.getElementById('il_notes').value = '';
-    renderInviteLinks(window.location.origin + window.location.pathname);
-  } catch(e) {
-    showToast('Hata: ' + (e.message || e));
-  }
-}
-
-function generateInviteCode() {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-  let code = '';
-  for (let i = 0; i < 8; i++) code += chars[Math.floor(Math.random() * chars.length)];
-  return code;
-}
-
-async function renderInviteLinks(baseUrl) {
-  const container = document.getElementById('il_list');
-  if (!container) return;
-
-  const data = await adminRestGet('invite_links').catch(() => null) || {};
-  const links = Object.values(data).sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
-
-  if (!links.length) {
-    container.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;color:var(--muted);font-size:.78rem;">Henüz davet linki oluşturulmadı.</div>';
-    return;
-  }
-
-  container.innerHTML = links.map(l => {
-    const url = l.url || (baseUrl + '?invite=' + l.code);
-    const expired = l.expiry && Date.now() > l.expiry;
-    const maxed = l.maxuse && l.useCount >= l.maxuse;
-    const statusColor = (!l.active || expired || maxed) ? '#e05555' : '#4ade80';
-    const statusText = !l.active ? '⛔ Devre Dışı' : expired ? '⏰ Süresi Doldu' : maxed ? '🔒 Dolu' : '✅ Aktif';
-    const pct = l.maxuse ? Math.min((l.useCount / l.maxuse) * 100, 100) : 0;
-    const expiryStr = l.expiry ? new Date(l.expiry).toLocaleDateString('tr-TR') : 'Sınırsız';
-
-    return `
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;">
-        <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-            <div style="font-size:.9rem;font-weight:800;color:var(--text-hi);">${esc(l.label)}</div>
-            <span style="font-size:.65rem;font-weight:700;color:${statusColor};background:${statusColor}22;border:1px solid ${statusColor}44;border-radius:100px;padding:2px 8px;">${statusText}</span>
-          </div>
-          <div style="font-family:monospace;font-size:.72rem;color:var(--accent);background:var(--bg);border-radius:6px;padding:4px 8px;display:inline-block;margin-bottom:6px;cursor:pointer;" onclick="copyToClipboard('${url}')" title="Kopyalamak için tıkla">
-            🔗 ${esc(url.length > 60 ? url.slice(0,60)+'…' : url)}
-          </div>
-          ${l.notes ? `<div style="font-size:.68rem;color:var(--muted);">${esc(l.notes)}</div>` : ''}
-        </div>
-      </div>
-
-      <!-- Stats -->
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;">
-        <div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center;">
-          <div style="font-size:1.1rem;font-weight:800;color:var(--accent);">${l.useCount || 0}</div>
-          <div style="font-size:.6rem;color:var(--muted);">Kayıt</div>
-        </div>
-        <div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center;">
-          <div style="font-size:.82rem;font-weight:800;color:var(--text);">${l.maxuse || '∞'}</div>
-          <div style="font-size:.6rem;color:var(--muted);">Maks.</div>
-        </div>
-        <div style="background:var(--bg);border-radius:8px;padding:8px;text-align:center;">
-          <div style="font-size:.78rem;font-weight:800;color:var(--text);">${expiryStr}</div>
-          <div style="font-size:.6rem;color:var(--muted);">Son Tarih</div>
-        </div>
-      </div>
-
-      ${l.maxuse ? `<div style="background:var(--bg);border-radius:100px;height:5px;overflow:hidden;margin-bottom:10px;"><div style="height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:100px;width:${pct}%;transition:width .5s;"></div></div>` : ''}
-
-      <!-- Kayıt olanlar -->
-      <div id="il_users_${l.code}" style="display:none;"></div>
-
-      <!-- Butonlar -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button onclick="copyToClipboard('${url}')" style="flex:1;min-width:80px;background:var(--accent);border:none;border-radius:7px;color:#fff;font-size:.72rem;font-weight:700;padding:7px;cursor:pointer;">📋 Kopyala</button>
-        <button onclick="toggleInviteLinkUsers('${l.code}')" style="flex:1;min-width:80px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:.72rem;font-weight:700;padding:7px;cursor:pointer;">👥 Kayıt Olanlar</button>
-        <button onclick="toggleInviteLink('${l.code}',${!l.active})" style="flex:1;min-width:80px;background:${l.active ? 'rgba(224,85,85,.15)' : 'rgba(46,204,113,.15)'};border:1px solid ${l.active ? 'rgba(224,85,85,.3)' : 'rgba(46,204,113,.3)'};border-radius:7px;color:${l.active ? '#e05555' : '#4ade80'};font-size:.72rem;font-weight:700;padding:7px;cursor:pointer;">${l.active ? '⛔ Durdur' : '✅ Aktif Et'}</button>
-        <button onclick="deleteInviteLink('${l.code}')" style="background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.3);border-radius:7px;color:#e05555;font-size:.72rem;font-weight:700;padding:7px 10px;cursor:pointer;">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-async function toggleInviteLinkUsers(code) {
-  const container = document.getElementById('il_users_' + code);
-  if (!container) return;
-  if (container.style.display !== 'none') { container.style.display = 'none'; return; }
-
-  container.style.display = 'block';
-  container.innerHTML = '<div style="color:var(--muted);font-size:.75rem;padding:8px 0;">Yükleniyor...</div>';
-
-  const users = await adminRestGet('invite_registrations/' + code).catch(() => null) || {};
-  const list = Object.values(users).sort((a,b) => (b.registeredAt||0) - (a.registeredAt||0));
-
-  if (!list.length) {
-    container.innerHTML = '<div style="color:var(--muted);font-size:.75rem;padding:8px 0;text-align:center;">Bu linkle henüz kimse kayıt olmadı.</div>';
-    return;
-  }
-  container.innerHTML = `
-    <div style="background:var(--bg);border-radius:8px;padding:10px;margin-top:6px;">
-      <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:8px;">👥 Bu linkle kayıt olanlar (${list.length})</div>
-      ${list.map(u => `
-        <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);">
-          <div style="width:26px;height:26px;border-radius:7px;background:${strColor(u.username)};display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;flex-shrink:0;">${initials(u.username)}</div>
-          <div style="flex:1;">
-            <div style="font-size:.78rem;font-weight:700;color:var(--text-hi);">${esc(u.username)}</div>
-            <div style="font-size:.63rem;color:var(--muted);">${u.registeredAt ? new Date(u.registeredAt).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '—'}</div>
-          </div>
-        </div>
-      `).join('')}
-    </div>`;
-}
-
-async function toggleInviteLink(code, active) {
-  await adminRestSet('invite_links/' + code + '/active', active);
-  showToast(active ? '✅ Link aktif edildi.' : '⛔ Link durduruldu.');
-  loadAdminInviteLinks();
-}
-
-async function deleteInviteLink(code) {
-  if (!confirm('Bu davet linki silinsin mi? Kayıt istatistikleri de silinecek.')) return;
-  await adminRestDelete('invite_links/' + code);
-  await adminRestDelete('invite_registrations/' + code);
-  showToast('Davet linki silindi.');
-  loadAdminInviteLinks();
-}
-
-function shareInviteLink(url, label) {
-  if (navigator.share) {
-    navigator.share({ title: 'Nature.co — ' + label + ' Davet Linki', url });
-  } else {
-    copyToClipboard(url);
-    showToast('Link panoya kopyalandı!');
-  }
-}
-
-/* ── Kayıt sırasında davet linki takibi ── */
-(function hookInviteTracking() {
-  // URL'den invite kodu al
-  const params = new URLSearchParams(window.location.search);
-  const inviteCode = params.get('invite');
-  if (inviteCode) {
-    sessionStorage.setItem('_pendingInvite', inviteCode);
-    // Input varsa doldur
-    const inp = document.getElementById('regInviteCode');
-    if (inp) inp.value = inviteCode;
-  }
-
-  // Kayıt input'una da yükle (DOM hazır olunca)
-  const fillInviteInput = () => {
-    const code = sessionStorage.getItem('_pendingInvite');
-    if (!code) return;
-    const inp = document.getElementById('regInviteCode');
-    if (inp && !inp.value) inp.value = code;
-  };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', fillInviteInput);
-  } else {
-    setTimeout(fillInviteInput, 500);
-  }
-})();
-
-/* ── Kayıt başarılı olunca davet istatistiğini güncelle ── */
-async function trackInviteRegistration(username) {
-  const code = sessionStorage.getItem('_pendingInvite');
-  if (!code) return;
-  try {
-    const linkData = await fbRestGet('invite_links/' + code).catch(() => null);
-    if (!linkData || !linkData.active) return;
-    if (linkData.expiry && Date.now() > linkData.expiry) return;
-    if (linkData.maxuse && (linkData.useCount || 0) >= linkData.maxuse) return;
-
-    const now = Date.now();
-    await Promise.all([
-      fbRestSet('invite_links/' + code + '/useCount', (linkData.useCount || 0) + 1),
-      fbRestSet('invite_registrations/' + code + '/' + username, {
-        username, registeredAt: now, inviteCode: code
-      }),
-      fbRestSet('users/' + username + '/invitedBy', code)
-    ]);
-    sessionStorage.removeItem('_pendingInvite');
-  } catch(e) {}
-}
-
-/* ── Kayıt fonksiyonuna hook et ── */
-(function hookRegister() {
-  const orig = window.doRegister;
-  if (typeof orig === 'function') {
-    window.doRegister = async function(...args) {
-      const result = await orig.apply(this, args);
-      // Kayıt başarılıysa kullanıcı adını bul
-      const username = (document.getElementById('regUser')?.value || '').trim().toLowerCase();
-      if (username) await trackInviteRegistration(username);
-      return result;
-    };
-  } else {
-    setTimeout(hookRegister, 2000);
-  }
-})();
-
-/* copyToClipboard yardımcı (yoksa tanımla) */
-if (typeof copyToClipboard === 'undefined') {
-  window.copyToClipboard = function(text) {
-    navigator.clipboard?.writeText(text).then(() => {
-      if (typeof showToast === 'function') showToast('📋 Kopyalandı!');
-    }).catch(() => {
-      const ta = document.createElement('textarea');
-      ta.value = text; document.body.appendChild(ta);
-      ta.select(); document.execCommand('copy');
-      document.body.removeChild(ta);
-      if (typeof showToast === 'function') showToast('📋 Kopyalandı!');
-    });
-  };
-}
-</script>
