@@ -95,14 +95,26 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%;font-size:15px;}
 html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;}
-/* Android Chrome DPR düzeltmesi — yüksek DPR ekranlarda font/eleman boyutlarını iOS ile eşitle */
-@media screen and (min-resolution:2dppx) and (hover:none) and (pointer:coarse) and (not (-webkit-touch-callout:default)){
-  html,body{font-size:13.5px;}
-  .tab-lb{font-size:.54rem !important;}
-  .ws-header,.c-header,.ws-name{font-size:.9rem;}
-  .r-row{padding:5px 12px;}
-  .mb{padding:3px 34px 3px 34px;}
+/* Android normalizasyon — iOS ile aynı görünüm */
+html.is-android, body.is-android {
+  font-size: 14px !important;
 }
+body.is-android .tab-lb { font-size: .6rem !important; }
+body.is-android .ws-name, body.is-android .c-header-title { font-size: .92rem !important; }
+body.is-android .r-row { padding: 5px 10px !important; }
+body.is-android .mb { padding: 3px 32px 3px 32px !important; }
+body.is-android .fr-name { font-size: .85rem !important; }
+body.is-android .fr-status { font-size: .7rem !important; }
+body.is-android .fr-btn { font-size: .72rem !important; padding: 6px 11px !important; }
+body.is-android .fr-av { width: 40px !important; height: 40px !important; font-size: .78rem !important; }
+body.is-android .screen-title { font-size: 1rem !important; font-weight: 800 !important; }
+body.is-android .atab-icon svg { width: 18px !important; height: 18px !important; }
+body.is-android .forum-post-title { font-size: .88rem !important; }
+body.is-android .ch-title, body.is-android .ch-sub { font-size: .82rem !important; }
+body.is-android .msg-text { font-size: .82rem !important; }
+body.is-android .r-label { font-size: .78rem !important; }
+body.is-android .sec-hdr { font-size: .6rem !important; letter-spacing: .06em !important; }
+body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 
 /* ── Yan Dönme Engelleme ── */
 #orientationBlock {
@@ -4101,6 +4113,20 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script>
 'use strict';
+
+/* ── Android/iOS Tespiti ── */
+(function(){
+  const ua = navigator.userAgent || '';
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isAndroid) {
+    document.documentElement.classList.add('is-android');
+    document.addEventListener('DOMContentLoaded', () => { document.body.classList.add('is-android'); });
+  }
+  if (isIOS) document.documentElement.classList.add('is-ios');
+  window._IS_ANDROID = isAndroid;
+  window._IS_IOS = isIOS;
+})();
 
 /* ── showToast: Genel bildirim fonksiyonu ── */
 function showToast(msg, dur){
