@@ -2091,23 +2091,18 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   position: relative;
 }
 .prof-av-ring::after {
-  content: '📷';
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,.45);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1.4rem;
-  opacity: 0;
-  transition: opacity .2s;
-  border-radius: 19px;
+  content: none;
+  display: none;
 }
-.prof-av-ring:hover::after { opacity: 1; }
+.prof-av-ring:hover::after { display: none; }
 .prof-status-dot {
   position: absolute;
-  bottom: 2px; right: 2px;
-  width: 14px; height: 14px;
+  bottom: -2px; right: -2px;
+  width: 12px; height: 12px;
   border-radius: 50%;
   background: var(--green);
-  border: 2.5px solid var(--bg2);
+  border: 2px solid var(--bg2);
+  display: none; /* JS ile gösterilir */
 }
 .prof-display-name {
   font-size: 1.25rem; font-weight: 900;
@@ -2951,6 +2946,8 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 #deskRailUser:hover,
 .prof-av-ring,
 .prof-av-ring:hover,
+.prof-av-ring::after,
+.prof-av-ring:hover::after,
 .prof-av-wrap,
 .r-av,
 .mb-av,
@@ -2963,6 +2960,14 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 /* Tüm online dot ve avatar glow efektleri kaldırıldı */
 .sdot, .r-dot.on, .rpp-dot {
   box-shadow: none !important;
+}
+/* Kamera overlay pseudo-element tamamen kaldırıldı */
+.prof-av-ring::after,
+.prof-av-ring:hover::after {
+  content: none !important;
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 /* ══ AVATAR & ONLINE DOT — TÜM IŞIK EFEKTLERİ KALDIRILDI ══ */
 .ws-av,
@@ -3695,7 +3700,7 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
       <input type="file" id="photoFileInput" accept="image/*" style="display:none" onchange="handlePhotoUpload(event)">
       <!-- Hero -->
       <div class="prof-hero">
-        <div class="prof-av-wrap" onclick="triggerPhotoUpload()">
+        <div class="prof-av-wrap" onclick="triggerPhotoUpload()" style="position:relative;">
           <div class="prof-av-ring" id="profAvBig"></div>
           <div class="prof-status-dot"></div>
         </div>
@@ -4164,6 +4169,9 @@ function switchMainTab(tab){
     var pn=document.getElementById('profName');
     if(av&&_cu) setAvatar(av,_cu);
     if(pn&&_cu) pn.textContent=_cu;
+    // Status dot'u göster (online)
+    var sd=document.querySelector('#profTabBody-profile .prof-status-dot');
+    if(sd) sd.style.display='block';
     setTimeout(()=>{ switchProfTab('profile'); }, 50);
   }
   setTimeout(()=>applyTabIcons(true), 0);
@@ -11574,7 +11582,9 @@ function deskLoadProfile() {
     // Avatar
     '<div style="position:relative;cursor:pointer;" onclick="triggerPhotoUpload()" title="Fotoğraf değiştir">' +
     '<div id="deskProfAvBig" style="width:80px;height:80px;border-radius:20px;background:' + strColor(_cu) + ';display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:900;color:#fff;background-size:cover;background-position:center;border:3px solid var(--bg2);">' + initials(_cu) + '</div>' +
-    '<div style="position:absolute;bottom:-4px;right:-4px;width:24px;height:24px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;border:2px solid var(--bg2);">📷</div>' +
+    '<div style="position:absolute;bottom:-4px;right:-4px;width:24px;height:24px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg2);">' +
+              '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+              '</div>' +
     // Online dot
     '<div style="position:absolute;bottom:2px;left:-4px;width:12px;height:12px;background:#4ade80;border-radius:50%;border:2px solid var(--bg2);"></div>' +
     '</div>' +
@@ -17835,7 +17845,7 @@ window.nc_replaceIcons = runIconSystem;
 
   <!-- Reuse existing profile structure -->
   <div style="padding:20px 20px 16px;text-align:center;">
-    <div class="prof-av-wrap" style="display:inline-block;cursor:pointer;" onclick="triggerPhotoUpload()">
+    <div class="prof-av-wrap" style="display:inline-block;cursor:pointer;position:relative;" onclick="triggerPhotoUpload()">
       <div class="prof-av-ring" id="drawerAvatar" style="width:80px;height:80px;border-radius:20px;font-size:2rem;margin:0 auto;"></div>
       <div class="prof-status-dot"></div>
     </div>
