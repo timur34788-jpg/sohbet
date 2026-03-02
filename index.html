@@ -5222,13 +5222,34 @@ function loadRooms(){
   _roomsRef.once('value').then(snap=>{
     const rooms=snap.val()||{};
     renderRooms(rooms);
-    Object.values(rooms).forEach(r=>{
-      if(!r.id) return;
-      // Kanal: herkese açık, dinle
-      if(r.type==='channel'){ listenLastMsg(r.id); return; }
-      // DM veya grup: sadece üyesi olduğumuz odaları dinle
-      const members = r.members||[];
-      if(members.includes(_cu)){ listenLastMsg(r.id); }
+    // Okunmamış sayıları reads ile hesapla
+    dbRef('reads/'+_cu).once('value').then(myReadsSnap=>{
+      const myReads = myReadsSnap.val()||{};
+      const roomList = Object.values(rooms);
+      // Her oda için son mesaj zaman damgasına bak
+      roomList.forEach(r=>{
+        if(!r.id) return;
+        const myLastRead = myReads[r.id]||0;
+        dbRef('msgs/'+r.id).orderByChild('ts').startAt(myLastRead+1).limitToLast(20).once('value').then(ms=>{
+          const msgs = ms.val()||{};
+          const newMsgs = Object.values(msgs).filter(m=>m.user!==_cu && m.ts>myLastRead);
+          if(newMsgs.length>0){
+            _unread[r.id] = newMsgs.length;
+            updateRoomBadge(r.id, _unread[r.id]);
+          }
+        }).catch(()=>{});
+        // Listener başlat
+        if(r.type==='channel'){ listenLastMsg(r.id); return; }
+        const members = r.members||[];
+        if(members.includes(_cu)){ listenLastMsg(r.id); }
+      });
+    }).catch(()=>{
+      Object.values(rooms).forEach(r=>{
+        if(!r.id) return;
+        if(r.type==='channel'){ listenLastMsg(r.id); return; }
+        const members = r.members||[];
+        if(members.includes(_cu)){ listenLastMsg(r.id); }
+      });
     });
   }).catch(()=>{
     if(L) L.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:.85rem;">Bağlantı hatası</div>';
@@ -5337,15 +5358,24 @@ function listenLastMsg(roomId){
   // Zaten dinleniyorsa tekrar bağlama
   if(_lastMsgListeners[roomId]) return;
   const ref = dbRef('msgs/'+roomId).orderByChild('ts').limitToLast(1);
+  const _listenStartTs = Date.now(); // Listener başlangıç zamanı
+  let _firstFire = true; // İlk tetikleme = mevcut durum, sayma
   const handler = snap=>{
     const msgs=snap.val();
     if(msgs){
       const last=Object.values(msgs)[0];
       _lastMsg[roomId]=last;
+      // İlk tetikleme: sadece son mesaj zamanını kaydet, sayma
+      if(_firstFire){
+        _firstFire = false;
+        return; // İlk yüklemede badge artırma
+      }
       if(last&&last.user!==_cu){
         checkAndNotify(roomId, last);
       }
-      if(_cRoom!==roomId&&last&&last.user!==_cu){
+      // Sadece gerçekten yeni mesajlar (listener başladıktan sonra gelen)
+      const msgTs = last&&last.ts ? last.ts : 0;
+      if(_cRoom!==roomId&&_deskRoom!==roomId&&last&&last.user!==_cu&&msgTs>_listenStartTs){
         _unread[roomId]=(_unread[roomId]||0)+1;
         updateRoomBadge(roomId, _unread[roomId]);
         // Bildirim merkezi
@@ -5777,7 +5807,9 @@ function scrollBottom(){const b=document.getElementById('chatMsgs');if(b)b.scrol
 /* ── Read Receipts ── */
 function markRoomRead(roomId){
   if(!_cu||!roomId)return;
-  dbRef('reads/'+roomId+'/'+_cu).set(Date.now());
+  const now = Date.now();
+  dbRef('reads/'+roomId+'/'+_cu).set(now); // eski format (uyumluluk)
+  dbRef('reads/'+_cu+'/'+roomId).set(now); // yeni format (hızlı okuma)
 }
 function listenReads(roomId){
   if(_stopReads){_stopReads();_stopReads=null;}
@@ -5835,6 +5867,12 @@ function updateRoomBadge(roomId, count){
 }
 function clearUnreadBadge(roomId){
   _unread[roomId]=0;
+  // Bildirim merkezindeki bu odaya ait bildirimleri okundu işaretle
+  if(typeof _notifs !== 'undefined'){
+    _notifs.forEach(n=>{ if(n.action && String(n.action).includes(roomId)) n.read=true; });
+    if(typeof updateNotifBadge==='function') updateNotifBadge();
+    try{localStorage.setItem(typeof _notifKey==='function'?_notifKey():'notifs', JSON.stringify(_notifs.slice(0,20)));}catch(e){}
+  }
   document.querySelectorAll('.r-row').forEach(row=>{
     const oc=row.getAttribute('onclick')||'';
     if(oc.includes("'"+roomId+"'")){
@@ -8433,9 +8471,11 @@ async function adminCreateUserSubmit() {
   try {
     const existing = await adminRestGet('users/'+username).catch(()=>null);
     if(existing){ if(res) res.textContent='❌ Bu kullanıcı adı zaten alınmış.'; return; }
+    // Login sistemi hashStr(pass+user) kullanıyor — aynı formatta kaydet
+    const passwordHash = await hashStr(password + username);
     const userData = {
       username, role,
-      password: btoa(password),
+      passwordHash,
       createdAt: Date.now(),
       createdBy: _cu,
       online: false,
@@ -12814,7 +12854,12 @@ async function sendDeskMsg() {
 }
 
 function onDeskMsgKey(e) {
-  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendDeskMsg(); }
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    const inp = document.getElementById('deskInp');
+    if (inp && inp.disabled) { showToast('🔒 Bu oda kilitli.'); return; }
+    sendDeskMsg();
+  }
 }
 
 function deskInpResize(el) {
