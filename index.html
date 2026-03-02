@@ -4069,6 +4069,18 @@ function onLoginSuccess(){
   localStorage.setItem('sohbet_user_' + _activeServer, _cu);
   localStorage.setItem('sohbet_pass_' + _activeServer, _passwordHash||'');
   localStorage.setItem('sohbet_last_server', _activeServer);
+  // Bekleyen hash navigasyonunu işle (sayfa yenilenince #profil gibi)
+  if(window._pendingHashNav){
+    var _phn = window._pendingHashNav;
+    window._pendingHashNav = null;
+    setTimeout(function(){
+      if(typeof IS_DESKTOP === 'function' && IS_DESKTOP()){
+        if(typeof deskNav === 'function') deskNav(_phn);
+      } else {
+        if(typeof switchMainTab === 'function') switchMainTab(_phn);
+      }
+    }, 600);
+  }
   // Admin durumunu her zaman DB'den doğrula — localStorage'a güvenme
   const _finalizeAdminStatus = (isAdm) => {
     _isAdmin = isAdm && (_cu === ADMIN_USERNAME);
@@ -8235,13 +8247,10 @@ window.visualViewport&&window.visualViewport.addEventListener('resize',()=>{if(d
     const hash = location.hash.replace('#','').replace('/','');
     const tab = HASH_TAB[hash];
     if(tab && tab !== 'home'){
-      setTimeout(()=>{
-        if(typeof IS_DESKTOP === 'function' && IS_DESKTOP()){
-          if(typeof deskNav === 'function') deskNav(tab);
-        } else {
-          if(typeof switchMainTab === 'function') switchMainTab(tab);
-        }
-      }, 800);
+      window._pendingHashNav = tab;
+    }
+    if(hash && hash !== '') {
+      history.replaceState(null, '', location.pathname);
     }
   });
 })();
@@ -19000,7 +19009,7 @@ window.openAmbiancePanel=function(){
   var gr=document.getElementById('amGrid');if(!gr)return;
   gr.innerHTML=aS.map(function(s,i){
     var on=aA===s[0];
-    return '<div onclick="toggleAm(''+s[0]+'')" style="background:'+(on?s[2]+'33':'var(--surface2)')+';border:1.5px solid '+(on?s[2]:'var(--border)')+';border-radius:12px;padding:11px 7px;text-align:center;cursor:pointer;transition:all .2s;">'
+    return '<div onclick="toggleAm('"+s[0]+"')" style="background:'+(on?s[2]+'33':'var(--surface2)')+';border:1.5px solid '+(on?s[2]:'var(--border)')+';border-radius:12px;padding:11px 7px;text-align:center;cursor:pointer;transition:all .2s;">'
       +'<div style="font-size:1.3rem;">'+aSE[i]+'</div>'
       +'<div style="font-size:.68rem;font-weight:700;color:'+(on?s[2]:'var(--text)')+';margin-top:3px;">'+s[1]+'</div></div>';
   }).join('');
