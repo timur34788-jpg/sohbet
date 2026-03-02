@@ -559,40 +559,38 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   document.addEventListener('mouseover', function(e){
     // Mobil/touch cihazlarda popup gösterme
     if(window.innerWidth < 768) return;
-    if('ontouchstart' in window && !window.matchMedia('(pointer: fine)').matches) return;
+    const minDim = Math.min(screen.width||0, screen.height||0);
+    if(minDim > 0 && minDim < 600) return; // telefon
 
     const row = e.target.closest('.dsk-row, .r-row');
     if(!row) return;
     const popup = row.querySelector('.room-preview-popup');
     if(!popup) return;
 
-    const rect = row.getBoundingClientRect();
-    const popupW = 240;
-    const margin = 10;
-
-    // Place to the RIGHT of the sidebar panel (not just the row)
-    // Find the parent sidebar/panel right edge
-    const sidebarEl = row.closest('#deskSidebar, #roomsScreen, .rooms-scroll');
-    let leftEdge;
-    if(sidebarEl){
-      const sRect = sidebarEl.getBoundingClientRect();
-      leftEdge = sRect.right + margin;
-    } else {
-      leftEdge = rect.right + margin;
+    // Rail (68px) + Sidebar (260px) + gap (10px) = 338px from left
+    const rail = document.getElementById('deskRail');
+    const sidebar = document.getElementById('deskSidebar');
+    let leftEdge = 338; // fallback
+    if(rail && sidebar){
+      const rRect = rail.getBoundingClientRect();
+      const sRect = sidebar.getBoundingClientRect();
+      leftEdge = sRect.right + 10;
     }
 
-    // Prevent going off screen right
+    // Clamp right so popup doesn't go off screen
+    const popupW = 240;
     if(leftEdge + popupW > window.innerWidth - 8){
-      leftEdge = rect.left - popupW - margin;
+      leftEdge = window.innerWidth - popupW - 8;
     }
 
     // Vertical: align with row, clamp to viewport
+    const rect = row.getBoundingClientRect();
     let top = rect.top;
     if(top + 120 > window.innerHeight - 8) top = window.innerHeight - 128;
     if(top < 8) top = 8;
 
-    popup.style.top = top + 'px';
     popup.style.left = leftEdge + 'px';
+    popup.style.top = top + 'px';
     popup.style.transform = 'none';
   });
 })();
