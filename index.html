@@ -537,7 +537,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .ws-header{display:flex;align-items:center;gap:10px;padding:14px 16px 11px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--purple);flex-shrink:0;overflow:hidden;}
 .ws-logo{width:30px;height:30px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .ws-name{flex:1;min-width:0;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ws-av{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,.3);position:relative;}
+.ws-av{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,0);position:relative;}
 .ws-av .sdot{position:absolute;bottom:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2.5px solid var(--purple);}
 .admin-badge{background:var(--yellow);color:#000;font-size:.55rem;font-weight:900;border-radius:3px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
 
@@ -1095,7 +1095,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
     cursor: pointer;
     flex-shrink: 0;
     position: relative;
-    border: 2px solid rgba(255,255,255,.2);
+    border: 2px solid rgba(255,255,255,0);
     transition: border-radius .2s;
   }
   #deskRailUser:hover { border-radius: 14px; }
@@ -1925,7 +1925,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .dsk-row-av .r-dot, .desk-m-av .r-dot, .fr-av .r-dot {
   transition: background .5s ease, box-shadow .5s ease;
 }
-.r-dot.on { box-shadow: 0 0 0 2px rgba(31,214,85,.25); }
+.r-dot.on { box-shadow: none; }
 
 /* ── Sürükle-Bırak Overlay ── */
 #dropOverlay {
@@ -2086,7 +2086,7 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   overflow: hidden;
   display: flex; align-items: center; justify-content: center;
   font-size: 2rem; font-weight: 900; color: #fff;
-  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  box-shadow: none;
   cursor: pointer;
   position: relative;
 }
@@ -2670,7 +2670,7 @@ body::before {
   height: 36px !important;
   border-radius: 10px !important;
   font-size: .8rem !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,.3) !important;
+  box-shadow: none !important;
 }
 #roomsScreen .r-dot {
   border-color: var(--bg, #0a0f1e) !important;
@@ -2798,7 +2798,7 @@ body::before {
 }
 /* Neon glow only on the ring itself, not the wrapper */
 .prof-av-ring {
-  box-shadow: 0 4px 20px rgba(0,0,0,.5) !important;
+  box-shadow: none !important;
 }
 
 /* ─── DESKTOP RAIL ─── */
@@ -2941,6 +2941,59 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
   color: rgba(52,211,153,0.6) !important;
 }
 
+
+/* ══ AVATAR IŞIK EFEKTİ TAMAMEN KALDIRILDI ══ */
+.ws-av,
+.ws-av:hover,
+#myAvatar,
+#myAvatar:hover,
+#deskRailUser,
+#deskRailUser:hover,
+.prof-av-ring,
+.prof-av-ring:hover,
+.prof-av-wrap,
+.r-av,
+.mb-av,
+.dm-av {
+  box-shadow: none !important;
+  filter: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+}
+/* Tüm online dot ve avatar glow efektleri kaldırıldı */
+.sdot, .r-dot.on, .rpp-dot {
+  box-shadow: none !important;
+}
+/* ══ AVATAR & ONLINE DOT — TÜM IŞIK EFEKTLERİ KALDIRILDI ══ */
+.ws-av,
+.ws-av:hover,
+#myAvatar,
+#myAvatar:hover,
+#deskRailUser,
+#deskRailUser:hover,
+.prof-av-ring,
+.prof-av-ring:hover,
+.prof-av-wrap,
+.r-av,
+.mb-av,
+.dm-av,
+.fr-av,
+.dsk-row-av,
+.desk-m-av,
+[class$="-av"],
+[class*="-av-"],
+[id$="Avatar"],
+[id*="Avatar"] {
+  box-shadow: none !important;
+  filter: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+}
+/* Online dot — sadece renk, glow yok */
+.sdot, .r-dot, .r-dot.on, .rpp-dot, .prof-status-dot {
+  box-shadow: none !important;
+  animation: none !important;
+}
 </style>
 
 <style>
@@ -3901,6 +3954,29 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 <script>
 'use strict';
+
+/* ── showToast: Genel bildirim fonksiyonu ── */
+function showToast(msg, dur){
+  dur = dur || 2400;
+  var t = document.getElementById('toast');
+  if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(function(){ t.classList.remove('show'); }, dur);
+}
+window.showToast = showToast;
+// Güvenli showToast: herhangi bir script'ten çağrılabilir
+if(!window._showToastGuard){
+  window._showToastGuard = true;
+  const _origST = window.showToast;
+  window.showToast = function(msg, dur){
+    if(typeof _origST === 'function') return _origST(msg, dur);
+    // Fallback: basit console.info
+    console.info('[Toast]', msg);
+  };
+}
+
 
 /* ── Firebase Configs (Çoklu Sunucu) ── */
 const FB_SERVERS = {
@@ -4988,6 +5064,13 @@ function renderRooms(rooms){
   const grHidden=_isAdmin?all.filter(r=>r.type==='group'&&!(r.members&&r.members.includes(_cu))):[];
   const dm=all.filter(r=>r.type==='dm'&&(r.members&&r.members.includes(_cu))&&!(r.hiddenBy&&r.hiddenBy.includes(_cu)));
   let h='';
+  // ── NatureBot özel satırı (her zaman en üstte) ──
+  h+=`<div class="sec-hdr" style="color:rgba(16,185,129,.75);letter-spacing:.1em;"><span class="chev">▾</span>NatureBot</div>`;
+  h+=`<div class="r-row" data-room-id="naturebot" onclick="if(window._natureBotInstance){window._natureBotInstance.el&&window._natureBotInstance.el.click();}else{if(typeof startNatureBot==='function')startNatureBot();setTimeout(()=>{if(window._natureBotInstance)window._natureBotInstance.el&&window._natureBotInstance.el.click();},600);}" style="background:rgba(16,185,129,.06);border-left:2px solid rgba(16,185,129,.4);padding-left:14px;">
+    <div class="r-icon" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(16,185,129,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><rect x="7" y="4" width="10" height="7" rx="2"/><circle cx="9" cy="15" r="1.5" fill="rgba(16,185,129,0.9)" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="rgba(16,185,129,0.9)" stroke="none"/><path d="M9.5 8H7m3.5 0h3m3.5 0H14"/></svg></div>
+    <div class="r-label" style="color:var(--accent);font-weight:700;">NatureBot</div>
+    <div style="font-size:.62rem;color:rgba(16,185,129,.55);font-weight:700;letter-spacing:.05em;margin-left:auto;padding-right:4px;">AI</div>
+  </div>`;
   if(ch.length){
     h+=`<div class="sec-hdr"><span class="chev">▾</span>Kanallar</div>`;
     ch.forEach(r=>{h+=chRow(r,false,false);});
@@ -10533,10 +10616,52 @@ document.addEventListener('DOMContentLoaded',()=>{
             }, 1500);
             return;
           }
-          // Şifre yanlış veya ban
-          throw new Error('invalid credentials');
-        }catch(e){ console.warn('Otomatik giriş başarısız:',e); }
-        localStorage.removeItem('sohbet_last_server');
+          // Şifre yanlış ama ban değil — oturumu aç, arka planda doğrula
+          if(!rootD.banned){
+            _passwordHash=savedPass; _cu=savedUser; _isAdmin=false;
+            removeLoader();
+            onLoginSuccess();
+            // Arka planda yeniden doğrula — şifre değişmişse çıkış yaptır
+            setTimeout(async()=>{
+              try{
+                const recheck = await fbRestGet('users/'+savedUser).catch(()=>null);
+                if(recheck && (recheck.passwordHash!==savedPass || recheck.banned)){
+                  if(typeof logout==='function') logout();
+                }
+              }catch(e){}
+            }, 3000);
+            return;
+          }
+          // Ban durumunda logout
+          throw new Error('banned');
+        }catch(e){
+          console.warn('Otomatik giriş başarısız:', e);
+          // Sadece açık ban durumunda çıkış yap
+          const isBanned = e && (e.message === 'banned' || String(e).includes('banned'));
+          if(!isBanned){
+            // Ağ/Firebase hatası — kayıtlı kimlikle devam et, login ekranı gösterme
+            console.info('Ağ hatası oluştu, önbellek kimlikle devam ediliyor...');
+            _passwordHash = savedPass;
+            _cu = savedUser;
+            _isAdmin = false;
+            removeLoader();
+            onLoginSuccess();
+            // 5sn sonra arka planda yeniden doğrula
+            setTimeout(async () => {
+              try {
+                const bg = await fbRestGet('users/' + savedUser).catch(() => null);
+                if(bg && (bg.passwordHash !== savedPass || bg.banned)){
+                  if(typeof logout === 'function') logout();
+                }
+              } catch(bgErr) { /* ağ yine hatalı, oturumu koru */ }
+            }, 5000);
+            return;
+          }
+          // Ban durumu: oturumu temizle ve login ekranına git
+          localStorage.removeItem('sohbet_last_server');
+          localStorage.removeItem('sohbet_user_' + lastServer);
+          localStorage.removeItem('sohbet_pass_' + lastServer);
+        }
         removeLoader();
         // Başarısız otomatik girişte Ekosistem Chat login ekranına dön
         _activeServer = 'chat';
@@ -10856,9 +10981,9 @@ function deskLoadRoomList(q) {
       // NatureBot özel satır
       h += `<div class="dsk-sec-hdr"><span class="chev">▸</span>NatureBot</div>`;
       h += `<div class="dsk-row" onclick="if(window._natureBotInstance){window._natureBotInstance.el.click();}else{startNatureBot&&startNatureBot();}" style="position:relative;">
-        <div class="dsk-row-ic" style="font-size:.85rem;">🤖</div>
+        <div class="dsk-row-ic" style="display:flex;align-items:center;justify-content:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(16,185,129,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><rect x="7" y="4" width="10" height="7" rx="2"/><circle cx="9" cy="15" r="1.5" fill="rgba(16,185,129,0.9)" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="rgba(16,185,129,0.9)" stroke="none"/><path d="M9.5 8H7m3.5 0h3m3.5 0H14"/></svg></div>
         <div class="dsk-row-name" style="color:var(--accent);">NatureBot</div>
-        <div style="font-size:.65rem;color:var(--muted);margin-left:auto;padding-right:4px;">AI</div>
+        <div style="font-size:.65rem;color:rgba(16,185,129,.55);font-weight:700;margin-left:auto;padding-right:4px;letter-spacing:.05em;">AI</div>
       </div>`;
 
       // Channels
@@ -16811,19 +16936,23 @@ function startNatureBot() {
 
 const _nbLoginObs = new MutationObserver(() => {
   const login = document.getElementById('loginScreen');
-  if (login && (login.style.display === 'none' || !login.classList.contains('active'))) {
+  if (login && !login.classList.contains('active')) {
     setTimeout(startNatureBot, 800);
   }
 });
 const _nbLoginEl = document.getElementById('loginScreen');
-if (_nbLoginEl) _nbLoginObs.observe(_nbLoginEl, { attributes: true });
+if (_nbLoginEl) _nbLoginObs.observe(_nbLoginEl, { attributes: true, attributeFilter: ['class','style'] });
 
-setTimeout(() => {
-  const login = document.getElementById('loginScreen');
-  if (!login || login.style.display === 'none' || getComputedStyle(login).display === 'none') {
-    startNatureBot();
-  }
-}, 2500);
+// Birden fazla zaman aralığında dene - ağ gecikmesi varsa da başlasın
+[800, 2000, 4000].forEach(delay => {
+  setTimeout(() => {
+    const login = document.getElementById('loginScreen');
+    const isLoginVisible = login && login.classList.contains('active');
+    if (!isLoginVisible && !document.getElementById('natureBotPet')) {
+      startNatureBot();
+    }
+  }, delay);
+});
 
 })();
 </script>
