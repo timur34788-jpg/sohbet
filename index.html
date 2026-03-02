@@ -63,10 +63,10 @@ const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createO
   --accent:#5b9bd5; --accent2:#2a4a7a; --own-bg:#2a4a7a; --incoming-bg:#263045;
 }
 [data-theme="forest"] {
-  --purple-dark:#0d1a0f; --purple:#1a2e1c; --purple-mid:#2a4a2e;
-  --bg:#0d1a0f; --bg2:#1a2e1c; --surface:#1f3823; --surface2:#28472d;
-  --border:#2a4a2e; --text:#b8d4bc; --text-hi:#e8f5e9; --muted:#6a9070;
-  --accent:#4caf50; --accent2:#1b5e20; --own-bg:#1b5e20; --incoming-bg:#1a3520;
+  --purple-dark:#1e2428; --purple:#252d32; --purple-mid:#2e3840;
+  --bg:#1a2025; --bg2:#1e2428; --surface:#252d35; --surface2:#2d3740;
+  --border:#384550; --text:#d8e4e0; --text-hi:#f0f8f5; --muted:#7a9a90;
+  --accent:#4a9e7a; --accent2:#1f5c46; --own-bg:#1f4a3a; --incoming-bg:#1e2e35;
 }
 [data-theme="ocean"] {
   --purple-dark:#091520; --purple:#0d2235; --purple-mid:#133452;
@@ -534,10 +534,10 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 /* ══════ ROOMS SCREEN ══════ */
 #roomsScreen{background:var(--purple-dark);padding-top:0;padding-bottom:0;}
 
-.ws-header{display:flex;align-items:center;gap:10px;padding:14px 16px 11px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--purple);flex-shrink:0;overflow:hidden;}
+.ws-header{display:flex;align-items:center;gap:10px;padding:14px 18px 11px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--purple);flex-shrink:0;}
 .ws-logo{width:30px;height:30px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .ws-name{flex:1;min-width:0;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.ws-av{width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,0);position:relative;}
+.ws-av{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,0);position:relative;}
 .ws-av .sdot{position:absolute;bottom:-3px;right:-3px;width:11px;height:11px;border-radius:50%;background:var(--green);border:2.5px solid var(--purple);}
 .admin-badge{background:var(--yellow);color:#000;font-size:.55rem;font-weight:900;border-radius:3px;padding:1px 4px;margin-left:4px;vertical-align:middle;}
 
@@ -2565,8 +2565,9 @@ body::before {
   backdrop-filter: blur(28px) saturate(1.4) !important;
   -webkit-backdrop-filter: blur(28px) !important;
   border-bottom: 1px solid rgba(255,255,255,0.08) !important;
-  padding: 14px 16px 12px !important;
+  padding: 14px 18px 12px !important;
   padding-top: calc(14px + env(safe-area-inset-top,0px)) !important;
+  overflow: visible !important;
 }
 #roomsScreen .ws-name {
   font-size: 1.1rem !important;
@@ -2648,8 +2649,8 @@ body::before {
   transform: scale(.99) !important;
 }
 #roomsScreen .r-row.act {
-  background: rgba(16,185,129,0.1) !important;
-  border-left: 2px solid #10b981 !important;
+  background: rgba(var(--accent-rgb, 74,158,122),0.1) !important;
+  border-left: 2px solid var(--accent) !important;
 }
 #roomsScreen .r-row.unread {
   background: rgba(255,255,255,0.05) !important;
@@ -2691,8 +2692,8 @@ body::before {
 
 /* Unread badge */
 #roomsScreen .ubadge {
-  background: linear-gradient(135deg,#10b981,#34d399) !important;
-  box-shadow: 0 2px 8px rgba(16,185,129,.4) !important;
+  background: linear-gradient(135deg, var(--accent), var(--accent)) !important;
+  box-shadow: 0 2px 8px rgba(74,158,122,.3) !important;
   font-size: .65rem !important;
   padding: 2px 7px !important;
   border-radius: 100px !important;
@@ -5073,11 +5074,11 @@ function renderRooms(rooms){
   const dm=all.filter(r=>r.type==='dm'&&(r.members&&r.members.includes(_cu))&&!(r.hiddenBy&&r.hiddenBy.includes(_cu)));
   let h='';
   // ── NatureBot özel satırı (her zaman en üstte) ──
-  h+=`<div class="sec-hdr" style="color:rgba(16,185,129,.75);letter-spacing:.1em;"><span class="chev">▾</span>NatureBot</div>`;
-  h+=`<div class="r-row" data-room-id="naturebot" onclick="if(window._natureBotInstance){window._natureBotInstance.el&&window._natureBotInstance.el.click();}else{if(typeof startNatureBot==='function')startNatureBot();setTimeout(()=>{if(window._natureBotInstance)window._natureBotInstance.el&&window._natureBotInstance.el.click();},600);}" style="background:rgba(16,185,129,.06);border-left:2px solid rgba(16,185,129,.4);padding-left:14px;">
-    <div class="r-icon" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(16,185,129,0.9)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><rect x="7" y="4" width="10" height="7" rx="2"/><circle cx="9" cy="15" r="1.5" fill="rgba(16,185,129,0.9)" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="rgba(16,185,129,0.9)" stroke="none"/><path d="M9.5 8H7m3.5 0h3m3.5 0H14"/></svg></div>
+  h+=`<div class="sec-hdr" style="color:rgba(var(--accent-rgb,74,158,122),.65);letter-spacing:.1em;"><span class="chev">▾</span>NatureBot</div>`;
+  h+=`<div class="r-row" data-room-id="naturebot" onclick="if(window._natureBotInstance){window._natureBotInstance.el&&window._natureBotInstance.el.click();}else{if(typeof startNatureBot==='function')startNatureBot();setTimeout(()=>{if(window._natureBotInstance)window._natureBotInstance.el&&window._natureBotInstance.el.click();},600);}" style="background:rgba(74,158,122,.05);border-left:2px solid rgba(74,158,122,.3);padding-left:14px;">
+    <div class="r-icon" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><rect x="7" y="4" width="10" height="7" rx="2"/><circle cx="9" cy="15" r="1.5" fill="var(--accent)" stroke="none"/><circle cx="15" cy="15" r="1.5" fill="var(--accent)" stroke="none"/><path d="M9.5 8H7m3.5 0h3m3.5 0H14"/></svg></div>
     <div class="r-label" style="color:var(--accent);font-weight:700;">NatureBot</div>
-    <div style="font-size:.62rem;color:rgba(16,185,129,.55);font-weight:700;letter-spacing:.05em;margin-left:auto;padding-right:4px;">AI</div>
+    <div style="font-size:.62rem;color:var(--muted);font-weight:700;letter-spacing:.05em;margin-left:auto;padding-right:4px;">AI</div>
   </div>`;
   if(ch.length){
     h+=`<div class="sec-hdr"><span class="chev">▾</span>Kanallar</div>`;
