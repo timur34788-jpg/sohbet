@@ -4190,6 +4190,10 @@ let _activeMainTab='home';
 
 function switchMainTab(tab){
   _activeMainTab=tab;
+  // Track last mobile tab for orientation restore
+  if(['home','forum','watch','msgs','friends'].includes(tab)) {
+    if(typeof _lastMobileTab !== 'undefined') _lastMobileTab = tab;
+  }
   if(typeof _updateURL === 'function') _updateURL(tab);
   // Hide all screens except login/chat/admin
   ['roomsScreen','forumScreen','msgsScreen','friendsScreen','profileScreen','chatScreen','adminPanel','gamesScreen','watchScreen'].forEach(id=>{
@@ -10803,7 +10807,8 @@ let _notifPermission = 'default';
 let _lastNotifTs = {};
 
 async function requestNotifPermission(){
-  if(!('Notification' in window)) return;
+  // Silent version — called on login, no toast
+  if(!('Notification' in window)) return; // iOS Safari browser: silently skip
   if(Notification.permission==='granted'){ _notifPermission='granted'; return; }
   if(Notification.permission!=='denied'){
     const result = await Notification.requestPermission();
@@ -12610,21 +12615,34 @@ onLoginSuccess = function() {
   }
 };
 
-// On resize, switch modes
+// On resize, switch modes — DEBOUNCED to avoid rotation glitch
+let _resizeTimer = null;
+let _lastWasDesktop = IS_DESKTOP();
+let _lastMobileTab = 'home'; // Track last active mobile tab
+
 window.addEventListener('resize', () => {
-  if (IS_DESKTOP() && _cu) {
-    document.getElementById('desktopShell').style.display = 'flex';
-    document.querySelectorAll('.screen').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
-    if (_deskRoom) deskOpenRoom(_deskRoom);
-    else deskLoadRoomList();
-  } else if (!IS_DESKTOP()) {
-    document.getElementById('desktopShell').style.display = 'none';
-    if (_cu) {
-      switchMainTab(_deskNav === 'home' ? 'home' : _deskNav);
-    } else {
-      showScreen('loginScreen');
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(() => {
+    const nowDesktop = IS_DESKTOP();
+    if (nowDesktop === _lastWasDesktop) return; // No mode change, skip
+    _lastWasDesktop = nowDesktop;
+
+    if (nowDesktop && _cu) {
+      document.getElementById('desktopShell').style.display = 'flex';
+      document.querySelectorAll('.screen').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
+      if (_deskRoom) deskOpenRoom(_deskRoom);
+      else deskLoadRoomList();
+    } else if (!nowDesktop) {
+      document.getElementById('desktopShell').style.display = 'none';
+      if (_cu) {
+        // Always restore to a safe mobile tab — never use _deskNav directly
+        const safeTab = ['home','forum','watch','msgs','friends'].includes(_lastMobileTab) ? _lastMobileTab : 'home';
+        switchMainTab(safeTab);
+      } else {
+        showScreen('loginScreen');
+      }
     }
-  }
+  }, 250); // 250ms debounce — ignores keyboard/soft keyboard resize
 });
 
 // Also update room list when online status changes
@@ -13308,6 +13326,11 @@ function openNotifCenter(triggerEl){
   const modal=document.getElementById('notifCenterModal');
   const panel=document.getElementById('notifCenterPanel');
   if(!modal||!panel) return;
+
+  // Request permission when user explicitly opens notifications
+  if('Notification' in window && Notification.permission === 'default'){
+    requestNotifPermissionFromSettings();
+  }
 
   const isMobile = window.innerWidth < 768;
 
@@ -14279,9 +14302,31 @@ function checkMentionsInMsg(text){
     });
   }
 }
-function requestNotifPermission(){
-  if(!('Notification'in window)){ showToast('Tarayıcınız bildirimleri desteklemiyor.'); return; }
-  Notification.requestPermission().then(p=>showToast(p==='granted'?'🔔 Bildirimler açıldı!':'İzin reddedildi.'));
+function requestNotifPermissionFromSettings(){
+  // iOS Safari tarayıcısında bildirimler sadece ana ekrana eklenen PWA'da çalışır
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+
+  if(!('Notification' in window)){
+    if(isIOS && !isStandalone){
+      showToast('📱 iOS\'ta bildirimleri etkinleştirmek için uygulamayı Ana Ekrana ekleyin.');
+    } else {
+      showToast('Bu tarayıcı bildirimleri desteklemiyor.');
+    }
+    return;
+  }
+  if(Notification.permission === 'granted'){
+    showToast('🔔 Bildirimler zaten açık!');
+    return;
+  }
+  Notification.requestPermission().then(p => {
+    if(p === 'granted'){
+      _notifPermission = 'granted';
+      showToast('🔔 Bildirimler açıldı!');
+    } else {
+      showToast('İzin reddedildi. Tarayıcı ayarlarından açabilirsiniz.');
+    }
+  });
 }
 
 /* 8. DÜZENLEME GEÇMİŞİ */
