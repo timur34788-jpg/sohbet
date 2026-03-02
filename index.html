@@ -557,13 +557,42 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 /* ── Kanal Önizleme Popup Konumlama ── */
 (function(){
   document.addEventListener('mouseover', function(e){
+    // Mobil/touch cihazlarda popup gösterme
+    if(window.innerWidth < 768) return;
+    if('ontouchstart' in window && !window.matchMedia('(pointer: fine)').matches) return;
+
     const row = e.target.closest('.dsk-row, .r-row');
     if(!row) return;
     const popup = row.querySelector('.room-preview-popup');
     if(!popup) return;
+
     const rect = row.getBoundingClientRect();
-    popup.style.top = Math.min(rect.top, window.innerHeight - 120) + 'px';
-    popup.style.left = (rect.right + 8) + 'px';
+    const popupW = 240;
+    const margin = 10;
+
+    // Place to the RIGHT of the sidebar panel (not just the row)
+    // Find the parent sidebar/panel right edge
+    const sidebarEl = row.closest('#deskSidebar, #roomsScreen, .rooms-scroll');
+    let leftEdge;
+    if(sidebarEl){
+      const sRect = sidebarEl.getBoundingClientRect();
+      leftEdge = sRect.right + margin;
+    } else {
+      leftEdge = rect.right + margin;
+    }
+
+    // Prevent going off screen right
+    if(leftEdge + popupW > window.innerWidth - 8){
+      leftEdge = rect.left - popupW - margin;
+    }
+
+    // Vertical: align with row, clamp to viewport
+    let top = rect.top;
+    if(top + 120 > window.innerHeight - 8) top = window.innerHeight - 128;
+    if(top < 8) top = 8;
+
+    popup.style.top = top + 'px';
+    popup.style.left = leftEdge + 'px';
     popup.style.transform = 'none';
   });
 })();
@@ -632,17 +661,24 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
 .flip-counter-digit { height: 1.2em; line-height: 1.2em; font-weight: 700; }
 
 .room-preview-popup {
-  display: none; position: fixed; z-index: 9000;
+  display: none; position: fixed; z-index: 99999;
   top: auto; left: auto;
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 12px; padding: 10px 14px; min-width: 200px; max-width: 240px;
   box-shadow: 0 8px 32px rgba(0,0,0,.5); pointer-events: none;
   animation: popupFadeIn .15s ease;
 }
-@keyframes popupFadeIn { from { opacity:0; transform:translateY(-50%) scale(.95); } to { opacity:1; transform:translateY(-50%) scale(1); } }
-/* popup JS ile konumlanıyor — CSS'te gizle/göster sadece */
-.r-row:hover .room-preview-popup,
-.dsk-row:hover .room-preview-popup { display: block; }
+@keyframes popupFadeIn { from { opacity:0; transform:scale(.95); } to { opacity:1; transform:scale(1); } }
+/* popup sadece masaüstünde göster — mobilde hover olmaz ama touch tetiklenebilir, önce CSS ile kapat */
+@media (hover: hover) and (pointer: fine) {
+  .r-row:hover .room-preview-popup,
+  .dsk-row:hover .room-preview-popup { display: block; }
+}
+/* Mobilde (touch cihaz) asla gösterme */
+@media (hover: none), (pointer: coarse) {
+  .r-row:hover .room-preview-popup,
+  .dsk-row:hover .room-preview-popup { display: none !important; }
+}
 .rpp-name { font-size:.78rem; font-weight:700; color:var(--text); margin-bottom:4px; }
 .rpp-msg  { font-size:.72rem; color:var(--muted); line-height:1.4; margin-bottom:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .rpp-meta { display:flex; align-items:center; gap:6px; font-size:.65rem; color:var(--muted); }
