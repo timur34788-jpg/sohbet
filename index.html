@@ -4090,6 +4090,7 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 <script>
 'use strict';
 
@@ -5093,6 +5094,32 @@ function onLoginSuccess(){
   initLocalVideoDrag();
   scheduleDMClear();
   if(typeof _newFeatureInit==='function') _newFeatureInit();
+
+  // ── FCM Push Bildirim Başlat ──
+  setTimeout(() => initFCM(_activeServer), 1500);
+
+  // ── SW polling fallback başlat (FCM VAPID girilene kadar) ──
+  setTimeout(() => {
+    if (!_cu) return;
+    // Oda listesini topla
+    const roomIds = [];
+    dbRef('rooms').once('value').then(snap => {
+      const rooms = snap.val() || {};
+      Object.values(rooms).forEach(r => {
+        if (!r.id) return;
+        if (r.type === 'channel') { roomIds.push(r.id); return; }
+        if ((r.members || []).includes(_cu)) roomIds.push(r.id);
+      });
+      // Auth token al
+      const user = _auth ? _auth.currentUser : null;
+      const tokenPromise = user ? user.getIdToken() : Promise.resolve(null);
+      tokenPromise.then(token => {
+        _swInit(_cu, token, _FB_REST, roomIds);
+      }).catch(() => {
+        _swInit(_cu, null, _FB_REST, roomIds);
+      });
+    }).catch(() => {});
+  }, 2000);
 }
 
 function doLogout(){
@@ -10852,6 +10879,12 @@ async function requestNotifPermission(){
 function showPushNotification(title, body, icon){
   if(_notifPermission!=='granted') return;
   if(document.visibilityState==='visible') return;
+  // SW üzerinden göster (daha güvenilir arka planda)
+  if(navigator.serviceWorker && navigator.serviceWorker.controller){
+    _swShowNotif(title, body, 'nc-' + Date.now());
+    return;
+  }
+  // Fallback: doğrudan Notification API
   try {
     const n = new Notification(title, {body, icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%232c3038"/><text y="44" x="32" text-anchor="middle" font-size="36">'+icon+'</text></svg>', badge:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="%232c3038"/></svg>', vibrate:[200,100,200]});
     n.onclick=()=>{window.focus();n.close();};
@@ -11410,7 +11443,364 @@ document.addEventListener('DOMContentLoaded',function(){
 });
 
 /* ── PWA SW ── */
-if('serviceWorker'in navigator){const sw=`const C='sb-v8';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./']).catch(()=>{})));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==C).map(k=>caches.delete(k)))));});self.addEventListener('fetch',e=>{if(e.request.url.includes('firebase')||e.request.url.includes('gstatic'))return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}
+// ══════════════════════════════════════════════════════════════
+//  🔔 FCM (Firebase Cloud Messaging) — Tam Push Bildirim Sistemi
+// ══════════════════════════════════════════════════════════════
+
+// ── VAPID Anahtarları — Firebase Console'dan alınacak ──
+// Her proje için: Firebase Console → Project Settings → Cloud Messaging
+//                 → Web Push certificates → Generate key pair
+const FCM_VAPID = {
+  layla: 'BDqV62xUvhOyafHiqEV4QEXgqgwAc1AKF5jVX1yDGXAYALauSDZmYSVGtWgMP5VIl02jNamn6uXo5CQTRrVLOEk',
+  chat:  'BCJehpZUtoODCfqCeaIqSibDvGEijqdCfn1hfRsRoZsY9UZ1ZpNUjjeYdASl9-Z9Ma8HLNV0ViXPKE6_n48CYzI'
+};
+
+let _fcmMessaging = null;
+let _fcmToken     = null;
+
+// ── FCM Başlatma (giriş sonrası çağrılır) ──
+async function initFCM(serverKey) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'denied') return;
+  if (!('serviceWorker' in navigator)) return;
+
+  const vapidKey = FCM_VAPID[serverKey];
+  if (!vapidKey || vapidKey.includes('BURAYA')) return; // Henüz key girilmemiş
+
+  let swReg;
+  try {
+    swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+  } catch(e) { return; }
+
+  // SW'ye Firebase config gönder
+  const ctrl = swReg.active || navigator.serviceWorker.controller;
+  if (ctrl) ctrl.postMessage({ type: 'FCM_INIT', config: FB_CONFIG });
+
+  try {
+    const existingApp = firebase.apps.find(a => a.name === '[DEFAULT]') || firebase.apps[0];
+    if (!existingApp) return;
+    _fcmMessaging = firebase.messaging(existingApp);
+
+    // İzin iste
+    if (Notification.permission !== 'granted') {
+      const perm = await Notification.requestPermission();
+      _notifPermission = perm;
+      if (perm !== 'granted') return;
+    } else {
+      _notifPermission = 'granted';
+    }
+
+    // FCM token al
+    _fcmToken = await _fcmMessaging.getToken({ vapidKey, serviceWorkerRegistration: swReg });
+    if (_fcmToken) await _saveFCMToken(_fcmToken);
+
+    // Uygulama ön plandayken gelen push mesajlarını yakala
+    _fcmMessaging.onMessage((payload) => {
+      _playNotifAudio(getSelectedNotif());
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      const n = payload.notification || payload.data || {};
+      if (n.title) showToast('💬 ' + n.title + (n.body ? ': ' + String(n.body).slice(0, 50) : ''));
+    });
+  } catch(e) { console.warn('[FCM]', e); }
+}
+
+// ── FCM Token DB'ye Kaydet ──
+async function _saveFCMToken(token) {
+  if (!_db || !_cu || !token) return;
+  try {
+    const platform = /Android/i.test(navigator.userAgent) ? 'android'
+                   : /iPhone|iPad/i.test(navigator.userAgent) ? 'ios' : 'web';
+    const key = platform + '_' + Date.now().toString(36);
+    await dbRef('fcmTokens/' + _cu + '/' + key).set({ token, platform, ts: Date.now(), server: _activeServer });
+    // En fazla 5 cihaz tut
+    const snap = await dbRef('fcmTokens/' + _cu).once('value');
+    const all = snap.val() || {};
+    const sorted = Object.keys(all).sort((a,b) => (all[b].ts||0) - (all[a].ts||0));
+    for (const k of sorted.slice(5)) await dbRef('fcmTokens/' + _cu + '/' + k).remove();
+  } catch(e) {}
+}
+
+// ── HTML Audio bildirim sesi (AudioContext) ──
+function _playNotifAudio(id) {
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const mg = ctx.createGain(); mg.gain.value = 1.8; mg.connect(ctx.destination);
+    const t = ctx.currentTime;
+    if (id === 'bubble' || !id) {
+      [[0,600,.12],[.15,800,.1]].forEach(([w,f,d])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(f,t+w);
+        o.frequency.exponentialRampToValueAtTime(f*.6,t+w+d);
+        g.gain.setValueAtTime(.5,t+w); g.gain.exponentialRampToValueAtTime(.001,t+w+d);
+        o.connect(g); g.connect(mg); o.start(t+w); o.stop(t+w+d+.05);
+      });
+    } else if (id === 'ding') {
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine'; o.frequency.value=1047;
+      g.gain.setValueAtTime(.8,t); g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.connect(g); g.connect(mg); o.start(t); o.stop(t+.4);
+    } else if (id === 'pop') {
+      [[0,800,.08],[.06,1200,.06]].forEach(([w,f,d])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.value=f;
+        g.gain.setValueAtTime(.7,t+w); g.gain.exponentialRampToValueAtTime(.001,t+w+d);
+        o.connect(g); g.connect(mg); o.start(t+w); o.stop(t+w+d+.02);
+      });
+    } else {
+      [[0,900,.14],[.18,1200,.14]].forEach(([w,f,d])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='triangle'; o.frequency.value=f;
+        g.gain.setValueAtTime(.8,t+w); g.gain.exponentialRampToValueAtTime(.001,t+w+d);
+        o.connect(g); g.connect(mg); o.start(t+w); o.stop(t+w+d+.02);
+      });
+    }
+    setTimeout(()=>{ try{ctx.close();}catch(e){} }, 2000);
+  } catch(e) {}
+}
+
+// ── Fallback SW (FCM VAPID girilene kadar polling yapar) ──
+(function() {
+  if (!('serviceWorker' in navigator)) return;
+  // FCM SW dosyası kontrol — yoksa blob polling SW kur
+  fetch('/firebase-messaging-sw.js', { method: 'HEAD' }).then(r => {
+    if (!r.ok) throw new Error();
+    // Dosya var — initFCM içinde register edilecek, burada bir şey yapma
+  }).catch(() => {
+    // Dosya yok — polling SW
+    const sw = `let _u=null,_r=[],_lt={},_db='',_tk=null,_ti=null;
+self.addEventListener('message',e=>{const d=e.data||{};
+  if(d.type==='INIT'){_u=d.user;_db=d.dbUrl;_tk=d.token;_r=d.rooms||[];if(_ti)clearInterval(_ti);_ti=setInterval(poll,20000);}
+  if(d.type==='NEW_ROOM'&&d.room&&!_r.includes(d.room))_r.push(d.room);
+  if(d.type==='STOP'){if(_ti){clearInterval(_ti);_ti=null;}_u=null;}
+  if(d.type==='SHOW_NOTIF')self.registration.showNotification(d.title||'💬',{body:d.body||'',icon:'/favicon.ico',vibrate:[200,100,200],tag:d.tag||'nc',renotify:true,data:{url:self.registration.scope}});
+});
+self.addEventListener('notificationclick',e=>{e.notification.close();e.waitUntil(clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>{for(const c of l)if(c.focus)return c.focus();if(clients.openWindow)return clients.openWindow(e.notification.data?.url||'/');
+}));});
+async function poll(){if(!_u||!_r.length)return;
+  const cl=await clients.matchAll({type:'window',includeUncontrolled:true});
+  if(cl.some(c=>c.visibilityState==='visible'))return;
+  const since=Date.now()-30000;
+  for(const rid of _r){try{
+    const auth=_tk?'&auth='+_tk:'';
+    const res=await fetch(_db+'/msgs/'+rid+'.json?orderBy="ts"&startAt='+since+'&limitToLast=3'+auth,{cache:'no-store'});
+    if(!res.ok)continue;const data=await res.json();if(!data)continue;
+    for(const[k,m]of Object.entries(data)){if(!m||m.user===_u||m.sys)continue;
+      const key=rid+'_'+k;if(_lt[key])continue;_lt[key]=true;
+      if(Object.keys(_lt).length>100){const ks=Object.keys(_lt);ks.slice(0,50).forEach(x=>delete _lt[x]);}
+      await self.registration.showNotification('💬 '+(m.user||'Mesaj'),{body:(m.file?'📎 Dosya':(m.text||'').slice(0,80)),icon:'/favicon.ico',badge:'/favicon.ico',vibrate:[200,100,200],tag:key,renotify:true,data:{url:self.registration.scope}});
+    }}catch(e){}}
+}
+self.addEventListener('install',()=>self.skipWaiting());
+self.addEventListener('activate',e=>{e.waitUntil(clients.claim());});
+self.addEventListener('fetch',e=>{if(e.request.url.includes('firebase')||e.request.url.includes('gstatic'))return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;
+    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).then(reg=>{window._swReg=reg;}).catch(()=>{});
+  });
+})();
+
+// ── SW mesaj helper'ları ──
+function _swInit(user, token, dbUrl, rooms) {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({ type:'INIT', user, token, dbUrl, rooms: rooms||[] });
+}
+function _swShowNotif(title, body, tag) {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({ type:'SHOW_NOTIF', title, body, tag });
+}
+function _swAddRoom(roomId) {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({ type:'NEW_ROOM', room: roomId });
+}
+
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const mg = ctx.createGain(); mg.gain.value = 1.8; mg.connect(ctx.destination);
+    const t = ctx.currentTime;
+    // Seçilen notif sesini çal
+    if (id === 'bubble' || !id) {
+      [[0,600,.12],[.15,800,.1]].forEach(([w,f,d])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(f,t+w);
+        o.frequency.exponentialRampToValueAtTime(f*.6,t+w+d);
+        g.gain.setValueAtTime(.5,t+w); g.gain.exponentialRampToValueAtTime(.001,t+w+d);
+        o.connect(g); g.connect(mg); o.start(t+w); o.stop(t+w+d+.05);
+      });
+    } else if (id === 'ding') {
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.type='sine'; o.frequency.value=1047;
+      g.gain.setValueAtTime(.8,t); g.gain.exponentialRampToValueAtTime(.001,t+.35);
+      o.connect(g); g.connect(mg); o.start(t); o.stop(t+.4);
+    } else if (id === 'pop') {
+      [[0,800,.08],[.06,1200,.06]].forEach(([w,f,d])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='sine'; o.frequency.value=f;
+        g.gain.setValueAtTime(.7,t+w); g.gain.exponentialRampToValueAtTime(.001,t+w+d);
+        o.connect(g); g.connect(mg); o.start(t+w); o.stop(t+w+d+.02);
+      });
+    } else {
+      [[0,900,.14],[.18,1200,.14]].forEach(([w,f,d])=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        o.type='triangle'; o.frequency.value=f;
+        g.gain.setValueAtTime(.8,t+w); g.gain.exponentialRampToValueAtTime(.001,t+w+d);
+        o.connect(g); g.connect(mg); o.start(t+w); o.stop(t+w+d+.02);
+      });
+    }
+    setTimeout(()=>{ try{ctx.close();}catch(e){} }, 2000);
+  } catch(e) {}
+}
+
+/* ── Service Worker — Firebase REST polling + arka plan bildirimleri ── */
+if ('serviceWorker' in navigator) {
+  const swCode = `
+const CACHE = 'nc-sw-v9';
+const DB_URLS = {
+  'layla': 'https://layla-d3710-default-rtdb.europe-west1.firebasedatabase.app',
+  'lisa':  'https://lisa-518f0-default-rtdb.europe-west1.firebasedatabase.app'
+};
+
+let _swDbUrl = DB_URLS.layla;
+let _swUser = null;
+let _swToken = null;
+let _swLastTs = {};
+let _pollTimer = null;
+let _swRooms = [];
+
+// Sayfadan mesaj al — kullanıcı bilgisi, oda listesi, token
+self.addEventListener('message', e => {
+  const d = e.data || {};
+  if (d.type === 'INIT') {
+    _swUser  = d.user;
+    _swToken = d.token;
+    _swDbUrl = d.dbUrl || _swDbUrl;
+    _swRooms = d.rooms || [];
+    // Polling başlat
+    if (_pollTimer) clearInterval(_pollTimer);
+    _pollTimer = setInterval(pollMessages, 15000); // 15sn'de bir kontrol
+  }
+  if (d.type === 'NEW_ROOM') {
+    if (d.room && !_swRooms.includes(d.room)) _swRooms.push(d.room);
+  }
+  if (d.type === 'STOP') {
+    if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+    _swUser = null;
+  }
+  // Ana sayfa mesajı doğrudan bildirim göster (tab arka planda)
+  if (d.type === 'SHOW_NOTIF') {
+    self.registration.showNotification(d.title || '💬 Yeni mesaj', {
+      body: d.body || '',
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      vibrate: [200, 100, 200],
+      tag: d.tag || 'nc-msg',
+      renotify: true,
+      data: { url: self.registration.scope }
+    });
+  }
+});
+
+// Bildirime tıklanınca uygulamayı aç
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url && c.focus) return c.focus();
+      }
+      if (clients.openWindow) return clients.openWindow(e.notification.data?.url || '/');
+    })
+  );
+});
+
+// Firebase REST ile yeni mesaj polling
+async function pollMessages() {
+  if (!_swUser || !_swRooms.length) return;
+  // Aktif (focused) sekme varsa polling yapma — tab zaten dinliyor
+  const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+  const hasVisibleClient = allClients.some(c => c.visibilityState === 'visible');
+  if (hasVisibleClient) return;
+
+  const now = Date.now();
+  const since = now - 30000; // son 30 saniye
+
+  for (const roomId of _swRooms) {
+    try {
+      const auth = _swToken ? '?auth=' + _swToken : '';
+      const url = _swDbUrl + '/msgs/' + roomId + '.json?orderBy=\\"ts\\"&startAt=' + since + '&limitToLast=3' + (auth ? '&auth='+_swToken : '');
+      const resp = await fetch(url, { cache: 'no-store' });
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      if (!data) continue;
+      for (const [key, msg] of Object.entries(data)) {
+        if (!msg || msg.user === _swUser || msg.sys) continue;
+        const k = roomId + '_' + key;
+        if (_swLastTs[k]) continue;
+        _swLastTs[k] = true;
+        // Bildirimi göster
+        const text = msg.file ? '📎 Dosya' : (msg.text || '').slice(0, 80);
+        await self.registration.showNotification('💬 ' + (msg.user || 'Yeni mesaj'), {
+          body: text,
+          icon: '/favicon.ico',
+          badge: '/favicon.ico',
+          vibrate: [200, 100, 200],
+          tag: k,
+          renotify: true,
+          data: { url: self.registration.scope }
+        });
+      }
+      // Cache temizle
+      if (Object.keys(_swLastTs).length > 100) {
+        const keys = Object.keys(_swLastTs);
+        keys.slice(0, 50).forEach(k => delete _swLastTs[k]);
+      }
+    } catch(err) {}
+  }
+}
+
+// Install & Activate
+self.addEventListener('install', e => { self.skipWaiting(); });
+self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+self.addEventListener('fetch', e => {
+  if (e.request.url.includes('firebase') || e.request.url.includes('gstatic')) return;
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+});
+`;
+
+  navigator.serviceWorker.register(
+    URL.createObjectURL(new Blob([swCode], { type: 'text/javascript' }))
+  ).then(reg => {
+    window._swReg = reg;
+    // SW'ye mesaj gönder — ana sayfa hazır olunca INIT gönderilecek
+  }).catch(() => {});
+
+  // SW'den gelen mesajları dinle (ileride gerekirse)
+  navigator.serviceWorker.addEventListener('message', e => {});
+}
+
+/* ── SW'ye kullanıcı bilgisi ve oda listesi gönder ── */
+function _swInit(user, token, dbUrl, rooms) {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({
+    type: 'INIT', user, token, dbUrl, rooms: rooms || []
+  });
+}
+
+/* ── Tab arka plana geçince SW üzerinden bildirim göster ── */
+function _swShowNotif(title, body, tag) {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({
+    type: 'SHOW_NOTIF', title, body, tag
+  });
+}
+
+/* ── SW'ye yeni oda ekle ── */
+function _swAddRoom(roomId) {
+  if (!navigator.serviceWorker || !navigator.serviceWorker.controller) return;
+  navigator.serviceWorker.controller.postMessage({ type: 'NEW_ROOM', room: roomId });
+}
 
 /* ══════════════════════════════════════════
    DESKTOP ENGINE
