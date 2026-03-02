@@ -123,9 +123,10 @@ html,body{height:100%;width:100%;overflow:hidden;background:var(--bg);color:var(
   0%,100% { transform: rotate(0deg); }
   50% { transform: rotate(-90deg); }
 }
+/* orientation lock disabled — landscape allowed */
 @media (orientation: landscape) and (max-width: 1024px) {
   #orientationBlock {
-    display: flex !important;
+    display: none !important;
   }
 }
 
@@ -3004,9 +3005,24 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 
 <style id="nc-ui-v2">
 /* NATURE.CO UI v2 - Mockup Match */
-:root { --v2-green: #00e87a; --v2-teal: #00c9a0; }
+:root {
+  --v2-green: #00e87a;
+  --v2-teal: #00c9a0;
+  /* Override main accent to mockup green */
+  --accent: #00e87a !important;
+  --green: #00e87a !important;
+  --nc-emerald: #00e87a !important;
+  --nc-emerald2: #00c463 !important;
+}
 
-/* TAB BAR */
+/* TAB BAR — fix label wrapping on Android */
+.tab-lb {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  font-size: .57rem !important;
+  max-width: 52px !important;
+}
 .tab.act::before { top:auto !important; bottom:0 !important; width:22px !important; height:3px !important; border-radius:3px 3px 0 0 !important; background:var(--v2-green) !important; }
 .tab.act .tab-ic-wrap { background:rgba(0,232,122,0.12) !important; border-radius:12px !important; }
 .tab.act .tab-lb { color:var(--v2-green) !important; }
@@ -3028,13 +3044,17 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 .dm-status { font-size:.75rem !important; color:rgba(148,200,188,0.5) !important; margin-top:1px !important; }
 #dmSearch { background:rgba(255,255,255,0.07) !important; border:1px solid rgba(255,255,255,0.1) !important; border-radius:14px !important; padding:10px 14px !important; font-size:.88rem !important; }
 
-/* FRIENDS */
+/* FRIENDS — fix name truncation */
 .fr-row { background:rgba(14,22,28,0.8) !important; border:1px solid rgba(255,255,255,0.07) !important; border-radius:16px !important; padding:11px 14px !important; margin:5px 0 !important; transition:border-color 0.2s,background 0.15s !important; }
 .fr-row:active { background:rgba(255,255,255,0.05) !important; border-color:rgba(0,232,122,0.15) !important; }
-.fr-av { width:42px !important; height:42px !important; border-radius:50% !important; font-size:.82rem !important; font-weight:900 !important; }
-.fr-name { font-family:'Syne',sans-serif !important; font-size:.95rem !important; font-weight:800 !important; }
+.fr-av { width:42px !important; height:42px !important; border-radius:50% !important; font-size:.82rem !important; font-weight:900 !important; flex-shrink:0 !important; }
+.fr-info { flex:1 !important; min-width:0 !important; overflow:hidden !important; }
+.fr-name { font-family:'Syne',sans-serif !important; font-size:.92rem !important; font-weight:800 !important; white-space:nowrap !important; overflow:hidden !important; text-overflow:ellipsis !important; max-width:140px !important; }
+.fr-btns { flex-shrink:0 !important; gap:6px !important; }
 .fr-btn.accept { background:rgba(0,232,122,0.12) !important; border:1px solid rgba(0,232,122,0.25) !important; color:var(--v2-green) !important; border-radius:10px !important; font-weight:700 !important; font-size:.78rem !important; padding:7px 14px !important; }
-.fr-btn:not(.accept):not(.reject) { background:rgba(255,255,255,0.07) !important; border:1px solid rgba(255,255,255,0.1) !important; color:rgba(255,255,255,0.8) !important; border-radius:10px !important; font-size:.78rem !important; padding:7px 14px !important; }
+.fr-btn.msg { background:rgba(0,232,122,0.12) !important; border:1px solid rgba(0,232,122,0.2) !important; color:var(--v2-green) !important; border-radius:10px !important; font-size:.78rem !important; font-weight:700 !important; padding:7px 14px !important; }
+.fr-btn.remove, .fr-btn.reject { background:rgba(248,113,113,0.1) !important; border:1px solid rgba(248,113,113,0.2) !important; color:#f87171 !important; border-radius:10px !important; font-size:.78rem !important; padding:7px 14px !important; }
+.fr-btn:not(.accept):not(.reject):not(.msg):not(.remove) { background:rgba(255,255,255,0.07) !important; border:1px solid rgba(255,255,255,0.1) !important; color:rgba(255,255,255,0.8) !important; border-radius:10px !important; font-size:.78rem !important; padding:7px 14px !important; }
 
 /* FORUM CARDS */
 .forum-card { position:relative !important; border-radius:18px !important; overflow:hidden !important; border:1px solid rgba(255,255,255,0.08) !important; transition:border-color .2s,transform .2s !important; margin-bottom:10px !important; }
@@ -3045,7 +3065,7 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 .forum-foot-btn { background:rgba(255,255,255,0.05) !important; border:1px solid rgba(255,255,255,0.08) !important; border-radius:100px !important; padding:4px 11px !important; font-size:.74rem !important; transition:background .15s,border-color .15s !important; cursor:pointer !important; }
 .forum-foot-btn:hover { background:rgba(0,232,122,0.1) !important; border-color:rgba(0,232,122,0.2) !important; color:var(--v2-green) !important; }
 
-/* ANA SAYFA rooms */
+/* ANA SAYFA rooms — match mockup */
 #roomsScreen .r-row { padding:10px 12px !important; border-radius:14px !important; margin:2px 0 !important; }
 #roomsScreen .r-av { width:38px !important; height:38px !important; border-radius:50% !important; font-size:.78rem !important; }
 #roomsScreen .r-label { font-family:'Syne',sans-serif !important; font-size:.92rem !important; font-weight:700 !important; }
@@ -3063,8 +3083,20 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
 /* MODAL */
 .bs-panel { border-radius:28px 28px 0 0 !important; }
 
-/* SCROLLBAR */
+/* SCROLLBAR hidden */
 ::-webkit-scrollbar { width:0; height:0; }
+
+/* GLOBAL ACCENT overrides */
+.login-btn { background:linear-gradient(135deg,#00c463,#00e87a) !important; color:#000 !important; }
+#sendBtn, .send-btn-main { background:linear-gradient(135deg,#00c463,#00e87a) !important; }
+.tab.act { color:var(--v2-green) !important; }
+/* + Ekle button */
+.hdr-btn-add, [onclick*="openFriendAdd"], [onclick*="switchFrTab"] {
+  background:linear-gradient(135deg,#00c463,#00e87a) !important;
+  color:#000 !important;
+  border-radius:10px !important;
+  font-weight:700 !important;
+}
 
 </style>
 
@@ -3568,7 +3600,7 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
               <option value="soru">❓ Soru</option>
             </select>
           </div>
-          <button onclick="submitForumPost()" style="background:#5b9bd5;border:none;border-radius:8px;color:#fff;padding:7px 18px;font-size:.82rem;font-weight:700;cursor:pointer;transition:opacity .15s;" onmousedown="this.style.opacity='.7'" onmouseup="this.style.opacity='1'">Paylaş →</button>
+          <button onclick="submitForumPost()" style="background:linear-gradient(135deg,#00c463,#00e87a);border:none;border-radius:100px;color:#000;padding:8px 20px;font-size:.82rem;font-weight:800;cursor:pointer;transition:opacity .15s;font-family:'Syne',sans-serif;letter-spacing:.02em;" onmousedown="this.style.opacity='.7'" onmouseup="this.style.opacity='1'">Paylaş →</button>
         </div>
       </div>
     </div>
@@ -14586,56 +14618,9 @@ startEditMsg = function(room,key){
 </script>
 
 <script>
-/* ── Ekran Yönü Kilidi (portrait-only) ── */
-(function lockOrientation(){
-  function tryLock(){
-    try{
-      if(screen.orientation&&screen.orientation.lock){
-        screen.orientation.lock('portrait').catch(()=>{});
-      } else if(screen.lockOrientation){
-        screen.lockOrientation('portrait');
-      } else if(screen.mozLockOrientation){
-        screen.mozLockOrientation('portrait');
-      }
-    }catch(e){}
-  }
-  tryLock();
-  document.addEventListener('DOMContentLoaded', tryLock);
-  window.addEventListener('orientationchange', function(){
-    setTimeout(tryLock, 100);
-    // Dönüşten sonra siyah ekran sorununu çöz (iOS repaint fix)
-    setTimeout(function(){
-      // Güvenilir portrait kontrolü
-      var isPortrait = false;
-      if(screen.orientation && screen.orientation.type){
-        isPortrait = screen.orientation.type.indexOf('portrait') !== -1;
-      } else if(typeof window.orientation !== 'undefined'){
-        isPortrait = (window.orientation === 0 || window.orientation === 180);
-      } else {
-        isPortrait = window.innerHeight > window.innerWidth;
-      }
-      if(isPortrait){
-        var el = document.getElementById('orientationBlock');
-        if(el) el.style.display = 'none';
-        // iOS WebKit tam repaint
-        document.documentElement.style.display = 'none';
-        void document.documentElement.offsetHeight;
-        document.documentElement.style.display = '';
-        window.scrollTo(0, 0);
-        // Görünür ekranı bul ve tetikle
-        var visibleScreens = document.querySelectorAll('.screen');
-        visibleScreens.forEach(function(s){
-          var d = s.style.display;
-          if(d && d !== 'none'){
-            s.style.transform = 'translateZ(0)';
-            void s.offsetHeight;
-            s.style.transform = '';
-          }
-        });
-      }
-    }, 350);
-  });
-})();
+/* orientation lock disabled — landscape allowed */
+// (function lockOrientation(){ ... })(); — devre dışı bırakıldı
+
 
 /* ── Emoji/GIF picker: boş alana tıklayınca kapat ── */
 document.addEventListener('click', function(e){
