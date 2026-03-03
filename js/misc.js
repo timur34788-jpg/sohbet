@@ -144,48 +144,74 @@ async function submitLogin(){
 
   const ph=await hashStr(pass+user);
   try{
-    // ── Giriş: direkt Firebase SDK kullan (REST/token bağımsız) ──
-    const phLegacy = hashStrSync(pass+user);
-
-    // Kullanıcı verisini SDK ile oku
-    const userSnap = await _db.ref('users/'+user).once('value');
-    const userData = userSnap.val();
-
-    if(!userData){
-      if(ADMIN_USERNAME && user===ADMIN_USERNAME){
-        showLoginErr("Admin hesabı bulunamadı. Firebase DB'ye users/"+user+" kaydı ekleyin.");
-      } else {
-        showLoginErr('Kullanıcı bulunamadı. Kayıt ol!');
+    // ── Admin girişi — Cloud Function bağımlılığı yok, doğrudan DB (REST) ──
+    if(ADMIN_USERNAME && user===ADMIN_USERNAME){
+      try{
+        const adminData = await fbRestGet('users/'+user).catch(()=>null);
+        const phLegacy  = hashStrSync(pass+user);
+        if(!adminData){
+          showLoginErr('Admin hesabı bulunamadı. Firebase DB\'ye users/'+user+' kaydı ekleyin.');
+          resetBtn(); return;
+        }
+        const storedHash = adminData.passwordHash || '';
+        const phLegacyAdmin = await hashStr(pass+'admin'); // eski 'admin' adıyla üretilmiş hash desteği
+        const matched    = (storedHash === ph) || (storedHash === phLegacy) || (storedHash === phLegacyAdmin);
+        if(!matched){
+          const rem  = recordLoginAttempt(user, false);
+          const lock = checkLoginLock(user);
+          if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika kilitli.');
+          else showLoginErr('Şifre yanlış.' + (rem.remaining !== undefined ? ' ' + rem.remaining + ' hakkınız kaldı.' : ''));
+          resetBtn(); return;
+        }
+        if(adminData.banned){ showLoginErr('Bu hesap yasaklandı.'); resetBtn(); return; }
+        // Legacy hash yükselt
+        if(storedHash === phLegacy && storedHash !== ph){
+          await fbRestSet('users/'+user+'/passwordHash', ph).catch(()=>{});
+        }
+        // Admin yetkisi: isAdmin flag VEYA admins/ path
+        const isAdminFlag  = adminData.isAdmin === true;
+        const adminsEntry  = await fbRestGet('admins/'+user).catch(()=>null);
+        recordLoginAttempt(user, true);
+        _passwordHash=ph; _cu=user; _isAdmin=(isAdminFlag || !!adminsEntry);
+        onLoginSuccess();
+        return;
+      }catch(dbErr){
+        const msg = dbErr.message || String(dbErr);
+        if(msg.includes('permission_denied')||msg.includes('401')||msg.includes('403')){
+          showLoginErr('DB erişimi reddedildi. Firebase Rules veya Anonymous Auth ayarını kontrol edin.');
+        } else {
+          showLoginErr('Bağlantı hatası: ' + msg);
+        }
+        resetBtn(); return;
       }
-      resetBtn(); return;
     }
-
-    if(userData.banned){ showLoginErr('Bu hesap yasaklandı.'); resetBtn(); return; }
-
-    const storedHash = userData.passwordHash || '';
-    const phLegacyAdmin = (ADMIN_USERNAME && user===ADMIN_USERNAME) ? await hashStr(pass+'admin') : '';
-    const matched = (storedHash === ph) || (storedHash === phLegacy) || (phLegacyAdmin && storedHash === phLegacyAdmin);
-
+    // Normal kullanıcı — users/ tablosundan doğrula
+    const phLegacy = hashStrSync(pass+user);
+    // _db null ise yeniden bağlanmayı dene
+    if(!_db){
+      const ok = await fbInit().catch(()=>false);
+      if(!ok || !_db){ showLoginErr('Sunucuya bağlanılamadı. Sayfayı yenileyip tekrar deneyin.'); resetBtn(); return; }
+    }
+    // SDK yerine REST kullan — auth/configuration-not-found olan sunucularda da çalışır
+    const rootD = await fbRestGet('users/'+user).catch(()=>null);
+    if(!rootD){showLoginErr('Kullanıcı bulunamadı. Kayıt ol!');resetBtn();return;}
+    const stored = rootD.passwordHash;
+    let matched = false;
+    if(stored === ph){ matched=true; }
+    else if(stored === phLegacy){
+      matched=true;
+      await fbRestSet('users/'+user+'/passwordHash', ph).catch(()=>{});
+    }
     if(!matched){
-      const rem  = recordLoginAttempt(user, false);
+      const rem = recordLoginAttempt(user, false);
       const lock = checkLoginLock(user);
-      if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika kilitli.');
+      if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika hesabın kilitli.');
       else showLoginErr('Şifre yanlış.' + (rem.remaining !== undefined ? ' ' + rem.remaining + ' hakkınız kaldı.' : ''));
-      resetBtn(); return;
+      resetBtn();return;
     }
-
-    // Legacy hash yükselt
-    if(storedHash !== ph){
-      _db.ref('users/'+user+'/passwordHash').set(ph).catch(()=>{});
-    }
-
-    // Admin yetkisi: isAdmin flag VEYA admins/ kaydı
-    const isAdminFlag = userData.isAdmin === true;
-    const adminsSnap  = await _db.ref('admins/'+user).once('value');
-    const adminsEntry = adminsSnap.val();
-
+    if(rootD.banned){showLoginErr('Bu hesap yasaklandı.');resetBtn();return;}
     recordLoginAttempt(user, true);
-    _passwordHash=ph; _cu=user; _isAdmin=(isAdminFlag || !!adminsEntry);
+    _passwordHash=ph;_cu=user;_isAdmin=false;
     onLoginSuccess();
   }catch(e){
     let msg = e.message || String(e);
@@ -263,10 +289,8 @@ function toggleChatMenu(e){
     items.push({sep:true});
     
     if(isDM){
-      items.push({icon:'🖥️', label:'Ekran Paylaş', action: ()=>startCall('screen')});
-      items.push({icon:'📹', label:'Görüntülü Ara', action: ()=>startCall('video')});
-      items.push({icon:'📞', label:'Sesli Ara', action: ()=>startCall('audio')});
-      items.push({sep:true});
+
+items.push({sep:true});
       items.push({icon:'🗑️', label:'Konuşmayı Kapat', action: ()=>closeDmConversation(_cRoom), danger:true});
     }
     
@@ -435,154 +459,10 @@ let _recStartTs = 0;
 let _recInterval = null;
 let _recDuration = 0;
 
-async function startVoiceRecord(e){
-  e.preventDefault();
-  if(_mediaRec) return;
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    _mediaRec = new MediaRecorder(stream, {mimeType: MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg'});
-    _recChunks = [];
-    _recStartTs = Date.now();
-    _recDuration = 0;
 
-    _mediaRec.ondataavailable = e=>{ if(e.data.size>0) _recChunks.push(e.data); };
-    _mediaRec.onstop = ()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      const blob = new Blob(_recChunks, {type:_mediaRec.mimeType});
-      const reader = new FileReader();
-      reader.onload = ev=>{
-        // Basit dalga formu oluştur (16 bar)
-        const bars = Array.from({length:16},()=>Math.floor(3+Math.random()*14));
-        const msg = {
-          user:_cu, ts:Date.now(), text:'',
-          voice:{ data:ev.target.result, dur:_recDuration, bars }
-        };
-        dbRef('msgs/'+_cRoom).push(msg).catch(()=>showToast('Gönderilemedi'));
-      };
-      reader.readAsDataURL(blob);
-      _recChunks=[];
-    };
 
-    _mediaRec.start(100);
 
-    const btn = document.getElementById('voiceRecordBtn');
-    const timer = document.getElementById('recTimer');
-    if(btn) btn.classList.add('recording');
-    if(timer) timer.classList.add('show');
 
-    _recInterval = setInterval(()=>{
-      _recDuration = Math.floor((Date.now()-_recStartTs)/1000);
-      const m=Math.floor(_recDuration/60);
-      const s=_recDuration%60;
-      if(timer) timer.textContent = m+':'+(s<10?'0':'')+s;
-      if(_recDuration>=120) stopVoiceRecord(); // max 2 dakika
-    },500);
-  }catch(e){
-    showToast('Mikrofon erişimi reddedildi');
-  }
-}
-
-async function toggleVoiceRecord(mode){
-  if(_mediaRec && _mediaRec.state!=='inactive'){
-    // Kayıt devam ediyor → durdur & gönder
-    clearInterval(_recInterval);
-    const isDesk = (mode==='desk');
-    const btn = document.getElementById(isDesk?'deskVoiceRecordBtn':'voiceRecordBtn');
-    const timer = document.getElementById(isDesk?'deskRecTimer':'recTimer');
-    if(btn) btn.classList.remove('recording');
-    if(timer){ timer.classList.remove('show'); timer.textContent='0:00'; }
-    _mediaRec.stop();
-    _mediaRec = null;
-    return;
-  }
-  // Kayıt yok → başlat
-  if(_mediaRec) return;
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({audio:true});
-    const isDesk = (mode==='desk');
-    _mediaRec = new MediaRecorder(stream, {mimeType: MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg'});
-    _recChunks = [];
-    _recStartTs = Date.now();
-    _recDuration = 0;
-
-    _mediaRec.ondataavailable = ev=>{ if(ev.data.size>0) _recChunks.push(ev.data); };
-    _mediaRec.onstop = ()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      if(_recDuration < 1){ showToast('Kayıt çok kısa'); _recChunks=[]; return; }
-      const blob = new Blob(_recChunks, {type:_mediaRec.mimeType});
-      const reader = new FileReader();
-      reader.onload = ev2=>{
-        const bars = Array.from({length:16},()=>Math.floor(3+Math.random()*14));
-        const msg = {
-          user:_cu, ts:Date.now(), text:'',
-          voice:{ data:ev2.target.result, dur:_recDuration, bars }
-        };
-        dbRef('msgs/'+_cRoom).push(msg).catch(()=>showToast('Gönderilemedi'));
-      };
-      reader.readAsDataURL(blob);
-      _recChunks=[];
-    };
-
-    _mediaRec.start(100);
-
-    const btn = document.getElementById(isDesk?'deskVoiceRecordBtn':'voiceRecordBtn');
-    const timer = document.getElementById(isDesk?'deskRecTimer':'recTimer');
-    if(btn) btn.classList.add('recording');
-    if(timer) timer.classList.add('show');
-
-    _recInterval = setInterval(()=>{
-      _recDuration = Math.floor((Date.now()-_recStartTs)/1000);
-      const m=Math.floor(_recDuration/60);
-      const s=_recDuration%60;
-      if(timer) timer.textContent = m+':'+(s<10?'0':'')+s;
-      if(_recDuration>=120) toggleVoiceRecord(mode); // max 2 dakika
-    },500);
-  }catch(e){
-    showToast('Mikrofon erişimi reddedildi');
-  }
-}
-
-function stopVoiceRecord(){
-  if(!_mediaRec||_mediaRec.state==='inactive') return;
-  clearInterval(_recInterval);
-  const btn = document.getElementById('voiceRecordBtn');
-  const timer = document.getElementById('recTimer');
-  if(btn){ btn.classList.remove('recording'); }
-  if(timer){ timer.classList.remove('show'); timer.textContent='0:00'; }
-  _mediaRec.stop();
-  _mediaRec = null;
-}
-
-function playVoiceMsg(btn, key){
-  const audio = document.getElementById('vau_'+key);
-  const progEl = document.getElementById('vpr_'+key);
-  if(!audio) return;
-
-  if(!audio.paused){
-    audio.pause();
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>';
-    return;
-  }
-
-  // Diğer sesleri durdur
-  document.querySelectorAll('audio[id^="vau_"]').forEach(a=>{ if(a!==audio) a.pause(); });
-
-  audio.play();
-  btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="white"><rect x="5" y="3" width="4" height="18"/><rect x="15" y="3" width="4" height="18"/></svg>';
-
-  audio.ontimeupdate = ()=>{
-    if(progEl) progEl.textContent = fmtDuration(Math.floor(audio.currentTime));
-  };
-  audio.onended = ()=>{
-    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>';
-    if(progEl) progEl.textContent = fmtDuration(audio.duration||0);
-  };
-}
-
-function fmtDuration(sec){
-  sec = Math.floor(sec)||0;
-  return Math.floor(sec/60)+':'+(sec%60<10?'0':'')+(sec%60);
-}
 
 
 /* ════════════════════════════════════════════════════
@@ -879,7 +759,6 @@ function buildEmojis(isDesk){
   h+='<div style="overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:6px 10px 10px;height:224px;box-sizing:border-box;"><div class="gif-grid" id="'+(isDesk?'desk':'mob')+'GifGrid"><div class="gif-loading">Yükleniyor...</div></div></div>';
   h+='</div>';
   target.innerHTML=h;
-  loadTrendingGifs(isDesk);
   loadCustomEmojis(isDesk);
 }
 
@@ -899,112 +778,25 @@ function switchPickerTab(tab, isDesk){
   }
 }
 
-// GIF API key — developers.giphy.com adresinden ücretsiz alınabilir
-const GIPHY_KEY = '';
 let _gifDebTimer = null;
 let _gifApiReady = true;
 
-function gifSearchDebounce(q, isDesk){
-  clearTimeout(_gifDebTimer);
-  _gifDebTimer = setTimeout(()=>{
-    if(q.trim()) searchGifs(q.trim(), isDesk);
-    else loadTrendingGifs(isDesk);
-  }, 400);
-}
 
-async function loadTrendingGifs(isDesk){
-  const grid = document.getElementById((isDesk?'desk':'mob')+'GifGrid');
-  if(!grid) return;
-  if(!_gifApiReady){ showGifKeyPrompt(grid, isDesk); return; }
-  grid.innerHTML = '<div class="gif-loading">Yükleniyor...</div>';
-  try {
-    const r = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${GIPHY_KEY}&limit=21&rating=g`);
-    const d = await r.json();
-    if(d.meta?.status !== 200) throw new Error(d.meta?.msg||'API error');
-    renderGifs(d.data||[], grid, isDesk);
-  } catch(e){ grid.innerHTML = '<div class="gif-loading">Yüklenemedi: '+e.message+'</div>'; }
-}
 
-async function searchGifs(q, isDesk){
-  const grid = document.getElementById((isDesk?'desk':'mob')+'GifGrid');
-  if(!grid) return;
-  if(!_gifApiReady){ showGifKeyPrompt(grid, isDesk); return; }
-  grid.innerHTML = '<div class="gif-loading">Aranıyor...</div>';
-  try {
-    const r = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_KEY}&q=${encodeURIComponent(q)}&limit=21&rating=g&lang=tr`);
-    const d = await r.json();
-    if(d.meta?.status !== 200) throw new Error(d.meta?.msg||'API error');
-    renderGifs(d.data||[], grid, isDesk);
-  } catch(e){ grid.innerHTML = '<div class="gif-loading">Hata: '+e.message+'</div>'; }
-}
 
-function renderGifs(results, grid, isDesk){
-  if(!results.length){ grid.innerHTML='<div class="gif-loading">Sonuç bulunamadı.</div>'; return; }
-  grid.innerHTML = results.map(g=>{
-    const preview = g.images?.fixed_height_small?.url || g.images?.downsized_small?.url || g.images?.downsized?.url || '';
-    const full = g.images?.original?.url || preview;
-    const safeUrl = full.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return `<div class="gif-item" onclick="sendGifMsg('${safeUrl}',${isDesk})"><img src="${preview}" loading="lazy" /></div>`;
-  }).join('');
-}
 
-function showGifKeyPrompt(grid, isDesk){
-  grid.innerHTML = `<div style="padding:16px;text-align:center;color:var(--muted);font-size:.82rem;line-height:1.6;">
-    <div style="font-size:1.5rem;margin-bottom:8px;">🔑</div>
-    <div style="color:var(--text-hi);font-weight:700;margin-bottom:6px;">Giphy API Key Gerekli</div>
-    <div style="margin-bottom:10px;"><a href="https://developers.giphy.com" target="_blank" style="color:var(--accent);">developers.giphy.com</a> adresinden ücretsiz key al, aşağıya yapıştır:</div>
-    <input id="gifKeyInput" placeholder="API key..." style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text-hi);padding:7px 10px;font-size:.82rem;outline:none;box-sizing:border-box;margin-bottom:8px;" />
-    <button onclick="saveGifKey(${isDesk})" style="background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 18px;cursor:pointer;font-size:.83rem;font-weight:700;">Kaydet ve Yükle</button>
-  </div>`;
-  // Daha önce kaydedilmiş key varsa doldur
-  const saved = localStorage.getItem('sohbet_giphy_key');
-  if(saved){ document.getElementById('gifKeyInput').value = saved; }
-}
 
-function saveGifKey(isDesk){
-  const inp = document.getElementById('gifKeyInput');
-  const key = inp ? inp.value.trim() : '';
-  if(!key){ showToast('Key boş olamaz'); return; }
-  localStorage.setItem('sohbet_giphy_key', key);
-  // Global key'i güncelle
-  window._gifApiKey = key;
-  window._gifApiReady = true;
-  // Monkey-patch
-  window.GIPHY_KEY_LIVE = key;
-  loadTrendingGifsWithKey(isDesk, key);
-}
 
-async function loadTrendingGifsWithKey(isDesk, key){
-  const grid = document.getElementById((isDesk?'desk':'mob')+'GifGrid');
-  if(!grid) return;
-  grid.innerHTML = '<div class="gif-loading">Yükleniyor...</div>';
-  try {
-    const r = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=${key}&limit=21&rating=g`);
-    const d = await r.json();
-    if(d.meta?.status !== 200) throw new Error(d.meta?.msg||'Geçersiz key');
-    // Key çalışıyor, global'e kaydet
-    Object.defineProperty(window, 'GIPHY_KEY', {value: key, writable: true, configurable: true});
-    _gifApiReady = true;
-    renderGifs(d.data||[], grid, isDesk);
-  } catch(e){ grid.innerHTML = '<div class="gif-loading" style="color:#e88;">Hata: '+e.message+'</div>'; }
-}
 
 // Sayfa açılırken localStorage'daki key'i yükle
 (function initGifKey(){
   const saved = localStorage.getItem('sohbet_giphy_key');
   if(saved){
-    try{ Object.defineProperty(window,'GIPHY_KEY',{value:saved,writable:true,configurable:true}); } catch(e){}
+    try{  } catch(e){}
     _gifApiReady = true;
   }
 })();
 
-function sendGifMsg(url, isDesk){
-  closeEmoji();
-  const room = isDesk ? _deskRoom : _cRoom;
-  if(!room||!_cu) return;
-  const msgData = { user:_cu, ts:Date.now(), file:{ type:'image/gif', data:url, name:'gif' } };
-  dbRef('msgs/'+room).push(msgData).catch(()=>showToast('Gönderilemedi'));
-}
 function scrollEmojiCat(i){const el=document.getElementById('ecat-'+i);if(el)el.scrollIntoView({block:'nearest'});}
 
 
@@ -1588,23 +1380,8 @@ const TURK_QUOTES = [
 let _turkQuoteIdx = 0;
 let _turkQuoteTimer = null;
 
-function showTurkQuote() {
-  const q = TURK_QUOTES[_turkQuoteIdx % TURK_QUOTES.length];
-  document.getElementById('turkQuoteRuler').textContent = '👑 ' + q.ruler;
-  document.getElementById('turkQuoteEra').textContent = q.era;
-  document.getElementById('turkQuoteText').textContent = q.quote;
-  const overlay = document.getElementById('turkQuoteOverlay');
-  overlay.style.display = 'flex';
-  _turkQuoteIdx++;
-}
 
-function closeTurkQuote() {
-  document.getElementById('turkQuoteOverlay').style.display = 'none';
-}
 
-function startTurkQuoteTimer() {
-  // devre dışı
-}
 
 // Overlay'e tıklayınca kapat
 document.addEventListener('DOMContentLoaded', function() {
@@ -2007,324 +1784,57 @@ let _callStopListeners = [];
 
 /* ── Helpers ── */
 
-function _pairKey(a, b){ return [a,b].sort().join('__'); }
 
-async function _getLocalStream(type){
-  if(type==='screen'){
-    const s = await navigator.mediaDevices.getDisplayMedia({video:{cursor:'always'},audio:false});
-    try{
-      const mic = await navigator.mediaDevices.getUserMedia({audio:true,video:false});
-      mic.getAudioTracks().forEach(t=>s.addTrack(t));
-    }catch(e){}
-    s.getVideoTracks()[0].onended = ()=>endCall();
-    return s;
-  }
-  return navigator.mediaDevices.getUserMedia(
-    type==='video'?{audio:true,video:{facingMode:'user'}}:{audio:true,video:false}
-  );
-}
 
-function _attachRemoteMedia(username, stream){
-  // Ses elementi oluştur veya güncelle
-  let audio = document.getElementById('_rAudio_'+username);
-  if(!audio){
-    audio = document.createElement('audio');
-    audio.id = '_rAudio_'+username;
-    audio.autoplay = true;
-    audio.playsInline = true;
-    audio.style.display = 'none';
-    document.body.appendChild(audio);
-  }
-  audio.srcObject = stream;
-  // Play'i zorla tetikle (autoplay policy bypass)
-  audio.play().catch(()=>{
-    const resume = ()=>{ audio.play().catch(()=>{}); document.removeEventListener('click',resume); };
-    document.addEventListener('click', resume, {once:true});
-  });
-  // Video varsa: tek katılımcıysa ana ekrana, çoksa grid'e
-  if(_callType==='video'||_callType==='screen'){
-    const rv = document.getElementById('remoteVideo');
-    if(rv){ rv.srcObject = stream; rv.play().catch(()=>{}); }
-  }
-}
 
 
 /* ══════════════════════════
    ARAMA BAŞLAT
 ══════════════════════════ */
 
-async function startCall(type){
-  const dmOther = getDMOther()||await getDMOtherFromDB();
-  if(!dmOther){showToast('DM odası gerekli!');return;}
-  if(!_online[dmOther]){showToast(dmOther+' şu an çevrimdışı.');return;}
-
-  _callType = type;
-  _callOther = dmOther;
-  _isCaller = true;
-  _groupCallId = 'gcall_'+_cu+'_'+Date.now();
-  _callId = _groupCallId;
-
-  try{
-    _localStream = await _getLocalStream(type);
-  }catch(e){
-    showToast(type==='screen'?'Ekran paylaşımı reddedildi.':'Mikrofon/kamera erişimi reddedildi.');
-    return;
-  }
-
-  // Firebase'e arama oluştur
-  await dbRef('calls/'+_groupCallId).set({host:_cu,type,status:'active',ts:Date.now()});
-  await dbRef('calls/'+_groupCallId+'/parts/'+_cu).set({active:true,ts:Date.now()});
-
-  // Karşı tarafı davet et
-  await dbRef('calls/'+_groupCallId+'/inv/'+dmOther).set({from:_cu,status:'ringing',type,ts:Date.now()});
-  await dbRef('callInvites/'+dmOther+'/'+_groupCallId).set({from:_cu,type,ts:Date.now()});
-
-  showCallScreen(dmOther, type, false);
-  document.getElementById('callStatus').textContent = 'Çağrılıyor...';
-
-  // Davet yanıtını dinle
-  const invRef = dbRef('calls/'+_groupCallId+'/inv/'+dmOther+'/status');
-  const stopInv = invRef.on('value', snap=>{
-    const s = snap.val();
-    if(s==='accepted'){
-      invRef.off('value',stopInv);
-      document.getElementById('callStatus').textContent = 'Bağlanıyor...';
-    } else if(s==='rejected'){
-      invRef.off('value',stopInv);
-      endCall(); showToast(dmOther+' aramayı reddetti.');
-    }
-  });
-  _callStopListeners.push(()=>invRef.off('value',stopInv));
-
-  // Yeni katılımcıları dinle
-  _listenParticipants();
-
-  // 30s cevap yoksa bitir
-  setTimeout(()=>{
-    const st = document.getElementById('callStatus');
-    if(_groupCallId && st && st.textContent==='Çağrılıyor...'){
-      endCall(); showToast('Cevap yok.');
-    }
-  },30000);
-}
 
 
 /* ══════════════════════════
    GÖRÜŞMEYE KULLANICI DAVET ET (aktif arama sırasında)
 ══════════════════════════ */
 
-async function inviteToCall(username){
-  if(!_groupCallId){showToast('Aktif görüşme yok.');return;}
-  if(_peers[username]){showToast(username+' zaten görüşmede.');return;}
-  if(!_online[username]){showToast(username+' şu an çevrimdışı.');return;}
 
-  await dbRef('calls/'+_groupCallId+'/inv/'+username).set({from:_cu,status:'ringing',type:_callType,ts:Date.now()});
-  await dbRef('callInvites/'+username+'/'+_groupCallId).set({from:_cu,type:_callType,ts:Date.now()});
-  showToast('📞 '+username+' görüşmeye davet edildi.');
-}
-
-function openCallInviteDialog(){
-  if(!_groupCallId) return;
-  // Çevrimiçi arkadaşları listele
-  const onlineUsers = Object.keys(_online).filter(u=>_online[u]&&u!==_cu&&!_peers[u]);
-  if(!onlineUsers.length){showToast('Davet edilebilecek çevrimiçi kullanıcı yok.');return;}
-  let h = '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:16px;position:fixed;bottom:160px;left:50%;transform:translateX(-50%);z-index:9999;min-width:220px;box-shadow:0 8px 32px rgba(0,0,0,.5);">';
-  h += '<div style="font-size:.85rem;font-weight:900;color:var(--text-hi);margin-bottom:10px;">📞 Görüşmeye Davet Et</div>';
-  onlineUsers.slice(0,8).forEach(u=>{
-    h += `<div onclick="inviteToCall('${u}');this.closest('[data-callInvDiv]').remove()" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;transition:background .1s;" onmouseenter="this.style.background='var(--surface)'" onmouseleave="this.style.background=''">`+
-      `<div style="width:30px;height:30px;border-radius:50%;background:${strColor(u)};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;color:#fff;">${initials(u)}</div>`+
-      `<div style="font-size:.85rem;font-weight:700;color:var(--text-hi);">${u}</div>`+
-      `<div style="width:8px;height:8px;border-radius:50%;background:#2ecc71;margin-left:auto;"></div>`+
-      `</div>`;
-  });
-  h += `<div onclick="this.closest('[data-callInvDiv]').remove()" style="text-align:center;margin-top:8px;font-size:.75rem;color:var(--muted);cursor:pointer;">Kapat</div></div>`;
-  const wrap = document.createElement('div');
-  wrap.setAttribute('data-callInvDiv','1');
-  wrap.innerHTML = h;
-  document.body.appendChild(wrap);
-  // Dışarı tıklayınca kapat
-  setTimeout(()=>document.addEventListener('click',function cls(e){
-    if(!e.target.closest('[data-callInvDiv]')){wrap.remove();document.removeEventListener('click',cls);}
-  }),100);
-}
 
 
 /* ══════════════════════════
    GELEN ARAMA DİNLE
 ══════════════════════════ */
 
-function listenIncomingCalls(){
-  const ref = dbRef('callInvites/'+_cu);
-  ref.on('child_added', async snap=>{
-    const callId = snap.key;
-    const inv = snap.val();
-    if(!inv||!inv.from||!inv.ts) return;
-    if(Date.now()-inv.ts>60000) return;  // eskimiş
-    if(_groupCallId===callId) return;    // zaten bu aramada
-    if(_groupCallId){
-      // Zaten aramadayız — bildirim göster
-      showToast('📞 '+inv.from+' sizi arıyor (şu an görüşmedesiniz)');
-      return;
-    }
-    _callId = callId;
-    _groupCallId = callId;
-    _callOther = inv.from;
-    _callType = inv.type;
-    _isCaller = false;
-    showIncomingCall(inv.from, inv.type);
-  });
-}
 
 
 /* ══════════════════════════
    ARAMAYI KABUL ET
 ══════════════════════════ */
 
-async function acceptCall(){
-  document.getElementById('incomingCallScreen').style.display='none';
-  stopRingSound();
-
-  try{
-    _localStream = await _getLocalStream(_callType==='screen'?'audio':_callType);
-  }catch(e){
-    showToast('Mikrofon/kamera erişimi reddedildi.'); rejectCall(); return;
-  }
-
-  // Firebase güncelle
-  await dbRef('calls/'+_groupCallId+'/inv/'+_cu+'/status').set('accepted');
-  await dbRef('calls/'+_groupCallId+'/parts/'+_cu).set({active:true,ts:Date.now()});
-  await dbRef('callInvites/'+_cu+'/'+_groupCallId).remove();
-
-  showCallScreen(_callOther, _callType, true);
-
-  // Mevcut katılımcılarla bağlan
-  const partsSnap = await dbRef('calls/'+_groupCallId+'/parts').once('value');
-  const parts = partsSnap.val()||{};
-  
-  // Yeni katılımcıları dinlemeye başla
-  _listenParticipants();
-
-  for(const u of Object.keys(parts)){
-    if(u===_cu||!parts[u].active||_peers[u]) continue;
-    await _setupPeer(u, _cu < u);
-  }
-
-  _updateParticipantsUI();
-}
 
 
 /* ══════════════════════════
    ARAMAYI REDDET
 ══════════════════════════ */
 
-function rejectCall(){
-  document.getElementById('incomingCallScreen').style.display='none';
-  stopRingSound();
-  if(_groupCallId){
-    dbRef('calls/'+_groupCallId+'/inv/'+_cu+'/status').set('rejected');
-    dbRef('callInvites/'+_cu+'/'+_groupCallId).remove();
-  }
-  _groupCallId=null; _callId=null; _callOther=null;
-}
 
 
 /* ══════════════════════════
    ARAMA EKRANI GÖSTEr
 ══════════════════════════ */
 
-function showCallScreen(other, type, incoming){
-  const el = document.getElementById('callScreen');
-  el.style.display='flex';
-  document.getElementById('callMinimizedBar').style.display='none';
-  document.getElementById('callName').textContent = other;
-  const av = document.getElementById('callAvatar');
-  av.textContent = initials(other);
-  av.style.background = strColor(other);
-  document.getElementById('callStatus').textContent = incoming?'Bağlanıyor...':'Çağrılıyor...';
-  const screenBadge = document.getElementById('callScreenBadge');
-  if(screenBadge) screenBadge.style.display = type==='screen'?'flex':'none';
-  if(type==='audio'){
-    document.getElementById('callVideoArea').style.display='none';
-    document.getElementById('callAudioArea').style.display='flex';
-  }
-}
 
 
 /* ══════════════════════════
    ZAMANLAYICI
 ══════════════════════════ */
 
-function startCallTimer(){
-  if(_callTimer) return;
-  _callSeconds=0;
-  const timerDisplay=document.getElementById('callTimerDisplay');
-  const qualInd=document.getElementById('callQualityIndicator');
-  if(timerDisplay){timerDisplay.style.display='block';}
-  if(qualInd){qualInd.style.display='flex';}
-  // Kalite indikatörü bars
-  const bars=[document.getElementById('cqi1'),document.getElementById('cqi2'),document.getElementById('cqi3'),document.getElementById('cqi4')];
-  const qh=[6,10,14,18];
-  const qc=('#4ade80');
-  bars.forEach((b,i)=>{if(b){b.style.height=qh[i]+'px';b.style.background=qc;}});
-  _callTimer=setInterval(()=>{
-    _callSeconds++;
-    const m=Math.floor(_callSeconds/60).toString().padStart(2,'0');
-    const s=(_callSeconds%60).toString().padStart(2,'0');
-    document.getElementById('callStatus').textContent='Bağlandı';
-    if(timerDisplay) timerDisplay.textContent=m+':'+s;
-    const ms = document.getElementById('callMinBar_status');
-    if(ms) ms.textContent=m+':'+s;
-  },1000);
-}
 
 
 /* ══════════════════════════
    ARAMAYI BİTİR
 ══════════════════════════ */
 
-function endCall(){
-  stopRingSound();
-  if(_callTimer){clearInterval(_callTimer);_callTimer=null;}
-  _callStopListeners.forEach(fn=>fn()); _callStopListeners=[];
-
-  // Tüm peer bağlantılarını kapat
-  Object.values(_peers).forEach(pc=>{try{pc.close();}catch(e){}});
-  _peers={};
-  _remoteStreams={};
-
-  // Ses elementlerini temizle
-  document.querySelectorAll('[id^="_rAudio_"]').forEach(el=>el.remove());
-
-  // Streamleri durdur
-  if(_localStream){_localStream.getTracks().forEach(t=>t.stop());_localStream=null;}
-  if(_screenStream){_screenStream.getTracks().forEach(t=>t.stop());_screenStream=null;}
-  _isSharingScreen=false;
-
-  _isSpeakerMuted=false;
-  const ssBtn=document.getElementById('callShareScreenBtn');
-  if(ssBtn) ssBtn.classList.remove('active');
-
-  // Firebase: kendini participants'tan kaldır
-  if(_groupCallId){
-    dbRef('calls/'+_groupCallId+'/parts/'+_cu).remove().catch(()=>{});
-    dbRef('callInvites/'+_cu+'/'+_groupCallId).remove().catch(()=>{});
-    if(_isCaller){
-      dbRef('calls/'+_groupCallId+'/status').set('ended').catch(()=>{});
-      setTimeout(()=>{ if(_groupCallId) dbRef('calls/'+_groupCallId).remove().catch(()=>{}); },5000);
-    }
-  }
-
-  _groupCallId=null; _callId=null; _callOther=null; _isCaller=false; _callSeconds=0;
-
-  document.getElementById('callScreen').style.display='none';
-  document.getElementById('incomingCallScreen').style.display='none';
-  document.getElementById('callMinimizedBar').style.display='none';
-  if(window._callMinSyncInterval){clearInterval(window._callMinSyncInterval);window._callMinSyncInterval=null;}
-  document.getElementById('callVideoArea').style.display='none';
-  document.getElementById('callAudioArea').style.display='flex';
-  document.getElementById('localVideo').srcObject=null;
-  document.getElementById('remoteVideo').srcObject=null;
-}
 
 
 /* ══════════════════════════
@@ -2336,179 +1846,22 @@ function endCall(){
    MİNİMİZE / MAKSİMİZE
 ══════════════════════════ */
 
-function minimizeCallScreen(){
-  document.getElementById('callScreen').style.display='none';
-  const bar=document.getElementById('callMinimizedBar');
-  const nameEl=document.getElementById('callMinBar_name');
-  const statusEl=document.getElementById('callMinBar_status');
-  if(nameEl) nameEl.textContent=_callOther||'Görüşme';
-  bar.style.display='flex';
-  if(window._callMinSyncInterval) clearInterval(window._callMinSyncInterval);
-  window._callMinSyncInterval=setInterval(()=>{
-    const m=Math.floor(_callSeconds/60).toString().padStart(2,'0');
-    const s=(_callSeconds%60).toString().padStart(2,'0');
-    if(statusEl) statusEl.textContent=m+':'+s;
-  },500);
-  _initMinBarDrag(bar);
-}
-function maximizeCallScreen(){
-  if(window._callMinSyncInterval){clearInterval(window._callMinSyncInterval);window._callMinSyncInterval=null;}
-  document.getElementById('callMinimizedBar').style.display='none';
-  document.getElementById('callScreen').style.display='flex';
-}
-function _initMinBarDrag(bar){
-  if(bar._dragInited) return; bar._dragInited=true;
-  let sx,sy,bx,by,dragging=false;
-  const getPos=e=>e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};
-  bar.addEventListener('mousedown',e=>{
-    if(e.target.closest('[title]')&&e.target!==bar) return;
-    dragging=true; const p=getPos(e); sx=p.x; sy=p.y;
-    const r=bar.getBoundingClientRect(); bx=r.left; by=r.top;
-    bar.style.transition='none'; bar.style.cursor='grabbing'; e.preventDefault();
-  });
-  bar.addEventListener('touchstart',e=>{
-    if(e.target.closest('[title]')&&e.target!==bar) return;
-    dragging=true; const p=getPos(e); sx=p.x; sy=p.y;
-    const r=bar.getBoundingClientRect(); bx=r.left; by=r.top;
-    bar.style.transition='none'; e.preventDefault();
-  },{passive:false});
-  document.addEventListener('mousemove',e=>{
-    if(!dragging) return;
-    const p=getPos(e);
-    bar.style.left=Math.max(0,Math.min(window.innerWidth-bar.offsetWidth,bx+(p.x-sx)))+'px';
-    bar.style.top=Math.max(0,Math.min(window.innerHeight-bar.offsetHeight,by+(p.y-sy)))+'px';
-    bar.style.transform='none'; bar.style.bottom='auto';
-  });
-  document.addEventListener('touchmove',e=>{
-    if(!dragging) return;
-    const p=getPos(e);
-    bar.style.left=Math.max(0,Math.min(window.innerWidth-bar.offsetWidth,bx+(p.x-sx)))+'px';
-    bar.style.top=Math.max(0,Math.min(window.innerHeight-bar.offsetHeight,by+(p.y-sy)))+'px';
-    bar.style.transform='none'; bar.style.bottom='auto';
-  },{passive:false});
-  const onEnd=()=>{dragging=false;bar.style.cursor='grab';bar.style.transition='';};
-  document.addEventListener('mouseup',onEnd);
-  document.addEventListener('touchend',onEnd);
-}
 
 
 /* ══════════════════════════
    GELEN ARAMA GÖSTER
 ══════════════════════════ */
 
-function showIncomingCall(from, type){
-  const labels={video:'📹 Görüntülü',screen:'🖥️ Ekran Paylaşımı',audio:'📞 Sesli Arama'};
-  const el=document.getElementById('incomingCallScreen');
-  const av=document.getElementById('incomingCallAv');
-  const nm=document.getElementById('incomingCallName');
-  const tp=document.getElementById('incomingCallType');
-  if(av){av.textContent=initials(from);av.style.background=strColor(from);}
-  if(nm) nm.textContent=from;
-  if(tp) tp.textContent=labels[type]||'📞 Sesli Arama';
-  el.style.display='flex';
-  playRingSound();
-}
 
 
 /* ══════════════════════════
    KONTROLLER
 ══════════════════════════ */
 
-function toggleMute(){
-  _isMuted=!_isMuted;
-  if(_localStream) _localStream.getAudioTracks().forEach(t=>t.enabled=!_isMuted);
-  const btn=document.getElementById('callMuteBtn');
-  btn.style.background=_isMuted?'rgba(224,85,85,.35)':'rgba(255,255,255,.1)';
-  btn.style.borderColor=_isMuted?'rgba(224,85,85,.6)':'rgba(255,255,255,.15)';
-  btn.innerHTML=_isMuted
-    ?`<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="11" rx="3" fill="rgba(255,255,255,.9)"/><path d="M5 11a7 7 0 0 0 14 0" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="18" x2="12" y2="22" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="22" x2="15" y2="22" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/><line x1="3" y1="3" x2="21" y2="21" stroke="rgba(255,80,80,.9)" stroke-width="2.2" stroke-linecap="round"/></svg>`
-    :`<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="11" rx="3" fill="rgba(255,255,255,.9)"/><path d="M5 11a7 7 0 0 0 14 0" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="18" x2="12" y2="22" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/><line x1="9" y1="22" x2="15" y2="22" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/></svg>`;
-  _updateParticipantsUI();
-}
 
 let _isSpeakerMuted=false;
-function toggleSpeaker(){
-  _isSpeakerMuted=!_isSpeakerMuted;
-  document.querySelectorAll('[id^="_rAudio_"]').forEach(a=>{a.muted=_isSpeakerMuted;});
-  const rv=document.getElementById('remoteVideo');
-  if(rv) rv.muted=_isSpeakerMuted;
-  const btn=document.getElementById('callSpeakerBtn');
-  if(btn){
-    btn.style.background=_isSpeakerMuted?'rgba(224,85,85,.35)':'rgba(255,255,255,.1)';
-    btn.style.borderColor=_isSpeakerMuted?'rgba(224,85,85,.6)':'rgba(255,255,255,.15)';
-    btn.innerHTML=_isSpeakerMuted
-      ?`<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2v6h4l5 4V5z" fill="rgba(255,255,255,.9)"/><line x1="23" y1="9" x2="17" y2="15" stroke="rgba(255,80,80,.9)" stroke-width="2.2" stroke-linecap="round"/><line x1="17" y1="9" x2="23" y2="15" stroke="rgba(255,80,80,.9)" stroke-width="2.2" stroke-linecap="round"/></svg>`
-      :`<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M11 5L6 9H2v6h4l5 4V5z" fill="rgba(255,255,255,.9)"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/></svg>`;
-  }
-  showToast(_isSpeakerMuted?'🔇 Hoparlör kapatıldı':'🔊 Hoparlör açıldı');
-}
 
-async function toggleScreenShare(){
-  if(Object.keys(_peers).length===0){showToast('Önce arama başlatın.');return;}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getDisplayMedia){showToast('Tarayıcınız ekran paylaşımını desteklemiyor.');return;}
 
-  const btn=document.getElementById('callShareScreenBtn');
-
-  if(!_isSharingScreen){
-    try{
-      _screenStream = await navigator.mediaDevices.getDisplayMedia({video:{cursor:'always'},audio:false});
-    }catch(e){showToast('Ekran paylaşımı iptal edildi.');return;}
-    _isSharingScreen=true;
-    if(btn){btn.classList.add('active');btn.title='Paylaşımı Durdur';}
-
-    const screenTrack=_screenStream.getVideoTracks()[0];
-    // Tüm peer bağlantılarına uygula
-    for(const pc of Object.values(_peers)){
-      const senders=pc.getSenders();
-      const vs=senders.find(s=>s.track&&s.track.kind==='video');
-      if(vs) await vs.replaceTrack(screenTrack).catch(()=>{});
-    }
-    const lv=document.getElementById('localVideo');
-    if(lv){lv.srcObject=_screenStream;lv.style.display='block';}
-    document.getElementById('callVideoArea').style.display='block';
-    document.getElementById('callAudioArea').style.display='none';
-    screenTrack.onended=()=>{if(_isSharingScreen) toggleScreenShare();};
-    showToast('🖥️ Ekran paylaşımı başladı.');
-  } else {
-    _isSharingScreen=false;
-    if(btn){btn.classList.remove('active');btn.title='Ekran Paylaş';}
-    if(_screenStream){_screenStream.getTracks().forEach(t=>t.stop());_screenStream=null;}
-    if(_callType==='video'){
-      try{
-        const camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
-        const camTrack=camStream.getVideoTracks()[0];
-        for(const pc of Object.values(_peers)){
-          const vs=pc.getSenders().find(s=>s.track&&s.track.kind==='video');
-          if(vs) await vs.replaceTrack(camTrack).catch(()=>{});
-        }
-        const lv=document.getElementById('localVideo');
-        if(lv) lv.srcObject=_localStream;
-      }catch(e){}
-      document.getElementById('callVideoArea').style.display='block';
-      document.getElementById('callAudioArea').style.display='none';
-    } else {
-      document.getElementById('callVideoArea').style.display='none';
-      document.getElementById('callAudioArea').style.display='flex';
-    }
-    showToast('Ekran paylaşımı durduruldu.');
-  }
-}
-
-async function toggleCamera(){
-  if(!_localStream) return;
-  const vt=_localStream.getVideoTracks();
-  if(!vt.length) return;
-  _isCameraOn=!_isCameraOn;
-  vt.forEach(t=>t.enabled=_isCameraOn);
-  const btn=document.getElementById('callCamBtn');
-  if(btn){
-    btn.style.background=_isCameraOn?'rgba(255,255,255,.1)':'rgba(224,85,85,.35)';
-    btn.style.borderColor=_isCameraOn?'rgba(255,255,255,.15)':'rgba(224,85,85,.6)';
-    btn.innerHTML=_isCameraOn
-      ?`<svg width="22" height="22" viewBox="0 0 24 24" fill="rgba(255,255,255,.9)"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`
-      :`<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M23 7l-7 5 7 5V7z" fill="rgba(255,255,255,.9)"/><rect x="1" y="5" width="15" height="14" rx="2" fill="rgba(255,255,255,.9)"/><line x1="1" y1="1" x2="23" y2="23" stroke="rgba(255,80,80,.9)" stroke-width="2.2" stroke-linecap="round"/></svg>`;
-  }
-}
 
 
 /* ══════════════════════════════════════
@@ -3527,12 +2880,6 @@ function scheduleDMClear(){ /* devre dışı — mesajlar artık kalıcı */ }
 
 /* ══ UI KIT MODAL ══ */
 
-function openUIKit() {
-  document.getElementById('uiKitModal').style.display = 'block';
-}
-function closeUIKit() {
-  document.getElementById('uiKitModal').style.display = 'none';
-}
 
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => {
@@ -5384,3 +4731,284 @@ window.showBotMsg = function(msg) {
   }
 };
 window.toggleWidgetsPanel = toggleWidgetsPanel;
+
+/* ══════════════════════════════════════════════════════════
+   🎙️ SES KAYDI (Voice Message)
+   ══════════════════════════════════════════════════════════ */
+_mediaRec = null; _recChunks = []; _recStream = null; _recInterval = null;
+
+function fmtDuration(sec) {
+  const m = Math.floor(sec/60), s = sec%60;
+  return m+':'+(s<10?'0':'')+s;
+}
+
+async function startVoiceRecord() {
+  try {
+    _recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    _recChunks = [];
+    _mediaRec = new MediaRecorder(_recStream);
+    _mediaRec.ondataavailable = e => { if(e.data.size>0) _recChunks.push(e.data); };
+    _mediaRec.onstop = () => {
+      const blob = new Blob(_recChunks, { type:'audio/webm' });
+      const url = URL.createObjectURL(blob);
+      sendVoiceMsg(blob, url);
+      _recStream.getTracks().forEach(t=>t.stop());
+    };
+    _mediaRec.start();
+    let sec = 0;
+    const timer = document.getElementById('recTimer');
+    if(timer) { timer.style.display='inline'; timer.textContent='0:00'; }
+    const btn = document.getElementById('voiceRecBtn');
+    if(btn) btn.style.color='var(--red)';
+    _recInterval = setInterval(() => {
+      sec++;
+      if(timer) timer.textContent = fmtDuration(sec);
+      if(sec >= 120) stopVoiceRecord(); // max 2 dk
+    }, 1000);
+  } catch(e) {
+    showToast('❌ Mikrofon erişimi reddedildi');
+  }
+}
+
+function stopVoiceRecord() {
+  if(_mediaRec && _mediaRec.state !== 'inactive') _mediaRec.stop();
+  clearInterval(_recInterval);
+  const timer = document.getElementById('recTimer');
+  if(timer) timer.style.display='none';
+  const btn = document.getElementById('voiceRecBtn');
+  if(btn) btn.style.color='';
+}
+
+function toggleVoiceRecord() {
+  if(_mediaRec && _mediaRec.state === 'recording') {
+    stopVoiceRecord();
+  } else {
+    startVoiceRecord();
+  }
+}
+
+async function sendVoiceMsg(blob, url) {
+  if(!_cRoom || !_cu) return;
+  // Ses dosyasını base64'e çevir (Firebase'e küçük ses için)
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const b64 = reader.result;
+    const msgRef = dbRef('msgs/'+_cRoom).push();
+    await msgRef.set({
+      user: _cu, ts: Date.now(), type:'voice',
+      audioData: b64, duration: Math.round(blob.size/8000)
+    });
+  };
+  reader.readAsDataURL(blob);
+}
+
+function playVoiceMsg(b64, btnEl) {
+  try {
+    const audio = new Audio(b64);
+    if(btnEl) btnEl.textContent = '⏸';
+    audio.play();
+    audio.onended = () => { if(btnEl) btnEl.textContent = '▶'; };
+  } catch(e) { showToast('Ses oynatılamadı'); }
+}
+
+/* ══════════════════════════════════════════════════════════
+   📞 SESLI ARAMA (WebRTC)
+   ══════════════════════════════════════════════════════════ */
+_callId = null; _callType = null; _callTimer = null; _callSec = 0;
+_localStream = null; _peers = {}; _callMin = false;
+
+async function startCall(type) {
+  if(!_cu || !_cRoom) { showToast('Önce bir odaya gir'); return; }
+  if(_callId) { showToast('Zaten aktif bir arama var'); return; }
+  _callType = type;
+  _callId = _cRoom + '_' + Date.now();
+  try {
+    const constraints = type === 'video'
+      ? { audio: true, video: true }
+      : type === 'audio'
+      ? { audio: true, video: false }
+      : { audio: true, video: false }; // screen share: audio only from mic
+    _localStream = await navigator.mediaDevices.getUserMedia(constraints);
+    if(type === 'screen') {
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        screenStream.getTracks().forEach(t => _localStream.addTrack(t));
+      } catch(e) { /* screen share cancelled */ }
+    }
+    await dbRef('calls/'+_callId).set({
+      host: _cu, type, status:'ringing', ts: Date.now(), room: _cRoom
+    });
+    await dbRef('calls/'+_callId+'/parts/'+_cu).set({ active:true, ts:Date.now() });
+    showCallScreen(type);
+    _listenParticipants && _listenParticipants();
+    // Oda üyelerine davet bildirimi
+    inviteToCall(_callId, type);
+  } catch(e) {
+    showToast('❌ Medya erişimi hatası: ' + (e.message||''));
+    _callId = null;
+  }
+}
+
+function inviteToCall(callId, type) {
+  if(!_cRoom || !_cu) return;
+  dbRef('calls/'+callId+'/inv').once('value').then(()=>{
+    // Oda üyelerine bildirim gönder
+    dbRef('rooms/'+_cRoom+'/members').once('value').then(snap=>{
+      const members = snap.val() || {};
+      Object.keys(members).forEach(user => {
+        if(user !== _cu) {
+          dbRef('callInvites/'+user).push({
+            callId, type, from:_cu, room:_cRoom, ts:Date.now()
+          });
+        }
+      });
+    });
+  });
+}
+
+async function acceptCall(callId, type) {
+  _callId = callId;
+  _callType = type;
+  try {
+    _localStream = await navigator.mediaDevices.getUserMedia(
+      type==='video' ? {audio:true,video:true} : {audio:true,video:false}
+    );
+    await dbRef('calls/'+callId+'/parts/'+_cu).set({active:true,ts:Date.now()});
+    showCallScreen(type);
+  } catch(e) {
+    showToast('❌ Mikrofon/kamera erişimi reddedildi');
+  }
+}
+
+function rejectCall(callId) {
+  dbRef('callInvites/'+_cu).orderByChild('callId').equalTo(callId).once('value', snap => {
+    snap.forEach(child => child.ref.remove());
+  });
+  showToast('📞 Arama reddedildi');
+}
+
+function showCallScreen(type) {
+  const el = document.getElementById('callScreen');
+  if(!el) return;
+  el.style.display = 'flex';
+  // Katılımcı adını göster
+  const nameEl = document.getElementById('callScreenName');
+  if(nameEl) nameEl.textContent = _cRoom || 'Arama';
+  const typeEl = document.getElementById('callScreenType');
+  if(typeEl) typeEl.textContent = type === 'video' ? '📹 Görüntülü' : type === 'screen' ? '🖥️ Ekran Paylaşımı' : '📞 Sesli Arama';
+  startCallTimer();
+  // Local video
+  if(type === 'video' && _localStream) {
+    const vid = document.getElementById('localVideo');
+    if(vid) { vid.srcObject = _localStream; vid.play().catch(()=>{}); }
+  }
+}
+
+function startCallTimer() {
+  _callSec = 0;
+  clearInterval(_callTimer);
+  _callTimer = setInterval(() => {
+    _callSec++;
+    const el = document.getElementById('callScreenTimer');
+    if(el) el.textContent = fmtDuration(_callSec);
+  }, 1000);
+}
+
+function endCall() {
+  clearInterval(_callTimer);
+  if(_callId) {
+    dbRef('calls/'+_callId+'/parts/'+_cu).remove();
+    dbRef('calls/'+_callId+'/status').set('ended');
+  }
+  if(_localStream) { _localStream.getTracks().forEach(t=>t.stop()); _localStream=null; }
+  Object.values(_peers).forEach(pc => pc.close());
+  _peers = {};
+  _callId = null;
+  const el = document.getElementById('callScreen');
+  if(el) el.style.display = 'none';
+  showToast('📞 Arama sonlandırıldı');
+}
+
+function minimizeCallScreen() {
+  _callMin = true;
+  const el = document.getElementById('callScreen');
+  if(el) { el.style.opacity='.3'; el.style.transform='scale(.35)'; el.style.transformOrigin='bottom right'; }
+}
+function maximizeCallScreen() {
+  _callMin = false;
+  const el = document.getElementById('callScreen');
+  if(el) { el.style.opacity='1'; el.style.transform=''; }
+}
+
+function toggleMute() {
+  if(!_localStream) return;
+  const audioTrack = _localStream.getAudioTracks()[0];
+  if(audioTrack) {
+    audioTrack.enabled = !audioTrack.enabled;
+    const btn = document.getElementById('callMuteBtn');
+    if(btn) btn.textContent = audioTrack.enabled ? '🎙️' : '🔇';
+  }
+}
+function toggleCamera() {
+  if(!_localStream) return;
+  const videoTrack = _localStream.getVideoTracks()[0];
+  if(videoTrack) {
+    videoTrack.enabled = !videoTrack.enabled;
+    const btn = document.getElementById('callCamBtn');
+    if(btn) btn.textContent = videoTrack.enabled ? '📹' : '📵';
+  }
+}
+
+// Gelen arama dinle (login sonrası çağrılır)
+function listenIncomingCalls() {
+  if(!_cu || !_db) return;
+  dbRef('callInvites/'+_cu).on('child_added', snap => {
+    const inv = snap.val();
+    if(!inv) return;
+    snap.ref.remove();
+    // Toast ile kabul/reddet
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 18px;z-index:9999;display:flex;flex-direction:column;gap:8px;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.6);';
+    toast.innerHTML = `
+      <div style="font-size:.9rem;font-weight:700;">📞 ${inv.from} arıyor</div>
+      <div style="font-size:.75rem;color:var(--muted);">${inv.type==='video'?'Görüntülü':'Sesli'} arama</div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="acceptCall('${inv.callId}','${inv.type}');this.closest('div').parentNode.remove();" style="flex:1;padding:8px;background:#2ecc71;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">✅ Kabul</button>
+        <button onclick="rejectCall('${inv.callId}');this.closest('div').parentNode.remove();" style="flex:1;padding:8px;background:#e05555;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">❌ Reddet</button>
+      </div>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 30000);
+    playRingSound && playRingSound();
+  });
+}
+
+/* ══════════════════════════════════════════════════════════
+   🎨 UIKit (Simge Galerisi)
+   ══════════════════════════════════════════════════════════ */
+function openUIKit() {
+  const el = document.getElementById('uiKitModal');
+  if(!el) return;
+  el.style.display = 'block';
+  const content = document.getElementById('uiKitContent');
+  if(!content) return;
+  const icons = [
+    {icon:'🏠',name:'Ana Sayfa'}, {icon:'💬',name:'Mesaj'}, {icon:'👥',name:'Arkadaşlar'},
+    {icon:'📰',name:'Forum'}, {icon:'🔔',name:'Bildirim'}, {icon:'⚙️',name:'Ayarlar'},
+    {icon:'🌿',name:'Doğa'}, {icon:'📊',name:'İstatistik'}, {icon:'🎵',name:'Müzik'},
+    {icon:'📸',name:'Galeri'}, {icon:'🗺️',name:'Harita'}, {icon:'🤖',name:'Bot'},
+    {icon:'🌙',name:'Gece'}, {icon:'☀️',name:'Gündüz'}, {icon:'🔒',name:'Güvenlik'},
+    {icon:'📎',name:'Dosya'}, {icon:'🎮',name:'Oyun'}, {icon:'📺',name:'İzle'},
+    {icon:'🌍',name:'Dünya'}, {icon:'💡',name:'Fikir'}, {icon:'🎯',name:'Hedef'},
+    {icon:'📅',name:'Takvim'}, {icon:'🔍',name:'Ara'}, {icon:'❤️',name:'Favori'},
+  ];
+  content.innerHTML = icons.map(({icon,name}) =>
+    `<div onclick="insertEmoji('${icon}');closeUIKit();" style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:10px;cursor:pointer;background:var(--surface);border:1px solid var(--border);transition:background .15s;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='var(--surface)'">
+      <span style="font-size:1.5rem;">${icon}</span>
+      <span style="font-size:.6rem;color:var(--muted);white-space:nowrap;">${name}</span>
+    </div>`
+  ).join('');
+}
+function closeUIKit() {
+  const el = document.getElementById('uiKitModal');
+  if(el) el.style.display = 'none';
+}
