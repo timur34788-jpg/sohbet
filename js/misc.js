@@ -4134,6 +4134,7 @@ const SPEECH = {
     }
   }
 };
+window.SPEECH = SPEECH;
 
 
 /* ══ Komut İşleyici ══ */
@@ -4214,6 +4215,7 @@ function runBotCmd(cmdText, showInBubble) {
   respond('❓ "' + cmd + '" komutunu bilmiyorum.\n/yardım ile tüm komutları görebilirsin!');
   return true;
 }
+window.runBotCmd = runBotCmd;
 
 ;(function(){
 class _BotMethods {
