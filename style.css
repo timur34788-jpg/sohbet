@@ -490,7 +490,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .ui-style-card .ui-style-label { font-size:.72rem;font-weight:700;color:var(--text-hi); }
 .ui-style-card .ui-style-desc { font-size:.6rem;color:var(--muted);margin-top:2px; }
 
-.screen{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;height:100dvh;display:none;flex-direction:column;background:var(--bg);overflow:hidden;}
+.screen{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100svh;display:none;flex-direction:column;background:var(--bg);overflow:hidden;}
 .screen.active{display:flex;}
 
 /* ══════ LOGIN SCREEN ══════ */
@@ -541,7 +541,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 /* ══════ ROOMS SCREEN ══════ */
 #roomsScreen{background:var(--purple-dark);padding-top:0;padding-bottom:0;}
 
-.ws-header{display:flex;align-items:center;gap:10px;padding:8px 18px 7px;margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:calc(env(safe-area-inset-top,0px) + 8px);background:var(--purple);flex-shrink:0;}
+.ws-header{display:flex;align-items:center;gap:10px;padding:8px 18px 7px;padding-top:env(safe-area-inset-top,0px);background:var(--purple);flex-shrink:0;}
 .ws-logo{width:30px;height:30px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .ws-name{flex:1;min-width:0;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ws-av{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,0);position:relative;}
@@ -629,7 +629,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .r-row.act .r-label{color:#fff;}
 .ubadge{background:var(--red);color:#fff;font-size:.62rem;font-weight:900;border-radius:100px;padding:1px 6px;min-width:18px;text-align:center;flex-shrink:0;}
 
-.tab-bar{display:flex;background:var(--purple-dark);border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px);margin-bottom:calc(-1 * env(safe-area-inset-bottom,0px));backdrop-filter:blur(20px);}
+.tab-bar{display:flex;background:var(--purple-dark);border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0px);backdrop-filter:blur(20px);}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 4px 5px;cursor:pointer;opacity:.45;transition:opacity .2s,transform .15s;user-select:none;position:relative;}
 .tab.act{opacity:1;}
 .tab.act .tab-ic-wrap{background:rgba(91,155,213,.18);border-radius:10px;}
@@ -643,7 +643,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 /* ══════ CHAT SCREEN ══════ */
 #chatScreen{background:var(--bg);padding-top:0;position:relative;}
 
-.c-header{display:flex;align-items:center;gap:10px;padding:9px 12px;margin-top:calc(-1 * env(safe-area-inset-top,0px));padding-top:calc(env(safe-area-inset-top,0px) + 9px);background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;min-height:52px;}
+.c-header{display:flex;align-items:center;gap:10px;padding:9px 12px;padding-top:env(safe-area-inset-top,0px);background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;min-height:52px;}
 .back-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;color:var(--blue);cursor:pointer;border-radius:6px;transition:background .1s;flex-shrink:0;}
 .back-btn:active{background:var(--surface);}
 .c-hdr-ic{width:30px;height:30px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:#fff;flex-shrink:0;}
@@ -2601,9 +2601,8 @@ body::before {
   backdrop-filter: blur(28px) saturate(1.4) !important;
   -webkit-backdrop-filter: blur(28px) !important;
   border-bottom: 1px solid rgba(255,255,255,0.08) !important;
-  margin-top: calc(-1 * env(safe-area-inset-top, 0px)) !important;
   padding: 8px 18px 8px !important;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+  padding-top: env(safe-area-inset-top, 0px) !important;
   overflow: visible !important;
 }
 #roomsScreen .ws-name {
