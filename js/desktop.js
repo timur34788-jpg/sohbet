@@ -1,3 +1,6 @@
+/* ── globals guard ── */
+(function(){var g={'_isMuted':false,'TV_CHANNELS':[],'_reminderTimers':[],'_deskRoom':null,'_origDeskAdminTab':null};Object.keys(g).forEach(function(k){if(typeof window[k]==='undefined')window[k]=g[k];});})();
+/* ── end guard ── */
 /* Nature.co — desktop.js */
 /* Otomatik bölümlendi */
 
@@ -18,7 +21,8 @@ const IS_DESKTOP = () => {
   return window.innerWidth >= 768;
 };
 
-var _deskRoom = null; // var so rooms.js can access it as global
+if(typeof window._deskRoom === "undefined") window._deskRoom = null;
+var _deskRoom = window._deskRoom; // var so rooms.js can access it as global
 let _deskNav = 'home';
 let _deskMembersOpen = true;
 let _deskStopMsg = null;
@@ -1356,3 +1360,4 @@ function injectRailIcons() {
     if (svgStr) { ic.innerHTML = svgStr; ic.style.fontSize = '0'; }
   });
 }
+
