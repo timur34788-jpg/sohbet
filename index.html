@@ -144,11 +144,8 @@
           <div id="deskChatHdrSub" style="font-size:.72rem;color:var(--muted);"></div>
         </div>
         <div class="dsk-hdr-actions">
-          <div class="dsk-hdr-btn" id="deskCallAudio" onclick="startCall('audio')" style="display:none" title="Sesli Ara">📞</div>
-          <div class="dsk-hdr-btn" id="deskCallVideo" onclick="startCall('video')" style="display:none" title="Görüntülü Ara">📹</div>
-          <div class="dsk-hdr-btn" id="deskCallScreen" onclick="startCall('screen')" style="display:none" title="Ekran Paylaş">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="20" height="14" rx="2" stroke="rgba(255,255,255,.9)" stroke-width="2"/><path d="M8 20h8M12 18v2" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round"/></svg>
-    </div>
+          
+          
           <div class="dsk-hdr-btn" id="deskToggleMembers" onclick="toggleDeskMembers()" title="Üyeler">👥</div>
         </div>
       </div>
@@ -197,9 +194,7 @@
           <button class="dsk-inp-btn" onclick="pickFile()" title="Dosya"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></button>
           <textarea id="deskInp" rows="1" placeholder="Mesaj yaz..." oninput="deskInpResize(this)" onkeydown="onDeskMsgKey(event)"></textarea>
           <span class="rec-timer" id="deskRecTimer">0:00</span>
-          <button class="voice-record-btn" id="deskVoiceRecordBtn" title="Sesli mesaj" onclick="toggleVoiceRecord('desk')">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>
-          </button>
+          
           <button id="deskSendBtn" onclick="sendDeskMsg()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
           </button>
@@ -597,14 +592,15 @@
       <div class="hdr-btn" id="chatSearchBtn" onclick="toggleChatSearch()" title="Ara" style="display:flex;">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       </div>
-      <div class="hdr-btn" id="callAudioBtn" onclick="startCall('audio')" style="display:none" title="Sesli Ara">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.81 19.79 19.79 0 01.22 1.18 2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.91a16 16 0 006.06 6.06l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
-      </div>
-      <div class="hdr-btn" id="callVideoBtn" onclick="startCall('video')" style="display:none" title="Görüntülü Ara">
+      
+      
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
       </div>
-      <div class="hdr-btn" id="callScreenBtn" onclick="startCall('screen')" style="display:none" title="Ekran Paylaş">
+      
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <div class="hdr-btn" id="callAudioBtn" onclick="startCall('audio')" title="Sesli Ara" style="display:none;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.63 3.4 2 2 0 0 1 3.6 1.21h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 9a16 16 0 0 0 6.09 6.09l1.95-1.95a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 15.12z"/></svg>
       </div>
       <div class="hdr-btn" id="chatMenuBtn" onclick="toggleChatMenu(event)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></div>
     </div>
@@ -657,11 +653,12 @@
       <div class="inp-btm">
         <div class="ii" onclick="toggleEmoji()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
         <div class="ii" onclick="pickFile()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg></div>
-        <button class="voice-record-btn" id="voiceRecordBtn" title="Sesli mesaj" onclick="toggleVoiceRecord('mob')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="9" y1="22" x2="15" y2="22"/></svg>
-        </button>
+        
         <span class="rec-timer" id="recTimer">0:00</span>
         <div class="ii" style="font-weight:900;font-size:.9rem;">@</div>
+        <div class="ii" id="voiceRecBtn" onclick="toggleVoiceRecord()" title="Sesli mesaj">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </div>
         <input type="file" id="fileInput" style="display:none" onchange="handleFile(this)">
         <button class="send-btn" id="sendBtn" onclick="sendMsg()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
@@ -1154,97 +1151,7 @@
 </div>
 
 <!-- ══ UI KIT MODAL ══ -->
-<div id="uiKitModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:9999;overflow-y:auto;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px));">
-  <div style="max-width:480px;margin:0 auto;background:var(--bg2);border-radius:16px;border:1px solid var(--border);overflow:hidden;">
-    <div style="display:flex;align-items:center;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
-      <div style="font-size:.95rem;font-weight:900;color:var(--text-hi);flex:1;">🧩 UI Bileşen Kütüphanesi</div>
-      <div onclick="closeUIKit()" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);font-size:1.2rem;border-radius:6px;" onmouseenter="this.style.background='var(--border)'" onmouseleave="this.style.background='transparent'"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>
-    </div>
-    <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
 
-      <!-- Avatarlar -->
-      <div class="uikit-card">
-        <div class="uikit-title">👤 Avatarlar</div>
-        <div class="uikit-av-row">
-          <div class="uikit-av sm" style="background:#6c63ff;">MK<div class="uikit-status on"></div></div>
-          <div class="uikit-av sm" style="background:#f97316;">ZD<div class="uikit-status away"></div></div>
-          <div class="uikit-av sm" style="background:#22c55e;">HT<div class="uikit-status off"></div></div>
-          <div class="uikit-av md" style="background:linear-gradient(135deg,#6c63ff,#ec4899);">AB<div class="uikit-status on"></div></div>
-          <div class="uikit-av lg" style="background:linear-gradient(135deg,#0ea5e9,#6c63ff);">BY</div>
-        </div>
-      </div>
-
-      <!-- Butonlar -->
-      <div class="uikit-card">
-        <div class="uikit-title">🖱️ Butonlar</div>
-        <div class="uikit-btn-row">
-          <button class="uikit-btn uikit-btn-primary">Gönder</button>
-          <button class="uikit-btn uikit-btn-secondary">İptal</button>
-        </div>
-        <div class="uikit-btn-row">
-          <button class="uikit-btn uikit-btn-ghost">Düzenle</button>
-          <button class="uikit-btn uikit-btn-danger">Sil</button>
-          <button class="uikit-btn uikit-btn-success">✓ Kabul</button>
-        </div>
-      </div>
-
-      <!-- Rozetler -->
-      <div class="uikit-card">
-        <div class="uikit-title">🏷️ Rozetler</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px;">
-          <span class="uikit-badge uikit-badge-online">● Çevrimiçi</span>
-          <span class="uikit-badge uikit-badge-away">◐ Uzakta</span>
-          <span class="uikit-badge uikit-badge-admin">⭐ Admin</span>
-          <span class="uikit-badge uikit-badge-mod">🛡 Mod</span>
-          <span class="uikit-badge uikit-badge-new">✦ Yeni</span>
-        </div>
-      </div>
-
-      <!-- Emoji Tepkiler -->
-      <div class="uikit-card">
-        <div class="uikit-title">😊 Emoji Tepkiler</div>
-        <div class="uikit-react-bar">
-          <span class="uikit-react on">👍</span>
-          <span class="uikit-react">❤️</span>
-          <span class="uikit-react">😂</span>
-          <span class="uikit-react">😮</span>
-          <span class="uikit-react">😢</span>
-          <span style="width:1px;height:16px;background:var(--border);margin:0 3px;"></span>
-          <span class="uikit-react">+</span>
-        </div>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;">
-          <span style="display:inline-flex;align-items:center;gap:2px;background:rgba(108,99,255,.12);border:1px solid rgba(108,99,255,.25);border-radius:100px;padding:2px 8px;font-size:.68rem;color:#9b8eff;">👍 12</span>
-          <span style="display:inline-flex;align-items:center;gap:2px;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.25);border-radius:100px;padding:2px 8px;font-size:.68rem;color:#f472b6;">❤️ 5</span>
-          <span style="display:inline-flex;align-items:center;gap:2px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.25);border-radius:100px;padding:2px 8px;font-size:.68rem;color:#fbbf24;">😂 3</span>
-        </div>
-      </div>
-
-      <!-- SVG İkon Seti -->
-      <div class="uikit-card">
-        <div class="uikit-title">🎯 SVG İkon Seti</div>
-        <div class="uikit-icon-grid">
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(91,155,213,.14);color:#5b9bd5;"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div><div class="uikit-icon-name">Ana Sayfa</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(108,99,255,.14);color:#9b8eff;"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div class="uikit-icon-name">Mesajlar</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(0,188,156,.14);color:#00bca0;"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg></div><div class="uikit-icon-name">Arkadaşlar</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(249,115,22,.14);color:#fb923c;"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="8 21 12 17 16 21"/></svg></div><div class="uikit-icon-name">Oyunlar</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(236,72,153,.14);color:#f472b6;"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="uikit-icon-name">Profil</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(234,179,8,.14);color:#fbbf24;"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div class="uikit-icon-name">Ara</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(34,197,94,.14);color:#4ade80;"><svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8a2 2 0 011.72-2.18h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L5.09 7.91a16 16 0 006 6z"/></svg></div><div class="uikit-icon-name">Sesli Ara</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(224,85,85,.14);color:#f07070;"><svg viewBox="0 0 24 24"><polyline points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div><div class="uikit-icon-name">Video</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(91,155,213,.14);color:#5b9bd5;"><svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg></div><div class="uikit-icon-name">Dosya</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(0,188,156,.14);color:#00bca0;"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><div class="uikit-icon-name">Admin</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(249,115,22,.14);color:#fb923c;"><svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><div class="uikit-icon-name">Bildirim</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(236,72,153,.14);color:#f472b6;"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M22 12h-2M19.07 19.07l-1.41-1.41M12 22v-2M4.93 19.07l1.41-1.41M2 12h2M4.93 4.93l1.41 1.41M12 2v2"/></svg></div><div class="uikit-icon-name">Ayarlar</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(34,197,94,.14);color:#4ade80;"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div><div class="uikit-icon-name">Okundu</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(234,179,8,.14);color:#fbbf24;"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div><div class="uikit-icon-name">Favori</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(224,85,85,.14);color:#f07070;"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div><div class="uikit-icon-name">Çıkış</div></div>
-          <div class="uikit-icon-item"><div class="uikit-icon-box" style="background:rgba(108,99,255,.14);color:#9b8eff;"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div><div class="uikit-icon-name">Düzenle</div></div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
 
 <!-- ══ KULLANICI PROFİL GÖRÜNTÜLE MODAL ══ -->
 <div id="userProfileModal" onclick="closeUserProfile()">
@@ -1651,7 +1558,7 @@
   <script src="js/admin.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/desktop.js"></script>
-  <script src="js/games.js"></script>
+  <!-- games.js kaldırıldı -->
   <script src="js/media.js"></script>
   <script src="js/bot.js"></script>
   <script src="js/search.js"></script>
@@ -1847,6 +1754,19 @@
       <button onclick="closeSchedulePanel()" style="flex:1;padding:11px;background:var(--surface2);border:none;border-radius:10px;color:var(--muted);font-size:.85rem;font-weight:700;cursor:pointer;">İptal</button>
       <button onclick="confirmScheduleMsg()" style="flex:2;padding:11px;background:var(--accent);border:none;border-radius:10px;color:#fff;font-size:.85rem;font-weight:700;cursor:pointer;">Planla ↗</button>
     </div>
+  </div>
+</div>
+
+<!-- ══ UIKit ══ -->
+<div id="uiKitModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;overflow-y:auto;padding:20px;padding-top:calc(20px + env(safe-area-inset-top,0px));">
+  <div style="max-width:480px;margin:0 auto;background:var(--bg2);border-radius:16px;border:1px solid var(--border);overflow:hidden;">
+    <div style="display:flex;align-items:center;padding:14px 16px;background:var(--surface);border-bottom:1px solid var(--border);">
+      <div style="font-size:.95rem;font-weight:900;flex:1;">🎨 Uygulama Simgeleri</div>
+      <div onclick="closeUIKit()" style="cursor:pointer;padding:4px;color:var(--muted);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </div>
+    </div>
+    <div id="uiKitContent" style="padding:16px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;"></div>
   </div>
 </div>
 
