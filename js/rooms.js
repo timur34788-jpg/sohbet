@@ -312,10 +312,10 @@ function openRoom(roomId){
   stopTypingListener();
   _cRoom=roomId;if(typeof clearUnreadBadge==="function")clearUnreadBadge(roomId);else if(typeof window.clearUnreadBadge==="function")window.clearUnreadBadge(roomId);closeEmoji();
   _currentMsgBox='chatMsgs';
-  markRoomRead(roomId);
-  listenReads(roomId);
-  listenTyping(roomId);
-  listenPinBar(roomId);
+  if(typeof markRoomRead==="function") markRoomRead(roomId);
+  if(typeof listenReads==="function") listenReads(roomId);
+  if(typeof listenTyping==="function") listenTyping(roomId);
+  if(typeof listenPinBar==="function") listenPinBar(roomId);
   document.getElementById('chatMsgs').innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
   dbRef('rooms/'+roomId).once('value').then(snap=>{
     const room=snap.val();if(!room)return;
