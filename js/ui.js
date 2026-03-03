@@ -1113,6 +1113,14 @@ const BOT_SVG = `
 (function(){
 'use strict';
 
+/* ── Renk paleti (fallback: bot.js yüklenmemişse buradan al) ── */
+const C = window.C = window.C || {
+  em: '#10b981', em2:'#34d399', tl: '#0d9488',
+  mu: 'rgba(148,200,188,0.65)', hi: '#e8fdf8',
+  rd: '#f87171', yw: '#fbbf24', bl: '#60a5fa',
+  pu: '#a78bfa', or: '#fb923c', pk: '#f472b6',
+  wh: 'rgba(255,255,255,0.85)', cy: '#67e8f9',
+};
 
 /* ── SVG builder ── */
 
