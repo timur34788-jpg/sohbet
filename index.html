@@ -1634,5 +1634,9 @@
   <script src="js/bot.js"></script>
   <script src="js/search.js"></script>
   <script src="js/misc.js"></script>
+  <script>
+    // Tüm modüller yüklendi, sunucu listesini doldur
+    if (typeof renderServerSelect === 'function') renderServerSelect();
+  </script>
 </body>
 </html>
