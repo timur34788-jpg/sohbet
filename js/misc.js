@@ -3,6 +3,10 @@
 /* Nature.co — Ana JavaScript Dosyası */
 /* Bölümler: Config → Firebase → Auth → Mesajlar → UI */
 
+// Global değişkenler — en üstte tanımla (Safari hoisting sorunu)
+var _loginAttempts = {};
+var _apiCallLog = {};
+
 (function(){
     var EMAILJS_PUBLIC_KEY  = 'k0VJPzZLwcdsOL7zc';
     var EMAILJS_SERVICE_ID  = 'service_pwyfg6j';
@@ -28,7 +32,6 @@
 
 /* ══ GÜVENLİK: Brute Force Koruması ══ */
 
-var _loginAttempts = {}; // {username: {count, lastAttempt, lockedUntil}}
 
 function recordLoginAttempt(username, success){
   if(!username || typeof _loginAttempts === 'undefined') return {allowed: true};
@@ -90,7 +93,6 @@ function sanitizeMessage(str, maxLen=2000){
 
 /* ══ GÜVENLİK: Rate Limiting (API çağrıları) ══ */
 
-var _apiCallLog = {};
 function checkRateLimit(action, maxPerMin=20){
   const now = Date.now();
   if(!_apiCallLog[action]) _apiCallLog[action] = [];
