@@ -1320,6 +1320,7 @@ function injectTabIcons() {
     }
   });
 }
+window.injectTabIcons = injectTabIcons;
 
 
 })();
