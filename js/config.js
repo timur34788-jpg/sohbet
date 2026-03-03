@@ -1031,3 +1031,8 @@ async function _sswDoLogin(){
   }
 }
 
+
+// ── Shared globals (used by multiple modules) ──
+const IS_MOBILE = () => window.innerWidth < 768;
+let _wpOpen = false;
+
