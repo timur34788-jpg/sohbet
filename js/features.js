@@ -1,6 +1,3 @@
-// Zaman yardimcisi
-function _timeAgo(ts,f){if(!ts)return"";const d=f?ts-Date.now():Date.now()-ts,a=Math.abs(d);if(a<60000)return f?"Az sonra":"Az once";if(a<3600000)return Math.floor(a/60000)+" dk"+(f?" sonra":" once");if(a<86400000)return Math.floor(a/3600000)+" sa"+(f?" sonra":" once");return Math.floor(a/86400000)+" gun"+(f?" sonra":" once");}
-
 // ══════════════════════════════════════════
 // FEATURES.JS — Nature.co
 // Bookmarks · Saved Items · Reminders

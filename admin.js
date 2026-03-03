@@ -1074,6 +1074,23 @@ async function loadAdminSettings(){
     });
     html += '<button class="a-btn blue" style="width:100%;margin-top:4px;" onclick="execExportFromSettings()">⬇️ Yedek Al</button></div></div>';
 
+
+    // ── Manuel Kullanıcı Hash Aracı ──
+    html += '<div class="admin-card" style="margin-top:18px">';
+    html += '<div class="admin-sec-title" style="margin-bottom:10px">🔑 Manuel Kullanıcı Hash Aracı</div>';
+    html += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">Firebase\'e manuel kullanıcı eklerken doğru <code>passwordHash</code> değerini üretir.</div>';
+    html += '<div style="display:grid;gap:8px">';
+    html += '<input class="admin-inp" id="hashToolUser" placeholder="Kullanıcı adı (örn: İnci)" />';
+    html += '<input class="admin-inp" id="hashToolPass" type="password" placeholder="Şifre" />';
+    html += '<button class="a-btn" onclick="generateUserHash()" style="background:var(--accent)">🔐 Hash Üret</button>';
+    html += '</div>';
+    html += '<div id="hashToolResult" style="margin-top:10px;display:none">';
+    html += '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">passwordHash (Firebase\'e kopyala):</div>';
+    html += '<div id="hashToolValue" style="font-family:monospace;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:8px 10px;word-break:break-all;cursor:pointer;color:var(--green)" onclick="copyHashValue()" title="Kopyalamak için tıkla"></div>';
+    html += '<div style="font-size:11px;color:var(--muted);margin-top:6px">☝️ Tıklayarak kopyala</div>';
+    html += '</div>';
+    html += '</div>';
+
     body.innerHTML = html;
   }}catch(e){ body.innerHTML='<p style="color:var(--muted);padding:20px">Yüklenemedi.</p>'; }
 }
@@ -1090,6 +1107,29 @@ async function execExportFromSettings(){
   showToast('✅ Yedek indirildi!');
 }
 
+async function generateUserHash(){
+  const user = (document.getElementById('hashToolUser')?.value||'').trim();
+  const pass = document.getElementById('hashToolPass')?.value||'';
+  if(!user){ showToast('❌ Kullanıcı adı girin'); return; }
+  if(!pass){ showToast('❌ Şifre girin'); return; }
+  const hash = await hashStr(pass + user);
+  const result = document.getElementById('hashToolResult');
+  const value = document.getElementById('hashToolValue');
+  if(result && value){
+    value.textContent = hash;
+    result.style.display = 'block';
+  }
+}
+function copyHashValue(){
+  const val = document.getElementById('hashToolValue')?.textContent||'';
+  if(!val) return;
+  navigator.clipboard.writeText(val).then(()=>showToast('✅ Hash kopyalandı!')).catch(()=>{
+    const ta = document.createElement('textarea');
+    ta.value = val; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('✅ Hash kopyalandı!');
+  });
+}
 async function toggleRegistration(){
   const btn = document.getElementById('regToggleBtn');
   if(!btn) return;
