@@ -332,7 +332,7 @@ class NatureBotPet {
 
   init() {
     const style = document.createElement('style');
-    style.textContent = BOT_CSS;
+    style.textContent = window.BOT_CSS || BOT_CSS || "";
     document.head.appendChild(style);
 
     this.el = document.createElement('div');
@@ -945,7 +945,8 @@ if (_nbLoginEl) _nbLoginObs.observe(_nbLoginEl, { attributes: true, attributeFil
 
 /* ── Renk paleti ── */
 
-const C = {
+window.C = window.C || {};
+const C = window.C = {
   em: '#10b981', // emerald
   em2:'#34d399',
   tl: '#0d9488', // teal
