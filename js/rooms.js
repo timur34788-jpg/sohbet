@@ -3,6 +3,9 @@
 
 /* ── Online ── */
 
+// Safe fallback for _deskRoom if desktop.js not loaded yet
+if (typeof _deskRoom === "undefined") var _deskRoom = null;
+
 function startHeartbeat(){
   clearInterval(_hbTimer);
   const b=()=>{
@@ -385,7 +388,7 @@ function openRoom(roomId){
   });
 }
 function updateChatStatus(){
-  const roomId = _deskRoom || _cRoom;
+  const roomId = (typeof _deskRoom !== "undefined" ? _deskRoom : null) || _cRoom;
   if(!roomId) return;
   dbRef('rooms/'+roomId).once('value').then(snap=>{
     const room=snap.val();if(!room||room.type!=='dm')return;
