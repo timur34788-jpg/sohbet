@@ -638,13 +638,28 @@ async function fbRestGet(path, retries=3){
       const authParam = token ? '?auth='+token : '';
       const r=await fetch(_FB_REST+'/'+wpath+'.json'+authParam,{signal:ctrl.signal,cache:'no-store'});
       clearTimeout(t);
+      if(r.status===401||r.status===403){
+        // Anonymous Auth kapalı — SDK fallback
+        if(_db){
+          const snap = await _db.ref(wpath).once('value');
+          return snap.val();
+        }
+        return null;
+      }
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     }catch(e){
       clearTimeout(t);
-      if(i<retries-1 && e.name==='AbortError'){
-        await new Promise(res=>setTimeout(res,1500));
-        continue;
+      if(e.name==='AbortError'){
+        if(i<retries-1){ await new Promise(res=>setTimeout(res,1500)); continue; }
+        // Son deneme: SDK fallback
+        if(_db){ try{ const snap=await _db.ref(wpath).once('value'); return snap.val(); }catch(e2){} }
+        throw e;
+      }
+      // 401/403 içeren hata mesajında da SDK'ya düş
+      if(String(e.message).includes('401')||String(e.message).includes('403')||String(e.message).includes('Unauthorized')){
+        if(_db){ try{ const snap=await _db.ref(wpath).once('value'); return snap.val(); }catch(e2){} }
+        return null;
       }
       throw e;
     }
@@ -660,13 +675,22 @@ async function fbRestSet(path,val, retries=3){
       const authParam = token ? '?auth='+token : '';
       const r=await fetch(_FB_REST+'/'+wpath+'.json'+authParam,{method:'PUT',body:JSON.stringify(val),headers:{'Content-Type':'application/json'},signal:ctrl.signal});
       clearTimeout(t);
+      if(r.status===401||r.status===403){
+        if(_db){ await _db.ref(wpath).set(val); return val; }
+        return null;
+      }
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     }catch(e){
       clearTimeout(t);
-      if(i<retries-1 && e.name==='AbortError'){
-        await new Promise(res=>setTimeout(res,1500));
-        continue;
+      if(e.name==='AbortError'){
+        if(i<retries-1){ await new Promise(res=>setTimeout(res,1500)); continue; }
+        if(_db){ try{ await _db.ref(wpath).set(val); return val; }catch(e2){} }
+        throw e;
+      }
+      if(String(e.message).includes('401')||String(e.message).includes('403')||String(e.message).includes('Unauthorized')){
+        if(_db){ try{ await _db.ref(wpath).set(val); return val; }catch(e2){} }
+        return null;
       }
       throw e;
     }
