@@ -3766,7 +3766,7 @@ const IS_MOBILE = () => window.innerWidth < 768;
 
 /* ══ CSS ══ */
 
-const BOT_CSS = `
+window.BOT_CSS = `
 #natureBotPet {
   position: fixed;
   z-index: 9997;
@@ -3984,7 +3984,7 @@ const BOT_CSS = `
 
 `;
 // Inject BOT_CSS styles
-(function(){ const _bs = document.createElement("style"); _bs.textContent = BOT_CSS; document.head.appendChild(_bs); })();
+(function(){ const _bs = document.createElement("style"); _bs.textContent = window.BOT_CSS || BOT_CSS || ""; document.head.appendChild(_bs); })();
 
 /* ══ Mesajlar ══ */
 
