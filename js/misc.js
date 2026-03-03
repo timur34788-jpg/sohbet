@@ -144,74 +144,48 @@ async function submitLogin(){
 
   const ph=await hashStr(pass+user);
   try{
-    // ── Admin girişi — Cloud Function bağımlılığı yok, doğrudan DB (REST) ──
-    if(ADMIN_USERNAME && user===ADMIN_USERNAME){
-      try{
-        const adminData = await fbRestGet('users/'+user).catch(()=>null);
-        const phLegacy  = hashStrSync(pass+user);
-        if(!adminData){
-          showLoginErr('Admin hesabı bulunamadı. Firebase DB\'ye users/'+user+' kaydı ekleyin.');
-          resetBtn(); return;
-        }
-        const storedHash = adminData.passwordHash || '';
-        const phLegacyAdmin = await hashStr(pass+'admin'); // eski 'admin' adıyla üretilmiş hash desteği
-        const matched    = (storedHash === ph) || (storedHash === phLegacy) || (storedHash === phLegacyAdmin);
-        if(!matched){
-          const rem  = recordLoginAttempt(user, false);
-          const lock = checkLoginLock(user);
-          if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika kilitli.');
-          else showLoginErr('Şifre yanlış.' + (rem.remaining !== undefined ? ' ' + rem.remaining + ' hakkınız kaldı.' : ''));
-          resetBtn(); return;
-        }
-        if(adminData.banned){ showLoginErr('Bu hesap yasaklandı.'); resetBtn(); return; }
-        // Legacy hash yükselt
-        if(storedHash === phLegacy && storedHash !== ph){
-          await fbRestSet('users/'+user+'/passwordHash', ph).catch(()=>{});
-        }
-        // Admin yetkisi: isAdmin flag VEYA admins/ path
-        const isAdminFlag  = adminData.isAdmin === true;
-        const adminsEntry  = await fbRestGet('admins/'+user).catch(()=>null);
-        recordLoginAttempt(user, true);
-        _passwordHash=ph; _cu=user; _isAdmin=(isAdminFlag || !!adminsEntry);
-        onLoginSuccess();
-        return;
-      }catch(dbErr){
-        const msg = dbErr.message || String(dbErr);
-        if(msg.includes('permission_denied')||msg.includes('401')||msg.includes('403')){
-          showLoginErr('DB erişimi reddedildi. Firebase Rules veya Anonymous Auth ayarını kontrol edin.');
-        } else {
-          showLoginErr('Bağlantı hatası: ' + msg);
-        }
-        resetBtn(); return;
-      }
-    }
-    // Normal kullanıcı — users/ tablosundan doğrula
+    // ── Giriş: direkt Firebase SDK kullan (REST/token bağımsız) ──
     const phLegacy = hashStrSync(pass+user);
-    // _db null ise yeniden bağlanmayı dene
-    if(!_db){
-      const ok = await fbInit().catch(()=>false);
-      if(!ok || !_db){ showLoginErr('Sunucuya bağlanılamadı. Sayfayı yenileyip tekrar deneyin.'); resetBtn(); return; }
+
+    // Kullanıcı verisini SDK ile oku
+    const userSnap = await _db.ref('users/'+user).once('value');
+    const userData = userSnap.val();
+
+    if(!userData){
+      if(ADMIN_USERNAME && user===ADMIN_USERNAME){
+        showLoginErr("Admin hesabı bulunamadı. Firebase DB'ye users/"+user+" kaydı ekleyin.");
+      } else {
+        showLoginErr('Kullanıcı bulunamadı. Kayıt ol!');
+      }
+      resetBtn(); return;
     }
-    // SDK yerine REST kullan — auth/configuration-not-found olan sunucularda da çalışır
-    const rootD = await fbRestGet('users/'+user).catch(()=>null);
-    if(!rootD){showLoginErr('Kullanıcı bulunamadı. Kayıt ol!');resetBtn();return;}
-    const stored = rootD.passwordHash;
-    let matched = false;
-    if(stored === ph){ matched=true; }
-    else if(stored === phLegacy){
-      matched=true;
-      await fbRestSet('users/'+user+'/passwordHash', ph).catch(()=>{});
-    }
+
+    if(userData.banned){ showLoginErr('Bu hesap yasaklandı.'); resetBtn(); return; }
+
+    const storedHash = userData.passwordHash || '';
+    const phLegacyAdmin = (ADMIN_USERNAME && user===ADMIN_USERNAME) ? await hashStr(pass+'admin') : '';
+    const matched = (storedHash === ph) || (storedHash === phLegacy) || (phLegacyAdmin && storedHash === phLegacyAdmin);
+
     if(!matched){
-      const rem = recordLoginAttempt(user, false);
+      const rem  = recordLoginAttempt(user, false);
       const lock = checkLoginLock(user);
-      if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika hesabın kilitli.');
+      if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika kilitli.');
       else showLoginErr('Şifre yanlış.' + (rem.remaining !== undefined ? ' ' + rem.remaining + ' hakkınız kaldı.' : ''));
-      resetBtn();return;
+      resetBtn(); return;
     }
-    if(rootD.banned){showLoginErr('Bu hesap yasaklandı.');resetBtn();return;}
+
+    // Legacy hash yükselt
+    if(storedHash !== ph){
+      _db.ref('users/'+user+'/passwordHash').set(ph).catch(()=>{});
+    }
+
+    // Admin yetkisi: isAdmin flag VEYA admins/ kaydı
+    const isAdminFlag = userData.isAdmin === true;
+    const adminsSnap  = await _db.ref('admins/'+user).once('value');
+    const adminsEntry = adminsSnap.val();
+
     recordLoginAttempt(user, true);
-    _passwordHash=ph;_cu=user;_isAdmin=false;
+    _passwordHash=ph; _cu=user; _isAdmin=(isAdminFlag || !!adminsEntry);
     onLoginSuccess();
   }catch(e){
     let msg = e.message || String(e);
