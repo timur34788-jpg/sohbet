@@ -1290,6 +1290,7 @@ function replaceEmojisInNode(node) {
     Array.from(node.childNodes).forEach(replaceEmojisInNode);
   }
 }
+window.replaceEmojisInNode = replaceEmojisInNode;
 
 
 /* ── Tab bar icons (SVG replacement for tab-ic) ── */
