@@ -97,6 +97,17 @@ function checkRateLimit(action, maxPerMin=20){
   return true;
 }
 async function submitLogin(){
+  // Sunucu seçilmemiş kontrolü
+  if (typeof FB_CONFIG === 'undefined' || !FB_CONFIG) {
+    const keys = typeof FB_SERVERS !== 'undefined' ? Object.keys(FB_SERVERS) : [];
+    if (keys.length === 1 && typeof selectServer === 'function') {
+      selectServer(keys[0]);
+      setTimeout(submitLogin, 1000);
+      return;
+    }
+    showLoginErr('Lütfen önce bir sunucu seçin.');
+    return;
+  }
   // IP ban kontrolü
   const ipBanned = await checkIPBan();
   if(ipBanned){ showLoginErr('Bu IP adresi yasaklıdır.'); return; }
@@ -4745,7 +4756,7 @@ function runIconSystem() {
   injectAttrIcons();
   // Selectively replace emojis in UI elements (not message content to preserve emoji reactions)
   const uiZones = [
-    '.ws-header', '.tab-bar', '.admin-tabs', '.admin-panel-wrap',
+    '.tab-bar', '.admin-tabs', '.admin-panel-wrap',
     '.c-header', '.bs-title', '.prof-sec-title', '.dsk-sec-hdr',
     '#deskRail', '#deskSidebarHeader', '.atab', '.hdr-btn',
     '.login-title', '.login-box .login-sub',
