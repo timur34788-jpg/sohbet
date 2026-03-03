@@ -892,6 +892,12 @@ function deskSwitchProfTab(tab){
 }
 
 function deskLoadAdmin() {
+  // ── GÜVENLİK: Admin yetkisi yoksa reddedip ana sayfaya yönlendir ──
+  if(!_isAdmin){
+    showToast('⛔ Bu bölüme erişim yetkiniz yok.');
+    deskNav('home');
+    return;
+  }
   const panel = document.getElementById('deskPanelContent');
   const tabs = [
     { key: 'users',      label: '👥 Kullanıcı' },

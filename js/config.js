@@ -875,7 +875,8 @@ function applyCustomGameImages(){ return Promise.resolve(); }
   const TAB_HASH = {
     home: '', forum: 'forum', msgs: 'mesajlar',
     friends: 'arkadaslar', profile: 'profil',
-    games: 'oyunlar', watch: 'izle', admin: 'admin'
+    games: 'oyunlar', watch: 'izle'
+    // 'admin' kasıtlı olarak URL hash sistemine dahil edilmedi (güvenlik)
   };
   const HASH_TAB = {};
   Object.entries(TAB_HASH).forEach(([t,h])=>{ HASH_TAB[h]=t; });
@@ -894,6 +895,12 @@ function applyCustomGameImages(){ return Promise.resolve(); }
   window.addEventListener('hashchange', function(){
     const hash = location.hash.replace('#','').replace('/','');
     const tab = HASH_TAB[hash] || 'home';
+    // ── GÜVENLİK: admin hash'i sadece gerçek admin erişebilir ──
+    if(tab === 'admin' && !window._isAdmin){
+      history.replaceState(null,'',location.pathname+'#');
+      if(typeof showToast === 'function') showToast('⛔ Yetkisiz erişim.');
+      return;
+    }
     if(typeof IS_DESKTOP === 'function' && IS_DESKTOP()){
       if(typeof deskNav === 'function') deskNav(tab);
     } else {
@@ -904,7 +911,12 @@ function applyCustomGameImages(){ return Promise.resolve(); }
     const hash = location.hash.replace('#','').replace('/','');
     const tab = HASH_TAB[hash];
     if(tab && tab !== 'home'){
-      window._pendingHashNav = tab;
+      // admin hash'i oturum açmadan veya yetkisiz kullana engelle
+      if(tab === 'admin') {
+        history.replaceState(null,'',location.pathname);
+      } else {
+        window._pendingHashNav = tab;
+      }
     }
     if(hash && hash !== '') {
       history.replaceState(null, '', location.pathname);

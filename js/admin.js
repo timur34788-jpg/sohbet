@@ -1189,14 +1189,29 @@ async function saveAdminDesign(){
     obj.hiddenTabs = [...tabList.children].filter(el=>parseFloat(el.style.opacity)<1).map(el=>el.dataset.tabId);
   }
 
+  // Kaydetme stratejisi: adminDbRef → adminRestSet → hata
+  let saved = false;
+  // 1. Önce SDK admin DB ref dene
   try {
-    // SDK üzerinden kaydet (REST token sorunu yok)
-    await dbRef('settings/design').set(obj);
+    await adminDbRef('settings/design').set(obj);
+    saved = true;
+  } catch(e1) {
+    console.warn('[saveAdminDesign] SDK failed:', e1.message||e1);
+  }
+  // 2. SDK başarısız → admin REST API dene
+  if(!saved) {
+    try {
+      await adminRestSet('settings/design', obj);
+      saved = true;
+    } catch(e2) {
+      console.warn('[saveAdminDesign] REST failed:', e2.message||e2);
+    }
+  }
+  if(saved){
     applyGlobalDesign(obj);
     showToast('✅ Tasarım kaydedildi! Üyeler yenileyince görecek.');
-  } catch(e) {
-    showToast('❌ Kaydetme hatası: ' + (e.message||String(e)));
-    console.error('[saveAdminDesign]', e);
+  } else {
+    showToast('❌ Kaydetme başarısız. Firebase Rules settings/design yazma iznini kontrol et.');
   }
 }
 
