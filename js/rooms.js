@@ -310,7 +310,7 @@ function submitCreateGroup(){
 function openRoom(roomId){
   if(_stopMsg){_stopMsg();_stopMsg=null;}
   stopTypingListener();
-  _cRoom=roomId;clearUnreadBadge(roomId);closeEmoji();
+  _cRoom=roomId;if(typeof clearUnreadBadge==="function")clearUnreadBadge(roomId);else if(typeof window.clearUnreadBadge==="function")window.clearUnreadBadge(roomId);closeEmoji();
   _currentMsgBox='chatMsgs';
   markRoomRead(roomId);
   listenReads(roomId);
