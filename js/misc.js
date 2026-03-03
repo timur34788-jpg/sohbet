@@ -4117,7 +4117,7 @@ const SPEECH = {
     utter.onstart = () => { this.speaking = true; onStart && onStart(); };
     utter.onend   = () => { this.speaking = false; onEnd && onEnd(); };
     utter.onerror = (e) => {
-      if (e.error !== 'interrupted') console.warn('TTS hata:', e.error);
+      if (e.error !== 'interrupted' && e.error !== 'canceled') console.warn('TTS hata:', e.error);
       this.speaking = false;
       onEnd && onEnd();
     };
@@ -4178,7 +4178,7 @@ function runBotCmd(cmdText, showInBubble) {
     '/hava': () => {
       if (!args) { respond('📍 Kullanım: /hava [şehir]\nÖrnek: /hava istanbul'); return; }
       respond('⏳ ' + args + ' için hava durumu alınıyor...');
-      fetch('https://wttr.in/'+encodeURIComponent(args)+'?format=3&lang=tr')
+      fetch('https://corsproxy.io/?' + encodeURIComponent('https://wttr.in/'+encodeURIComponent(args)+'?format=3&lang=tr'))
         .then(r=>r.text()).then(t=>respond('🌤️ '+t.trim()))
         .catch(()=>respond('❌ Hava durumu alınamadı.'));
     },
