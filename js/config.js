@@ -918,7 +918,21 @@ function applyCustomGameImages(){ return Promise.resolve(); }
 
 /* ── PWA SW ── */
 
-if('serviceWorker'in navigator){const sw=`const C='sb-v8';self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(['./']).catch(()=>{})));self.skipWaiting();});self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==C).map(k=>caches.delete(k)))));});self.addEventListener('fetch',e=>{if(e.request.url.includes('firebase')||e.request.url.includes('gstatic'))return;e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));});`;navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'}))).catch(()=>{});}
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js', { scope: './' })
+    .then(reg => {
+      // Yeni sürüm varsa hemen aktifleştir
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if(nw) nw.addEventListener('statechange', () => {
+          if(nw.state === 'installed' && navigator.serviceWorker.controller){
+            // Eski cache temizlendi, sayfa yenilenebilir
+          }
+        });
+      });
+    })
+    .catch(() => {});
+}
 
 
 /* ══════════════════════════════════════════════
