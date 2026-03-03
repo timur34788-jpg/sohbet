@@ -1637,6 +1637,13 @@
   <script>
     // Tüm modüller yüklendi, sunucu listesini doldur
     if (typeof renderServerSelect === 'function') renderServerSelect();
+    // Tek sunucu varsa otomatik seç, login ekranına geç
+    if (typeof FB_SERVERS !== 'undefined' && typeof selectServer === 'function') {
+      const keys = Object.keys(FB_SERVERS);
+      if (keys.length === 1) {
+        selectServer(keys[0]);
+      }
+    }
   </script>
 </body>
 </html>
