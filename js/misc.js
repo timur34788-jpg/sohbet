@@ -18,14 +18,13 @@
 /* ─────────────────────────────── */
 
 
-'use strict';
-
 
 /* ══ GÜVENLİK: Brute Force Koruması ══ */
 
 var _loginAttempts = {}; // {username: {count, lastAttempt, lockedUntil}}
 
 function recordLoginAttempt(username, success){
+  if(!username || typeof _loginAttempts === 'undefined') return {allowed: true};
   const key = username.toLowerCase();
   if(!_loginAttempts[key]) _loginAttempts[key] = {count:0, lastAttempt:0, lockedUntil:0};
   const rec = _loginAttempts[key];
@@ -49,6 +48,8 @@ function recordLoginAttempt(username, success){
 }
 
 function checkLoginLock(username){
+  if(!username) return {allowed: true};
+  if(typeof _loginAttempts === 'undefined' || !_loginAttempts) return {allowed: true};
   const key = username.toLowerCase();
   const rec = _loginAttempts[key];
   if(!rec) return {allowed: true};
@@ -5383,4 +5384,3 @@ window.showBotMsg = function(msg) {
   }
 };
 window.toggleWidgetsPanel = toggleWidgetsPanel;
-
