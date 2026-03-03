@@ -15,11 +15,6 @@
 /* ─────────────────────────────── */
 
 
-const manifestData={name:"Biyom",short_name:"TürkSohbet",start_url:"https://natureco.me/",display:"standalone",background_color:"#2c3038",theme_color:"#2c3038",orientation:"portrait",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='40' fill='%233f0e40'/><text y='130' x='96' text-anchor='middle' font-size='110'>💬</text></svg>",sizes:"192x192",type:"image/svg+xml"}]};
-const _mb=new Blob([JSON.stringify(manifestData)],{type:'application/json'});
-const _ml=document.createElement('link');_ml.rel='manifest';_ml.href=URL.createObjectURL(_mb);document.head.appendChild(_ml);
-
-
 /* ─────────────────────────────── */
 
 
