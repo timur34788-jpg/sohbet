@@ -95,6 +95,7 @@ let FB_CONFIG = null;
 const ADMIN_USERNAME = 'admin1';
 
 let _db=null,_auth=null,_functions=null,_cu=null,_isAdmin=false,_cRoom=null;
+let _fbInitPromise=null; // double-init önleyici
 
 
 /* ── Oyun görselleri — tek kaynak of truth ── */
@@ -271,6 +272,12 @@ function hashStrSync(s){
 /* ── Firebase Init ── */
 
 async function fbInit(){
+  // Zaten init ediliyorsa aynı promise'i döndür
+  if(_fbInitPromise) return _fbInitPromise;
+  _fbInitPromise = _fbInitInternal().finally(()=>{ _fbInitPromise=null; });
+  return _fbInitPromise;
+}
+async function _fbInitInternal(){
   try{
     // Önceki app varsa önce sil, bekle
     if(firebase.apps.length){
