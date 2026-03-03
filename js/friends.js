@@ -96,7 +96,10 @@ function listenFriendRequests(){
 
 /* ── Tab 1: Arkadaşlar ── */
 
-function loadFriendsList(){
+async function loadFriendsList(){
+  if(_auth && !_auth.currentUser){
+    try{ await _auth.signInAnonymously(); }catch(e){}
+  }
   const el=document.getElementById('frContent');
   el.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
 
@@ -244,7 +247,11 @@ function loadAddFriend(){
     <div id="addFriendResults"><div class="fr-empty"><div class="fr-empty-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div><div>Kullanıcı adı yazarak ara</div></div></div>`;
   document.getElementById('addFriendInp').focus();
 }
-function searchFriendUsers(){
+async function searchFriendUsers(){
+  // Auth token yoksa önce anonim giriş yap
+  if(_auth && !_auth.currentUser){
+    try{ await _auth.signInAnonymously(); }catch(e){}
+  }
   const q=document.getElementById('addFriendInp').value.trim().toLowerCase();
   const el=document.getElementById('addFriendResults');
   if(!q){el.innerHTML='<div class="fr-empty"><div class="fr-empty-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></div><div>Kullanıcı adı yazarak ara</div></div>';return;}

@@ -220,6 +220,12 @@ async function checkIPBan(){
   }catch(e){ return false; }
 }
 function onLoginSuccess(){
+  // Anonymous Auth token garantisi — Firebase Rules auth!=null için gerekli
+  (async () => {
+    if(_auth && !_auth.currentUser){
+      try{ await _auth.signInAnonymously(); }catch(e){}
+    }
+  })();
   loadCustomGameImages();
   loadCustomGames();
   loadUserSecurityData();
