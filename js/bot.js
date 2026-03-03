@@ -919,6 +919,11 @@ window._natureBotReply = function(text) {
 
 function startNatureBot() {
   if (document.getElementById('natureBotPet')) return;
+  // misc.js'nin prototype kopyalamasi tamamlanmadan baslatma
+  if (typeof NatureBotPet.prototype.bindClick !== 'function') {
+    setTimeout(startNatureBot, 300);
+    return;
+  }
   window._natureBotInstance = new NatureBotPet();
 }
 
