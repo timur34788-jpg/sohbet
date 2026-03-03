@@ -4319,3 +4319,72 @@ window.nc_replaceIcons = runIconSystem;
   .card, .r-card { padding: 10px 12px !important; }
 }
 /* ══════════════════════════════════════════════════════════ */
+
+
+/* ══════════════════════════════════════════════════════════
+   🚫 Pull-to-refresh yuvarlak ikonu gizle (Ana Sayfa sol üst)
+   ══════════════════════════════════════════════════════════ */
+html, body {
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
+}
+/* iOS Safari pull-to-refresh ve bounce efektini kapat */
+body {
+  position: fixed;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+#roomsScreen, #roomsScreen * {
+  overscroll-behavior: contain;
+}
+
+/* Ana sayfa mobil boyutları — diğer sayfalarla eşitle */
+@media (max-width: 767px) {
+  /* Rooms screen header */
+  #roomsScreen .c-header,
+  #roomsScreen .ws-header,
+  .rooms-header {
+    min-height: 44px !important;
+    padding: 6px 12px !important;
+    padding-top: calc(6px + env(safe-area-inset-top,0px)) !important;
+  }
+  /* Oda/kanal listeleri */
+  .r-item {
+    padding: 6px 12px !important;
+    min-height: 36px !important;
+  }
+  .r-label, .ch-title {
+    font-size: .82rem !important;
+  }
+  /* DM avatarları (ana sayfada) */
+  .r-av, .ch-av {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 6px !important;
+    font-size: .66rem !important;
+  }
+  /* Bölüm başlıkları (KANALLAR, GRUPLAR...) */
+  .sec-hdr {
+    font-size: .6rem !important;
+    padding: 8px 12px 2px !important;
+    letter-spacing: .08em !important;
+  }
+  /* Üst header (Nature.co logosu + butonlar) */
+  .ws-header-title, #wsHeaderName {
+    font-size: .92rem !important;
+    font-weight: 900 !important;
+  }
+  /* Header buton ikonları */
+  .ws-header svg, .hdr-btn svg,
+  .ws-header .hdr-ic svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  /* Karbon widget */
+  .carbon-badge, #carbonWidget {
+    font-size: .68rem !important;
+    padding: 3px 7px !important;
+  }
+}
+/* ══════════════════════════════════════════════════════════ */
