@@ -8,7 +8,14 @@
     var EMAILJS_SERVICE_ID  = 'service_pwyfg6j';
     var EMAILJS_TEMPLATE_ID = 'template_jvivfgc';
     window._EJS = { pub: EMAILJS_PUBLIC_KEY, svc: EMAILJS_SERVICE_ID, tpl: EMAILJS_TEMPLATE_ID };
-    if (EMAILJS_PUBLIC_KEY) emailjs.init(EMAILJS_PUBLIC_KEY);
+    // emailjs async yüklendiği için hazır olana kadar bekle
+    if (typeof emailjs !== 'undefined') {
+      emailjs.init(EMAILJS_PUBLIC_KEY);
+    } else {
+      window.addEventListener('load', function() {
+        if (typeof emailjs !== 'undefined') emailjs.init(EMAILJS_PUBLIC_KEY);
+      });
+    }
   })();
 
 
