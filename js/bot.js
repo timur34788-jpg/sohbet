@@ -110,6 +110,11 @@ setTimeout(()=>{
 // Hook into login success
 
 
+
+/* ── Bot CSS Enjeksiyonu ── */
+(function injectBotCSS(){
+  const s = document.createElement('style');
+  s.textContent = `
 /* ── Gövde yüzen hareket ── */
 
 #natureBotPet .bot-body-group {
@@ -289,6 +294,9 @@ setTimeout(()=>{
   #natureBotBubble { max-width:200px; }
 }
 `;
+  document.head.appendChild(s);
+})();
+
 
 
 /* ══ NatureBotPet Sınıfı ══ */
@@ -835,8 +843,8 @@ class NatureBotPet {
     this.updateVoiceWavePos();
     this.rafId = requestAnimationFrame(() => this.loop());
   }
+}
 
-  
 /* ── Global köprüler ── */
 
 window._natureBotRunCmd = function(cmd) {
@@ -933,7 +941,6 @@ if (_nbLoginEl) _nbLoginObs.observe(_nbLoginEl, { attributes: true, attributeFil
   }, delay);
 });
 
-})();
 
 
 /* ── Renk paleti ── */
@@ -955,7 +962,10 @@ const C = {
 };
 
 
-/* ── 2. NATUREBOT VOICE WIDGET ENHANCEMENT ── */
+
+(function injectBotCSS2(){
+  const s = document.createElement('style');
+  s.textContent = `
 
 /* Mevcut #botVoiceWave zaten var — bar sayısını artır, boyutu büyüt */
 #botVoiceWave {
@@ -990,6 +1000,10 @@ const C = {
   from { transform: scale(.8) translateY(8px); opacity: 0; }
   to   { transform: scale(1) translateY(0); opacity: 1; }
 }
+
+  `;
+  document.head.appendChild(s);
+})();
 
 
 /* ── NatureBot: waveform bar sayısını artır ── */
