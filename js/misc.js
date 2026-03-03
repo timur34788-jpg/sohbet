@@ -1,3 +1,6 @@
+/* ── globals guard ── */
+(function(){var g={'_isMuted':false,'TV_CHANNELS':[],'_reminderTimers':[],'_deskRoom':null,'_origDeskAdminTab':null};Object.keys(g).forEach(function(k){if(typeof window[k]==='undefined')window[k]=g[k];});})();
+/* ── end guard ── */
 /* Nature.co — app.js — Sınıflandırılmamış bölümler */
 
 /* Nature.co — Ana JavaScript Dosyası */
@@ -2014,6 +2017,7 @@ let _screenStream = null;
 let _callType = null;
 let _callOther = null;         // İlk davet edilen (display için)
 let _isCaller = false;
+if(typeof window._isMuted === "undefined") window._isMuted = false;
 if(typeof window._isMuted === "undefined") window._isMuted = false;
 var _isMuted = window._isMuted;
 let _isSharingScreen = false;
@@ -4516,7 +4520,7 @@ class _BotMethods {
 }
 // Copy all methods to NatureBotPet prototype
 if(typeof NatureBotPet !== "undefined" && typeof _BotMethods !== "undefined"){
-  Object.getOwnPropertyNames(_BotMethods.prototype).filter(n=>n!=="constructor").forEach(n=>{NatureBotPet.prototype[n]=_BotMethods.prototype[n];});
+  if(typeof NatureBotPet !== "undefined" && typeof _BotMethods !== "undefined"){Object.getOwnPropertyNames(_BotMethods.prototype).filter(n=>n!=="constructor").forEach(n=>{NatureBotPet.prototype[n]=_BotMethods.prototype[n];});}
 }
 })()
 
