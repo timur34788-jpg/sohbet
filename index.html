@@ -1851,5 +1851,37 @@
 </div>
 
 <script src="js/push.js"></script>
+
+<script>
+/* ── iOS Safari pull-to-refresh & bounce tamamen kapat ── */
+(function(){
+  // HTML/body'e dokunarak kaydırma bounce efektini engelle
+  document.documentElement.style.cssText += ';overscroll-behavior:none;overflow:hidden;position:fixed;width:100%;height:100%;';
+  document.body.style.cssText += ';overscroll-behavior:none;';
+  
+  // iOS Safari'de pull-to-refresh için touchmove engelle
+  var _startY = 0;
+  document.addEventListener('touchstart', function(e){ 
+    _startY = e.touches[0].pageY; 
+  }, { passive: true });
+  
+  document.addEventListener('touchmove', function(e){
+    var el = e.target;
+    // Kaydırılabilir alan bul
+    while(el && el !== document.body){
+      if(el.scrollHeight > el.clientHeight && 
+         window.getComputedStyle(el).overflow !== 'hidden'){
+        // Zaten en üstteyse ve aşağı çekiyorsa engelle (pull-to-refresh)
+        if(el.scrollTop === 0 && e.touches[0].pageY > _startY){
+          e.preventDefault();
+        }
+        return;
+      }
+      el = el.parentElement;
+    }
+    e.preventDefault(); // Scroll alanı dışında her zaman engelle
+  }, { passive: false });
+})();
+</script>
 </body>
 </html>
