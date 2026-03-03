@@ -3982,6 +3982,10 @@ const BOT_CSS = `
 }
 
 
+`;
+// Inject BOT_CSS styles
+(function(){ const _bs = document.createElement("style"); _bs.textContent = BOT_CSS; document.head.appendChild(_bs); })();
+
 /* ══ Mesajlar ══ */
 
 const GREETING_MSGS = [
@@ -4079,7 +4083,7 @@ const SPEECH = {
     // Noktalama ve biçimlendirme
     t = t.replace(/\n+/g, '. ');
     t = t.replace(/→/g, ', ');
-    t = t.replace(/[|\/\\*_`~^<>{}[\]()#@=+]/g, ' ');
+    t = t.replace(/[|\/*_~^<>{}()#@=+\[\]\\]/g, ' ');
     t = t.replace(/\.{2,}/g, '.');
     t = t.replace(/\s{2,}/g, ' ');
 
@@ -4211,7 +4215,8 @@ function runBotCmd(cmdText, showInBubble) {
   return true;
 }
 
-
+;(function(){
+class _BotMethods {
 /* ── Sesli konuşma — sadece butonla ── */
 
   speak(text) {
@@ -4466,6 +4471,9 @@ function runBotCmd(cmdText, showInBubble) {
     if (!IS_MOBILE() && !this.isSleeping) this.startWanderDesktop();
   }
 }
+// Copy all methods to NatureBotPet prototype
+Object.getOwnPropertyNames(_BotMethods.prototype).filter(n=>n!=="constructor").forEach(n=>{NatureBotPet.prototype[n]=_BotMethods.prototype[n];});
+})()
 
 
 /* ─────────────────────────────── */
@@ -4778,7 +4786,9 @@ window.nc_replaceIcons = runIconSystem;
 
 })();
 
-<style>
+(function injectMiscCSS(){
+  const s = document.createElement("style");
+  s.textContent = `
 
 /* ── 3. iOS WIDGET PANELİ ── */
 
@@ -4981,9 +4991,12 @@ window.nc_replaceIcons = runIconSystem;
   transition:all .18s;
 }
 .ap-stop-btn:hover { background:rgba(224,85,85,.25); }
-</style>
+  `;
+  document.head.appendChild(s);
+})();
 
-<!-- Karbon Modal HTML -->
+(function injectMiscHTML(){
+  const html = `
 <div id="carbonModalOverlay" onclick="if(event.target===this)closeCarbonModal()">
   <div id="carbonModal">
     <div class="cm-header">
@@ -5034,8 +5047,12 @@ window.nc_replaceIcons = runIconSystem;
     <button class="ap-stop-btn" onclick="stopAmbiance()">⏹ Sesi Durdur</button>
   </div>
 </div>
+  `;
+  document.addEventListener("DOMContentLoaded", function() {
+    document.body.insertAdjacentHTML("beforeend", html);
+  });
+})();
 
-<script>
 
 /* ══════════════════════════════════════════════
    🌿 KARBON AYAK İZİ
