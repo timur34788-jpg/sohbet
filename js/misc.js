@@ -3223,7 +3223,7 @@ function deskLoadGames() { loadGamesPanel(); }
    📺 TV CANLI İZLE PANELİ
 ══════════════════════════════════════════════ */
 
-const TV_CHANNELS = [
+var TV_CHANNELS = [
   // Haber
   { id:'trt_haber',  name:'TRT Haber',   cat:'Haber',  emoji:'📡', m3u8:'https://tv-trthaber.medya.trt.com.tr/master_720.m3u8' },
   { id:'ntv',        name:'NTV',          cat:'Haber',  emoji:'📡', m3u8:'https://dogus-live.daioncdn.net/ntv/ntv.m3u8' },
@@ -4515,7 +4515,9 @@ class _BotMethods {
   }
 }
 // Copy all methods to NatureBotPet prototype
-Object.getOwnPropertyNames(_BotMethods.prototype).filter(n=>n!=="constructor").forEach(n=>{NatureBotPet.prototype[n]=_BotMethods.prototype[n];});
+if(typeof NatureBotPet !== "undefined" && typeof _BotMethods !== "undefined"){
+  Object.getOwnPropertyNames(_BotMethods.prototype).filter(n=>n!=="constructor").forEach(n=>{NatureBotPet.prototype[n]=_BotMethods.prototype[n];});
+}
 })()
 
 
