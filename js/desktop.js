@@ -1356,4 +1356,3 @@ function injectRailIcons() {
     if (svgStr) { ic.innerHTML = svgStr; ic.style.fontSize = '0'; }
   });
 }
-
