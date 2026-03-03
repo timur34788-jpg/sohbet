@@ -108,9 +108,8 @@ async function submitLogin(){
     showLoginErr('Lütfen önce bir sunucu seçin.');
     return;
   }
-  // IP ban kontrolü
-  const ipBanned = await checkIPBan();
-  if(ipBanned){ showLoginErr('Bu IP adresi yasaklıdır.'); return; }
+  // IP ban kontrolü — arka planda, login'i bloke etmez
+  checkIPBan().then(ipBanned => { if(ipBanned) showLoginErr('Bu IP adresi yasaklıdır.'); }).catch(()=>{});
   const user=document.getElementById('loginUser').value.trim();
   const pass=document.getElementById('loginPass').value;
   if(!user){showLoginErr('Kullanıcı adı girin.');return;}
