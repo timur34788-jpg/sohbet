@@ -1313,6 +1313,9 @@ function injectTabIcons() {
 }
 
 
+})();
+
+
 /* ═══════════════════════════════════════════════════
    🎨 UI UPGRADE PACK
    1. Profil Glass Drawer
@@ -1325,6 +1328,10 @@ function injectTabIcons() {
 
 /* ── 1. PROFİL GLASS DRAWER ── */
 
+/* ── UI Upgrade Pack CSS + HTML Enjeksiyonu ── */
+(function injectUIUpgradePack(){
+  const s = document.createElement('style');
+  s.textContent = `
 #profileDrawer {
   position: fixed; top: 0; right: 0; bottom: 0;
   width: 300px; max-width: 92vw;
@@ -1350,91 +1357,30 @@ function injectTabIcons() {
   transition: opacity .3s;
 }
 #profileDrawerOverlay.open { opacity: 1; pointer-events: auto; }
-
-/* Drawer header */
-.pdr-header {
-  padding: 20px 20px 0;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
-.pdr-close {
-  width: 32px; height: 32px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.1);
-  cursor: pointer; font-size: .85rem;
-  transition: background .15s;
-}
+.pdr-header { padding: 20px 20px 0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.pdr-close { width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-size: .85rem; transition: background .15s; }
 .pdr-close:hover { background: rgba(255,255,255,0.14); }
-
-/* Avatar glow removed - no neon effects on avatars */
 .prof-av-ring.neon-glow { box-shadow: none; }
-[data-theme="dark"] .prof-av-ring.neon-glow { --glow-rgb: 91,155,213; }
-[data-theme="forest"] .prof-av-ring.neon-glow { --glow-rgb: 76,175,80; }
-[data-theme="ocean"] .prof-av-ring.neon-glow { --glow-rgb: 41,182,246; }
-[data-theme="sunset"] .prof-av-ring.neon-glow { --glow-rgb: 240,98,146; }
-[data-theme="midnight"] .prof-av-ring.neon-glow { --glow-rgb: 156,39,176; }
-
-/* Drawer nav - reuses .prof-act logic, new container */
 .pdr-nav { padding: 0 12px; }
 .pdr-nav .prof-act { border-radius: 12px; }
 .pdr-nav .prof-act:hover { background: rgba(255,255,255,0.07); }
 .pdr-divider { height: 1px; background: var(--border); margin: 8px 20px; }
+.forum-card { background: rgba(255,255,255,0.045) !important; backdrop-filter: blur(16px) saturate(1.2) !important; -webkit-backdrop-filter: blur(16px) !important; border: 1px solid rgba(255,255,255,0.09) !important; border-radius: 16px !important; transition: all .22s cubic-bezier(.4,0,.2,1) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.25); }
+.forum-card:hover { background: rgba(255,255,255,0.07) !important; border-color: rgba(var(--glow-rgb,91,155,213),0.3) !important; box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 30px rgba(var(--glow-rgb,91,155,213),0.06) !important; transform: translateY(-2px); }
+.forum-card-img { width: calc(100% + 28px); margin: -14px -14px 12px; height: 160px; object-fit: cover; border-radius: 14px 14px 0 0; display: block; }
+.forum-card-img-emoji { width: calc(100% + 28px); margin: -14px -14px 12px; height: 120px; display: flex; align-items: center; justify-content: center; font-size: 2.8rem; border-radius: 14px 14px 0 0; }
+.forum-card-cat { background: rgba(var(--glow-rgb,91,155,213),0.12) !important; border-color: rgba(var(--glow-rgb,91,155,213),0.25) !important; color: var(--accent) !important; }
+  `;
+  document.head.appendChild(s);
 
-
-/* ── 4. FORUM CARD GLASSMORPHİSM ── */
-
-/* Mevcut .forum-card'a glassmorphism ekle — sıfırdan yazmıyoruz */
-.forum-card {
-  background: rgba(255,255,255,0.045) !important;
-  backdrop-filter: blur(16px) saturate(1.2) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  border: 1px solid rgba(255,255,255,0.09) !important;
-  border-radius: 16px !important;
-  transition: all .22s cubic-bezier(.4,0,.2,1) !important;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-}
-.forum-card:hover {
-  background: rgba(255,255,255,0.07) !important;
-  border-color: rgba(var(--glow-rgb,91,155,213),0.3) !important;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.4), 0 0 30px rgba(var(--glow-rgb,91,155,213),0.06) !important;
-  transform: translateY(-2px);
-}
-/* Forum kart içi resim desteği */
-.forum-card-img {
-  width: calc(100% + 28px); /* padding compensate */
-  margin: -14px -14px 12px;
-  height: 160px; object-fit: cover;
-  border-radius: 14px 14px 0 0;
-  display: block;
-}
-.forum-card-img-emoji {
-  width: calc(100% + 28px);
-  margin: -14px -14px 12px;
-  height: 120px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2.8rem;
-  border-radius: 14px 14px 0 0;
-}
-/* Forum kart etiket (kategori pill) güncelleme */
-.forum-card-cat {
-  background: rgba(var(--glow-rgb,91,155,213),0.12) !important;
-  border-color: rgba(var(--glow-rgb,91,155,213),0.25) !important;
-  color: var(--accent) !important;
-}
-</style>
-
-<!-- ════════════════════════════════════
-     PROFİL GLASS DRAWER HTML
-════════════════════════════════════ -->
+  // HTML enjeksiyonu
+  const html = `
 <div id="profileDrawerOverlay" onclick="closeProfileDrawer()"></div>
 <div id="profileDrawer">
   <div class="pdr-header">
     <div style="font-size:.7rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;">Profilim</div>
     <div class="pdr-close" onclick="closeProfileDrawer()">✕</div>
   </div>
-
-  <!-- Reuse existing profile structure -->
   <div style="padding:20px 20px 16px;text-align:center;">
     <div class="prof-av-wrap" style="display:inline-block;cursor:pointer;position:relative;" onclick="triggerPhotoUpload()">
       <div class="prof-av-ring" id="drawerAvatar" style="width:80px;height:80px;border-radius:20px;font-size:2rem;margin:0 auto;"></div>
@@ -1443,98 +1389,30 @@ function injectTabIcons() {
     <div class="prof-display-name" id="drawerName" style="margin-top:10px;"></div>
     <div class="prof-handle" id="drawerHandle"></div>
   </div>
-
-  <!-- Stats - reuses .prof-stat classes -->
   <div class="prof-stat-row" style="margin:0 16px 16px;">
-    <div class="prof-stat">
-      <span class="prof-stat-num" id="drawerMsgCount">—</span>
-      <span class="prof-stat-lbl">Mesaj</span>
-    </div>
-    <div class="prof-stat">
-      <span class="prof-stat-num" id="drawerFriendCount">—</span>
-      <span class="prof-stat-lbl">Arkadaş</span>
-    </div>
-    <div class="prof-stat">
-      <span class="prof-stat-num" id="drawerJoinDate">—</span>
-      <span class="prof-stat-lbl">Katılım</span>
-    </div>
+    <div class="prof-stat"><span class="prof-stat-num" id="drawerMsgCount">—</span><span class="prof-stat-lbl">Mesaj</span></div>
+    <div class="prof-stat"><span class="prof-stat-num" id="drawerFriendCount">—</span><span class="prof-stat-lbl">Arkadaş</span></div>
+    <div class="prof-stat"><span class="prof-stat-num" id="drawerJoinDate">—</span><span class="prof-stat-lbl">Katılım</span></div>
   </div>
-
   <div class="pdr-divider"></div>
-
-  <!-- Nav items - reuses .prof-act -->
   <nav class="pdr-nav" style="padding:8px 12px;">
-    <div class="prof-act" onclick="closeProfileDrawer();switchMainTab&&switchMainTab('profile')">
-      <div class="prof-act-ic">👤</div>
-      <div class="prof-act-lb">Profil Sayfam</div>
-    </div>
-    <div class="prof-act" onclick="closeProfileDrawer();switchProfTab&&switchProfTab('appearance')">
-      <div class="prof-act-ic">🎨</div>
-      <div class="prof-act-lb">Görünüm & Tema</div>
-    </div>
-    <div class="prof-act" onclick="closeProfileDrawer();switchProfTab&&switchProfTab('sounds')">
-      <div class="prof-act-ic">🔔</div>
-      <div class="prof-act-lb">Bildirimler & Sesler</div>
-    </div>
-    <div class="prof-act" onclick="closeProfileDrawer();switchMainTab&&switchMainTab('games')">
-      <div class="prof-act-ic">🎮</div>
-      <div class="prof-act-lb">Oyunlarım</div>
-    </div>
-    <div class="prof-act" onclick="closeProfileDrawer();switchProfTab&&switchProfTab('account')">
-      <div class="prof-act-ic">⚙️</div>
-      <div class="prof-act-lb">Hesap Ayarları</div>
-    </div>
+    <div class="prof-act" onclick="closeProfileDrawer();switchMainTab&&switchMainTab('profile')"><div class="prof-act-ic">👤</div><div class="prof-act-lb">Profil Sayfam</div></div>
+    <div class="prof-act" onclick="closeProfileDrawer();switchProfTab&&switchProfTab('appearance')"><div class="prof-act-ic">🎨</div><div class="prof-act-lb">Görünüm & Tema</div></div>
+    <div class="prof-act" onclick="closeProfileDrawer();switchProfTab&&switchProfTab('sounds')"><div class="prof-act-ic">🔔</div><div class="prof-act-lb">Bildirimler & Sesler</div></div>
+    <div class="prof-act" onclick="closeProfileDrawer();switchMainTab&&switchMainTab('games')"><div class="prof-act-ic">🎮</div><div class="prof-act-lb">Oyunlarım</div></div>
+    <div class="prof-act" onclick="closeProfileDrawer();switchProfTab&&switchProfTab('account')"><div class="prof-act-ic">⚙️</div><div class="prof-act-lb">Hesap Ayarları</div></div>
   </nav>
-
   <div class="pdr-divider"></div>
-
   <div class="pdr-nav" style="padding:8px 12px;">
-    <div class="prof-act danger" onclick="closeProfileDrawer();typeof logout==='function'&&logout()">
-      <div class="prof-act-ic">🚪</div>
-      <div class="prof-act-lb">Çıkış Yap</div>
-    </div>
+    <div class="prof-act danger" onclick="closeProfileDrawer();typeof logout==='function'&&logout()"><div class="prof-act-ic">🚪</div><div class="prof-act-lb">Çıkış Yap</div></div>
   </div>
 </div>
-
-<!-- ════════════════════════════════════
-     iOS WIDGET PANELİ HTML
-════════════════════════════════════ -->
 <div id="widgetsPanel">
-  <!-- Saat Widget -->
-  <div class="ios-widget">
-    <div class="ios-widget-label">⏰ Saat</div>
-    <div class="w-clock-time" id="wpClock">--:--</div>
-    <div class="w-clock-date" id="wpDate"></div>
-  </div>
-
-  <!-- Online Widget -->
-  <div class="ios-widget">
-    <div class="ios-widget-label">👥 Aktif Kullanıcılar</div>
-    <div class="w-online-count">
-      <div class="w-online-dot"></div>
-      <span id="wpOnlineCount">—</span>
-    </div>
-    <div class="w-online-bar">
-      <div class="w-online-fill" id="wpOnlineBar" style="width:0%"></div>
-    </div>
-    <div class="w-online-sub">Şu an çevrimiçi</div>
-  </div>
-
-  <!-- Hava Durumu Widget (statik — hava API entegre değil) -->
-  <div class="ios-widget">
-    <div class="ios-widget-label">☁️ Hava Durumu</div>
-    <div class="w-weather-main">
-      <div class="w-weather-icon">🌤️</div>
-      <div>
-        <div class="w-weather-temp" id="wpTemp">—°</div>
-        <div class="w-weather-desc" id="wpWeatherDesc">/hava [şehir] yazarak sorgula</div>
-      </div>
-    </div>
-    <div class="w-weather-details">
-      <div class="w-weather-detail" id="wpHumidity">💧 —%</div>
-      <div class="w-weather-detail" id="wpWind">💨 — km/s</div>
-    </div>
-  </div>
-</div>
-
-<style>
+  <div class="ios-widget"><div class="ios-widget-label">⏰ Saat</div><div class="w-clock-time" id="wpClock">--:--</div><div class="w-clock-date" id="wpDate"></div></div>
+  <div class="ios-widget"><div class="ios-widget-label">👥 Aktif Kullanıcılar</div><div class="w-online-count"><div class="w-online-dot"></div><span id="wpOnlineCount">—</span></div><div class="w-online-bar"><div class="w-online-fill" id="wpOnlineBar" style="width:0%"></div></div><div class="w-online-sub">Şu an çevrimiçi</div></div>
+  <div class="ios-widget"><div class="ios-widget-label">☁️ Hava Durumu</div><div class="w-weather-main"><div class="w-weather-icon">🌤️</div><div><div class="w-weather-temp" id="wpTemp">—°</div><div class="w-weather-desc" id="wpWeatherDesc">/hava [şehir] yazarak sorgula</div></div></div><div class="w-weather-details"><div class="w-weather-detail" id="wpHumidity">💧 —%</div><div class="w-weather-detail" id="wpWind">💨 — km/s</div></div></div>
+</div>`;
+  document.addEventListener('DOMContentLoaded', () => {
+    document.body.insertAdjacentHTML('beforeend', html);
+  });
+})();
