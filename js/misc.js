@@ -293,6 +293,14 @@ function toggleChatMenu(e){
       items.push({icon:'🚪', label:'Gruptan Ayrıl', action: ()=>leaveGroup(_cRoom, room.name||_cRoom), danger:true});
     }
     
+    // Yeni özellikler
+    items.push({sep:true});
+    items.push({icon:'📄', label:'Eco Belgeler', action: ()=>openCanvasPanel(_cRoom)});
+    items.push({icon:'✅', label:'Görev Listeleri', action: ()=>openListsPanel(_cRoom)});
+    items.push({icon:'🔖', label:'Yer İşareti Ekle', action: ()=>addBookmark(_cRoom)});
+    items.push({icon:'⏰', label:'Hatırlatıcı Kur', action: ()=>openReminderModal()});
+    items.push({icon:'💾', label:'Kaydedilenler', action: ()=>openSavedItems()});
+
     if(_isAdmin){
       items.push({sep:true});
       items.push({icon:'⚙️', label:'Oda Ayarları (Admin)', action: ()=>{switchMainTab('home');openAdminPanel();adminTab('rooms');}});
