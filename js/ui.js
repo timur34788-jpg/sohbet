@@ -1130,7 +1130,7 @@ const g      = (content) => `<g>${content}</g>`;
 
 /* ── İkon Kütüphanesi ── */
 
-const ICONS = {
+const ICONS = window.ICONS = {
   // ─── Navigasyon ───
   '💬': svg(20,20, path('M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z', C.em)),
   '🏠': svg(20,20, path('M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z', C.em)+path('M9 22V12h6v10',C.em)),
