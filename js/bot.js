@@ -362,7 +362,7 @@ class NatureBotPet {
     this.hookCallScreen();
 
     // Sesler yüklenince yeniden kontrol
-    if (SPEECH.supported) {
+    if (window.SPEECH && window.SPEECH.supported) {
       speechSynthesis.onvoiceschanged = () => {};
       // Sesleri önceden yükle
       speechSynthesis.getVoices();
@@ -849,7 +849,7 @@ class NatureBotPet {
 /* ── Global köprüler ── */
 
 window._natureBotRunCmd = function(cmd) {
-  runBotCmd(cmd, true);
+  window.runBotCmd && window.runBotCmd(cmd, true);
 };
 
 
@@ -861,7 +861,7 @@ window._natureBotReply = function(text) {
   if (!bot) return;
   const t = text.trim();
   // Komut mu?
-  if (t.startsWith('/')) { runBotCmd(t, true); return; }
+  if (t.startsWith('/')) { window.runBotCmd && window.runBotCmd(t, true); return; }
 
   const lower = t.toLowerCase();
   let reply = '';
