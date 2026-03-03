@@ -275,7 +275,16 @@ function toggleChatMenu(e){
     
     // Search messages
     items.push({icon:'🔍', label:'Mesajlarda Ara', action: ()=>openMsgSearch()});
-    
+
+    // New features
+    items.push({icon:'📄', label:'Eco Belgeler', action: ()=>openCanvasPanel(_cRoom)});
+    items.push({icon:'✅', label:'Görev Listeleri', action: ()=>openListsPanel(_cRoom)});
+    items.push({icon:'🔖', label:'Kaydedilenler', action: ()=>openSavedItems()});
+    items.push({icon:'⏰', label:'Hatırlatıcılar', action: ()=>openRemindersModal()});
+    items.push({icon:'💬', label:'Durumumu Ayarla', action: ()=>openStatusModal()});
+    items.push({icon:'🗓', label:'Mesaj Planla', action: ()=>openSchedulePanel()});
+    items.push({icon:'🔖', label:'Yer İşareti Ekle', action: ()=>promptAddBookmark(_cRoom)});
+
     // Separator
     items.push({sep:true});
     
@@ -726,6 +735,14 @@ async function sendMsg(){
   // Slash bot komutu kontrolü
   if(t.startsWith('/') && typeof checkBotCommand==='function' && checkBotCommand(t)){
     inp.value='';if(inp._autoResize)inp._autoResize();else{inp.style.height='';} return;
+  }
+  // Yeni slash komutları
+  if(t.startsWith('/')){
+    const handled = typeof executeSlashCmd==='function' && await executeSlashCmd(t, _cRoom);
+    if(handled){ inp.value='';if(inp._autoResize)inp._autoResize();else inp.style.height=''; return; }
+    // /shrug ve /me özel dönüşüm
+    if(t.toLowerCase()==='/shrug'){ inp.value='¯\\_(ツ)_/¯'; }
+    else if(t.toLowerCase().startsWith('/me ')){ inp.value='_' + _cu + ' ' + t.slice(4) + '_'; }
   }
   const box=document.getElementById('slashSuggestBox');if(box) box.style.display='none';
   // ── Susturma kontrolü ──

@@ -1290,7 +1290,9 @@ window.addEventListener('resize', () => {
           : 'home';
         switchMainTab(safeTab);
       } else {
-        showScreen('loginScreen');
+        // showScreen misc.js'de tanımlı — yoksa fallback
+        if(typeof showScreen === 'function') showScreen('loginScreen');
+        else { const ls=document.getElementById('loginScreen'); if(ls){ls.style.display='flex';ls.classList.add('active');} }
       }
     }
   }, 200);

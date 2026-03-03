@@ -357,9 +357,9 @@ class NatureBotPet {
       this.initDesktop();
     }
 
-    if (typeof this.bindClick === 'function') this.bindClick();
-    if (typeof this.scheduleIdleMsg === 'function') this.scheduleIdleMsg();
-    if (typeof this.hookCallScreen === 'function') this.hookCallScreen();
+    this.bindClick();
+    this.scheduleIdleMsg();
+    this.hookCallScreen();
 
     // Sesler yüklenince yeniden kontrol
     if (window.SPEECH && window.SPEECH.supported) {
