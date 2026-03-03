@@ -1892,20 +1892,7 @@ async function loadAdminSettings(){
     html += '<button onclick="adminClearAllMsgs()" style="width:100%;padding:11px;border:1px solid rgba(224,30,90,.3);border-radius:9px;background:rgba(224,30,90,.12);color:#ff5a8a;font-weight:900;font-size:.88rem;cursor:pointer;">🗑️ Tüm Mesajları Sil (DM Dahil)</button>';
     html += '<button onclick="adminClearForumPosts()" style="width:100%;padding:11px;border:1px solid rgba(224,30,90,.3);border-radius:9px;background:rgba(224,30,90,.12);color:#ff5a8a;font-weight:900;font-size:.88rem;cursor:pointer;">🗑️ Tüm Forum Paylaşımlarını Sil</button>';
     html += '</div></div>';
-    // ── AI Asistan Key bölümü ──
-    const aiKey = esc(s.openrouterKey||'');
-    const aiKeyMasked = aiKey ? '✅ Key kayıtlı (' + aiKey.slice(0,8) + '...)' : '❌ Key girilmemiş';
-    html += '<div class="admin-section" style="margin-top:12px">';
-    html += '<div class="admin-sec-title">🤖 AI Mesaj Asistanı</div>';
-    html += '<div class="admin-card" style="padding:14px;display:flex;flex-direction:column;gap:10px;">';
-    html += '<div style="font-size:.75rem;color:var(--muted);">OpenRouter API key giriniz — tüm kullanıcılar kendi key girmeden AI asistanı kullanabilir.</div>';
-    html += '<div style="font-size:.78rem;font-weight:700;color:' + (aiKey ? 'var(--green)' : '#e05555') + ';">' + aiKeyMasked + '</div>';
-    html += '<div style="display:flex;gap:8px;">';
-    html += '<input class="admin-inp" type="password" id="setAiKey" value="' + aiKey + '" placeholder="sk-or-..." style="margin-bottom:0;flex:1;">';
-    html += '<button class="a-btn blue" onclick="saveAiKeyAdmin()">Kaydet</button>';
-    html += '</div>';
-    html += '<div style="font-size:.7rem;color:var(--muted);">Ücretsiz key: <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--purple);">openrouter.ai/keys</a></div>';
-    html += '</div></div>';
+    // AI Asistan kaldırıldı
 
     // Davet kodu bölümü
     html += '<div class="admin-section" style="margin-top:12px">';
@@ -1948,15 +1935,7 @@ async function toggleRegistration(){
   try{ await adminRestSet('settings/registration',newVal); showToast(isOpening?'✅ Kayıt açıldı!':'🔒 Kayıt durduruldu!'); loadAdminSettings(); }
   catch(e){ showToast('❌ Hata: '+(e&&e.message||'Bilinmiyor')); btn.disabled=false; }
 }
-async function saveAiKeyAdmin(){
-  const val = (document.getElementById('setAiKey')?.value||'').trim();
-  if(!val){ showToast('❌ Key boş olamaz'); return; }
-  try{
-    await adminRestSet('settings/openrouterKey', val);
-    showToast('✅ AI Key kaydedildi! Tüm kullanıcılar artık kullanabilir.');
-    loadAdminSettings();
-  }catch(e){ showToast('❌ Hata: '+(e?.message||'')); }
-}
+
 
 async function saveAdminSetting(key, inputId, successMsg){
   const val = document.getElementById(inputId).value.trim();
