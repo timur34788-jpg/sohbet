@@ -4189,8 +4189,21 @@ function runBotCmd(cmdText, showInBubble) {
     '/hava': () => {
       if (!args) { respond('📍 Kullanım: /hava [şehir]\nÖrnek: /hava istanbul'); return; }
       respond('⏳ ' + args + ' için hava durumu alınıyor...');
-      fetch('https://corsproxy.io/?' + encodeURIComponent('https://wttr.in/'+encodeURIComponent(args)+'?format=3&lang=tr'))
-        .then(r=>r.text()).then(t=>respond('🌤️ '+t.trim()))
+      // Önce geocoding ile koordinat al
+      fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(args) + '&count=1&language=tr&format=json')
+        .then(r=>r.json())
+        .then(geo => {
+          if (!geo.results || !geo.results.length) { respond('❌ Şehir bulunamadı: ' + args); return; }
+          const { latitude, longitude, name, country } = geo.results[0];
+          return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,weathercode,windspeed_10m&timezone=auto`)
+            .then(r=>r.json())
+            .then(w => {
+              const c = w.current;
+              const codes = {0:'☀️ Açık',1:'🌤️ Az bulutlu',2:'⛅ Parçalı bulutlu',3:'☁️ Bulutlu',45:'🌫️ Sisli',48:'🌫️ Kırağılı sis',51:'🌦️ Hafif çisenti',61:'🌧️ Hafif yağmur',63:'🌧️ Yağmurlu',65:'🌧️ Yoğun yağmur',71:'❄️ Hafif kar',73:'❄️ Karlı',75:'❄️ Yoğun kar',80:'🌦️ Sağanak',95:'⛈️ Fırtına'};
+              const desc = codes[c.weathercode] || '🌡️';
+              respond(`${desc} ${name}, ${country}\n🌡️ ${c.temperature_2m}°C | 💨 ${c.windspeed_10m} km/s`);
+            });
+        })
         .catch(()=>respond('❌ Hava durumu alınamadı.'));
     },
     '/anket': () => {
