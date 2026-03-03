@@ -3761,7 +3761,7 @@ function playDeleteSound(){
 (function() {
 'use strict';
 
-const IS_MOBILE = () => window.innerWidth < 768;
+// IS_MOBILE moved to config.js
 
 
 /* ══ CSS ══ */
@@ -5310,7 +5310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ── iOS Widget Paneli ── */
 
-let _wpOpen = false;
+// _wpOpen moved to config.js
 function toggleWidgetsPanel() {
   _wpOpen = !_wpOpen;
   document.getElementById('widgetsPanel').classList.toggle('open', _wpOpen);
