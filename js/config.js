@@ -348,22 +348,23 @@ function selectServer(key){
   const sideTitle = document.getElementById('deskSidebarTitle');
   if(sideTitle) sideTitle.textContent = FB_SERVERS[key].label;
 
-  // Kayıtlı oturum var mı kontrol et
-  waitForFirebase(async ()=>{
-    try{
-      if(!await fbInit()){
-        showScreen('loginScreen');
-        showToast('Firebase bağlanamadı');
-        return;
-      }
-      // Sunucu seçim ekranından gelince her zaman giriş ekranı göster
-      showScreen('loginScreen');
-      startTurkQuoteTimer();
-    }catch(e){
-      console.error('Server init error:',e);
+  // Firebase hazır olana kadar bekle, sonra init et
+  const _waitAndInit = (tries=0) => {
+    if (typeof firebase !== 'undefined' && firebase.database) {
+      (async () => {
+        try {
+          if (!await fbInit()) { showScreen('loginScreen'); showToast && showToast('Firebase bağlanamadı'); return; }
+          showScreen('loginScreen');
+          if (typeof startTurkQuoteTimer === 'function') startTurkQuoteTimer();
+        } catch(e) { console.error('Server init error:', e); showScreen('loginScreen'); }
+      })();
+    } else if (tries < 30) {
+      setTimeout(() => _waitAndInit(tries + 1), 100);
+    } else {
       showScreen('loginScreen');
     }
-  });
+  };
+  _waitAndInit();
 }
 
 /* Logout sonrası sunucu seçimine dön */
