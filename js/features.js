@@ -1,3 +1,6 @@
+/* ── globals guard ── */
+(function(){var g={'_isMuted':false,'TV_CHANNELS':[],'_reminderTimers':[],'_deskRoom':null,'_origDeskAdminTab':null};Object.keys(g).forEach(function(k){if(typeof window[k]==='undefined')window[k]=g[k];});})();
+/* ── end guard ── */
 // ══════════════════════════════════════════
 // FEATURES.JS — Nature.co
 // Bookmarks · Saved Items · Reminders
@@ -100,6 +103,7 @@ function closeSavedItems() {
 // Firebase: reminders/{username}/{id}
 // ─────────────────────────────────────────
 if (typeof window._reminderTimers === 'undefined') window._reminderTimers = [];
+if(typeof window._reminderTimers === "undefined") window._reminderTimers = [];
 var _reminderTimers = window._reminderTimers;
 
 async function addReminder(text, timeStr, roomId, msgKey) {
