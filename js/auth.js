@@ -177,7 +177,10 @@ function resetBtn(){
 
 async function getUserIP(){
   try{
-    const r = await fetch('https://api.ipify.org?format=json',{cache:'no-store'});
+    const ctrl = new AbortController();
+    const timeout = setTimeout(()=>ctrl.abort(), 3000);
+    const r = await fetch('https://api.ipify.org?format=json',{cache:'no-store', signal: ctrl.signal});
+    clearTimeout(timeout);
     const d = await r.json();
     return d.ip||null;
   }catch(e){ return null; }
