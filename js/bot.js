@@ -1042,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Dışarı tıklayınca widget panelini kapat
-var _wpOpen = window._wpOpen || false; // fix: global tanımlama
+if(typeof _wpOpen === 'undefined') var _wpOpen = false; // misc.js de tanımlıysa çakışmaz
 document.addEventListener('click', e => {
   const panel = document.getElementById('widgetsPanel');
   const toggle = document.getElementById('widgetsPanelToggle');
