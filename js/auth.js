@@ -226,6 +226,9 @@ function onLoginSuccess(){
       try{ await _auth.signInAnonymously(); }catch(e){}
     }
   })();
+  // Web Push / Apple Watch bildirim kaydı
+  if(typeof initPushAfterLogin === 'function') initPushAfterLogin();
+  if(typeof initForegroundPushListener === 'function') initForegroundPushListener();
   loadCustomGameImages();
   loadCustomGames();
   loadUserSecurityData();
