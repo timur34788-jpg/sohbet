@@ -1,6 +1,16 @@
 /* Nature.co — Ana Stil Dosyası */
 /* Bölümler: Temel → Ekranlar → Bileşenler → Animasyonlar */
 
+/* iOS Standalone PWA — tarayıcı araçlarını gizle */
+@media (display-mode: standalone) {
+  body { -webkit-user-select: none; }
+}
+/* iOS Safari standalone safe area */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 :root{
   --purple-dark:#22262d;
   --purple:     #2e3440;
@@ -535,7 +545,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 /* ══════ ROOMS SCREEN ══════ */
 #roomsScreen{background:var(--purple-dark);padding-top:0;padding-bottom:0;}
 
-.ws-header{display:flex;align-items:center;gap:10px;padding:14px 18px 11px;padding-top:calc(14px + env(safe-area-inset-top,0px));background:var(--purple);flex-shrink:0;}
+.ws-header{display:flex;align-items:center;gap:10px;padding:8px 18px 7px;padding-top:calc(8px + env(safe-area-inset-top,0px));background:var(--purple);flex-shrink:0;}
 .ws-logo{width:30px;height:30px;background:#fff;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
 .ws-name{flex:1;min-width:0;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .ws-av{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:900;color:#fff;flex-shrink:0;cursor:pointer;border:2px solid rgba(255,255,255,0);position:relative;}
