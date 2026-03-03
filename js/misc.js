@@ -3667,7 +3667,7 @@ deskLoadAdmin = function(){
   deskAdminTab('users');
 };
 
-const _origDeskAdminTab = typeof deskAdminTab === 'function' ? deskAdminTab : null;
+if (typeof window._origDeskAdminTab === 'undefined') window._origDeskAdminTab = typeof deskAdminTab === 'function' ? deskAdminTab : null;
 deskAdminTab = function(tab){
   if(tab==='create_user'){
     const b=document.getElementById('adminBody');
