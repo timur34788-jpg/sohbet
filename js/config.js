@@ -901,6 +901,8 @@ function applyCustomGameImages(){ return Promise.resolve(); }
     if(hash && hash !== '') {
       history.replaceState(null, '', location.pathname);
     }
+    // Sunucu listesini ilk yüklemede doldur
+    if(typeof renderServerSelect === 'function') renderServerSelect();
   });
 })();
 
@@ -1036,3 +1038,13 @@ async function _sswDoLogin(){
 const IS_MOBILE = () => window.innerWidth < 768;
 let _wpOpen = false;
 
+
+// ── SPEECH stub (gerçek tanım misc.js'de, bot.js erken yükleniyor) ──
+window.SPEECH = window.SPEECH || {
+  supported: 'speechSynthesis' in window,
+  speaking: false,
+  currentUtter: null,
+  speak() {},
+  stop() {},
+  getVoice() { return null; }
+};
