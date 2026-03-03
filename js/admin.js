@@ -403,213 +403,501 @@ async function adminDeleteForumPost(key){
 async function loadAdminDesign(){
   const body = document.getElementById('adminBody');
   body.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
-  const d = await adminRestGet('settings/design').catch(()=>null)||{};
+  _db.ref('settings/design').once('value').then(snap=>{
+    const d = snap.val()||{};
+    _renderDesignPanel(d);
+  }).catch(()=>_renderDesignPanel({}));
+}
 
-  // ── Renk Tanımları ──
-  const colors = [
-    { key:'bg',         label:'Ana Arka Plan',       def:'#1a1e25' },
-    { key:'bg2',        label:'İkincil Arka Plan',   def:'#22262d' },
-    { key:'surface',    label:'Yüzey (Kartlar)',     def:'#2a303c' },
-    { key:'surface2',   label:'Yüzey 2',             def:'#333c4a' },
-    { key:'border',     label:'Kenarlık',            def:'#434c5e' },
-    { key:'text',       label:'Normal Yazı',         def:'#dde2ea' },
-    { key:'textHi',     label:'Başlık Yazı',         def:'#ffffff' },
-    { key:'muted',      label:'Soluk Yazı',          def:'#8f9ab0' },
-    { key:'accent',     label:'Vurgu Rengi',         def:'#4a9e7a' },
-    { key:'green',      label:'Yeşil (Online)',      def:'#2ecc71' },
-    { key:'red',        label:'Kırmızı (Hata)',      def:'#e05555' },
-    { key:'ownBg',      label:'Kendi Mesaj Balonu',  def:'#1f4a3a' },
-    { key:'incomingBg', label:'Gelen Mesaj Balonu',  def:'#1e2e35' },
+function _renderDesignPanel(d){
+  const body = document.getElementById('adminBody');
+  if(!body) return;
+
+  // ── Yardımcı oluşturucular ──
+  const sv  = (k,def) => d[k]!==undefined ? d[k] : def;
+  const inp = (id,val,ph,extra='') =>
+    `<input type="text" id="${id}" value="${val||''}" placeholder="${ph}"
+     style="width:100%;background:var(--surface2);border:1px solid var(--border);
+            border-radius:7px;padding:7px 10px;color:var(--text);font-size:.78rem;" ${extra}>`;
+  const ta  = (id,val,ph,rows=4) =>
+    `<textarea id="${id}" rows="${rows}" placeholder="${ph}"
+     style="width:100%;background:var(--surface2);border:1px solid var(--border);
+            border-radius:7px;padding:8px 10px;color:var(--text);font-size:.78rem;
+            resize:vertical;font-family:inherit;">${val||''}</textarea>`;
+  const row = (lbl,inner,tip='') =>
+    `<div style="margin-bottom:12px;">
+       <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:5px;">${lbl}${tip?`<span style="font-weight:400;opacity:.6;margin-left:6px;">${tip}</span>`:''}</div>
+       ${inner}
+     </div>`;
+  const range = (id,min,max,def,unit,lbl) => {
+    const cur = d[id]!==undefined ? d[id] : def;
+    return `<div style="margin-bottom:10px;">
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;display:flex;justify-content:space-between;">
+        <span>${lbl}</span><b id="drv_${id}" style="color:var(--accent)">${cur}${unit}</b>
+      </div>
+      <input type="range" id="dr_${id}" min="${min}" max="${max}" value="${cur}"
+             style="width:100%;accent-color:var(--accent);"
+             oninput="document.getElementById('drv_${id}').textContent=this.value+'${unit}';_liveApply('${id}',this.value,'${unit}')">
+    </div>`;
+  };
+  const toggle = (id,lbl,def) => {
+    const checked = d[id]!==undefined ? d[id] : def;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:.82rem;">${lbl}</span>
+      <label style="position:relative;display:inline-block;width:40px;height:22px;">
+        <input type="checkbox" id="dr_${id}" ${checked?'checked':''} style="opacity:0;width:0;height:0;"
+               onchange="_liveApplyToggle('${id}',this.checked)">
+        <span style="position:absolute;inset:0;background:${checked?'var(--accent)':'var(--border)'};border-radius:11px;transition:.2s;cursor:pointer;"
+              onclick="var cb=this.previousElementSibling;cb.checked=!cb.checked;this.style.background=cb.checked?'var(--accent)':'var(--border)';_liveApplyToggle('${id}',cb.checked)"></span>
+        <span style="position:absolute;left:${checked?'20px':'2px'};top:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none;" id="drth_${id}"></span>
+      </label>
+    </div>`;
+  };
+  const clr = (id,def,lbl) => {
+    const cur = d['color_'+id]||def;
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <input type="color" id="dc_${id}" value="${cur}"
+             style="width:36px;height:36px;border-radius:8px;border:2px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);"
+             oninput="_previewColor('${id}',this.value)">
+      <div style="flex:1;">
+        <div style="font-size:.72rem;font-weight:700;color:var(--text);">${lbl}</div>
+        <div style="font-size:.65rem;font-weight:400;color:var(--muted);" id="dcc_${id}">${cur}</div>
+      </div>
+    </div>`;
+  };
+  const grid2 = arr => `<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">${arr.join('')}</div>`;
+  const grid1 = arr => arr.join('');
+  const sec  = (title,content) =>
+    `<div style="margin-bottom:20px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+       <div style="padding:10px 14px;background:var(--surface2);font-size:.72rem;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">${title}</div>
+       <div style="padding:14px;">${content}</div>
+     </div>`;
+
+  // ────────────────────────────────
+  // TAB 0: 🖌️ RENKLER
+  // ────────────────────────────────
+  const COLORS = [
+    { cat:'🏠 Genel', items:[
+      ['bg','#1a1e25','Ana Arka Plan'],['bg2','#22262d','İkincil Arka Plan'],
+      ['surface','#2a303c','Panel Yüzeyi'],['surface2','#333c4a','Panel Yüzeyi 2'],
+      ['border','#434c5e','Kenarlık'],
+    ]},
+    { cat:'✏️ Yazı', items:[
+      ['text','#dde2ea','Normal Yazı'],['textHi','#ffffff','Başlık Yazı'],
+      ['muted','#8f9ab0','Soluk/Yardımcı Yazı'],
+    ]},
+    { cat:'🎯 Vurgu & Durum', items:[
+      ['accent','#4a9e7a','Aksan / CTA'],['green','#2ecc71','Çevrimiçi / Başarı'],
+      ['red','#e05555','Hata / Tehlike'],['yellow','#f59e0b','Uyarı / Bilgi'],
+    ]},
+    { cat:'🗂️ Layout', items:[
+      ['purple','#1e2030','Header Arka Plan'],['sidebarBg','#161a22','Sidebar Arka Plan'],
+      ['sidebarItem','#252d3d','Sidebar Seçili Öğe'],['navBg','#12151c','Sol Rail'],
+      ['tabBarBg','#12151c','Alt Tab Bar (Mobil)'],
+    ]},
+    { cat:'💬 Mesajlar', items:[
+      ['ownBg','#1f4a3a','Kendi Mesaj Balonu'],['incomingBg','#1e2e35','Gelen Mesaj Balonu'],
+      ['ownText','#d4f1e4','Kendi Mesaj Yazısı'],['incomingText','#dde2ea','Gelen Mesaj Yazısı'],
+      ['inputBg','#1e2a3a','Mesaj Giriş Arka Plan'],['inputBorder','#3a4560','Giriş Kenarlığı'],
+    ]},
   ];
+  let colHtml = '';
+  COLORS.forEach(cat => {
+    colHtml += sec(cat.cat, cat.items.map(([id,def,lbl]) => clr(id,def,lbl)).join(''));
+  });
 
-  const fonts = [
-    { value:'DM Sans,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', label:'DM Sans (Varsayılan)' },
-    { value:'"Inter",sans-serif',       label:'Inter' },
-    { value:'"Roboto",sans-serif',      label:'Roboto' },
-    { value:'"Nunito",sans-serif',      label:'Nunito' },
-    { value:'"Poppins",sans-serif',     label:'Poppins' },
-    { value:'"Montserrat",sans-serif',  label:'Montserrat' },
-    { value:'monospace',                label:'Monospace' },
+  // ────────────────────────────────
+  // TAB 1: 🔤 YAZI & FONT
+  // ────────────────────────────────
+  const FONTS = [
+    { v:'DM Sans,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', l:'DM Sans (Varsayılan)' },
+    { v:'"Inter",sans-serif', l:'Inter' },{ v:'"Roboto",sans-serif', l:'Roboto' },
+    { v:'"Nunito",sans-serif', l:'Nunito' },{ v:'"Poppins",sans-serif', l:'Poppins' },
+    { v:'"Montserrat",sans-serif', l:'Montserrat' },{ v:'"Syne",sans-serif', l:'Syne' },
+    { v:'"DM Mono",monospace', l:'DM Mono' },{ v:'monospace', l:'Monospace' },
   ];
+  const curFont = d.fontFamily||FONTS[0].v;
+  let fontSel = `<select id="dr_fontFamily" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:.82rem;margin-bottom:14px;" onchange="_liveApplyFont(this.value)">`;
+  FONTS.forEach(f => { fontSel += `<option value="${f.v}" ${curFont===f.v?'selected':''}>${f.l}</option>`; });
+  fontSel += '</select>';
 
-  const curFont    = d.fontFamily || fonts[0].value;
-  const curSize    = d.fontSize   || '15px';
-  const curRadius  = d.borderRadius !== undefined ? d.borderRadius : 12;
+  let fontHtml = row('📦 Font Ailesi', fontSel);
+  fontHtml += sec('📏 Yazı Boyutları', grid2([
+    range('fontSize',11,24,15,'px','📝 Genel Yazı'),
+    range('msgFontSize',11,22,14,'px','💬 Mesaj Yazısı'),
+    range('sidebarFontSize',11,20,13,'px','📋 Sidebar Yazısı'),
+    range('headerFontSize',13,30,18,'px','🏷️ Header Başlığı'),
+    range('inputFontSize',11,20,14,'px','✏️ Giriş Kutusu'),
+    range('forumFontSize',11,22,14,'px','📰 Forum Yazısı'),
+    range('sidebarItemFontSize',10,18,13,'px','📁 Sidebar Öğe'),
+    range('timestampSize',9,14,11,'px','🕐 Zaman Damgası'),
+    range('usernameFontSize',10,18,13,'px','👤 Kullanıcı Adı'),
+    range('letterSpacing',-2,5,0,'px','↔️ Harf Aralığı'),
+  ]));
 
-  // Tab order & visibility
+  // ────────────────────────────────
+  // TAB 2: 📐 BOYUTLAR & LAYOUT
+  // ────────────────────────────────
+  let layoutHtml = '';
+  layoutHtml += sec('📐 Köşe Yuvarlamaları', grid2([
+    range('borderRadius',0,28,12,'px','🔵 Genel Köşe'),
+    range('cardRadius',0,24,10,'px','🃏 Kart'),
+    range('msgRadius',0,28,14,'px','💬 Mesaj Balonu'),
+    range('inputRadius',0,20,10,'px','✏️ Input'),
+    range('btnRadius',0,24,8,'px','🔘 Buton'),
+    range('avatarRadius',0,50,8,'px','👤 Avatar'),
+  ]));
+  layoutHtml += sec('📏 Panel & Menü Boyutları', grid2([
+    range('sidebarWidth',160,360,260,'px','📋 Sidebar Genişliği'),
+    range('railWidth',44,100,68,'px','🛤️ Sol Rail Genişliği'),
+    range('headerHeight',44,88,56,'px','📏 Header Yüksekliği'),
+    range('tabBarHeight',50,90,60,'px','📱 Alt Tab Bar (Mob)'),
+    range('inputHeight',32,80,44,'px','✏️ Input Yüksekliği'),
+    range('avatarSize',22,56,32,'px','👤 Avatar Boyutu'),
+  ]));
+  layoutHtml += sec('↔️ Boşluklar', grid2([
+    range('msgPaddingH',4,24,10,'px','↔️ Mesaj Yatay'),
+    range('msgPaddingV',3,18,6,'px','↕️ Mesaj Dikey'),
+    range('sidebarItemPad',3,20,8,'px','📁 Sidebar Öğe Pad'),
+    range('sectionGap',1,24,6,'px','↕️ Bölüm Arası'),
+    range('msgGap',1,16,4,'px','↕️ Mesajlar Arası'),
+    range('railPad',4,20,10,'px','🛤️ Rail İç Boşluk'),
+  ]));
+
+  // ────────────────────────────────
+  // TAB 3: 🌑 GÖLGE & BLUR
+  // ────────────────────────────────
+  let shadowHtml = sec('🌑 Gölgeler', grid2([
+    range('cardShadow',0,48,12,'px','🃏 Kart Gölgesi'),
+    range('headerShadow',0,48,8,'px','🏷️ Header Gölgesi'),
+    range('sidebarShadow',0,48,0,'px','📋 Sidebar Gölgesi'),
+    range('inputShadow',0,24,0,'px','✏️ Input Gölgesi'),
+    range('bubbleShadow',0,32,8,'px','💬 Mesaj Balonu'),
+    range('btnShadow',0,24,0,'px','🔘 Buton Gölgesi'),
+  ]));
+  shadowHtml += sec('💨 Blur Efektleri', grid2([
+    range('headerBlur',0,48,20,'px','🏷️ Header Frosted'),
+    range('sidebarBlur',0,36,0,'px','📋 Sidebar Blur'),
+    range('modalBlur',0,36,16,'px','🗔 Modal Blur'),
+    range('overlayOpacity',0,90,80,'%','🌑 Overlay Opaklık'),
+  ]));
+
+  // ────────────────────────────────
+  // TAB 4: 📱 İKON & TAB BAR
+  // ────────────────────────────────
+  let iconHtml = sec('📱 Alt Tab Bar (Mobil)', grid2([
+    range('tabIconSize',14,40,20,'px','📱 İkon Boyutu'),
+    range('tabLabelSize',7,16,9,'px','📱 Etiket Boyutu'),
+    range('tabBarPad',2,16,6,'px','📱 Tab Bar Padding'),
+  ]));
+  iconHtml += sec('🖥️ Sol Rail (Desktop)', grid2([
+    range('navIconSize',14,40,19,'px','🖥️ İkon Boyutu'),
+    range('railBtnRadius',4,28,12,'px','🛤️ Buton Radius'),
+    range('railBtnSize',32,64,44,'px','🛤️ Buton Boyutu'),
+  ]));
+  iconHtml += sec('💬 Mesaj & Durum İkonları', grid2([
+    range('msgIconSize',12,32,18,'px','💬 Mesaj İkonu'),
+    range('statusDotSize',6,18,11,'px','🟢 Durum Noktası'),
+    range('reactionSize',14,32,18,'px','😊 Reaksiyon İkonu'),
+  ]));
+
+  // Tab sırası/görünürlük
   const defaultTabs = [
-    { id:'home',    label:'Ana Sayfa',  emoji:'🏠', action:"switchMainTab('home')" },
-    { id:'msgs',    label:'Mesajlar',   emoji:'💬', action:"openDMModal()" },
-    { id:'forum',   label:'Forum',      emoji:'📋', action:"switchMainTab('forum')" },
-    { id:'friends', label:'Arkadaşlar', emoji:'👥', action:"openFriendsModal()" },
-    { id:'watch',   label:'İzle',       emoji:'📺', action:"switchMainTab('watch')" },
+    {id:'home',label:'Ana Sayfa',emoji:'🏠'},{id:'msgs',label:'Mesajlar',emoji:'💬'},
+    {id:'forum',label:'Forum',emoji:'📋'},{id:'friends',label:'Arkadaşlar',emoji:'👥'},
+    {id:'watch',label:'İzle',emoji:'📺'},
   ];
-  const savedTabOrder  = d.tabOrder   || defaultTabs.map(t=>t.id);
-  const hiddenTabs     = d.hiddenTabs || [];
-
-  // Icon sizes
-  const tabIconSize  = d.tabIconSize  || 20;
-  const tabLabelSize = d.tabLabelSize || 9;
-  const navIconSize  = d.navIconSize  || 19;
-
-  // Text sizes
-  const msgFontSize     = d.msgFontSize     || 14;
-  const sidebarFontSize = d.sidebarFontSize || 15;
-  const headerFontSize  = d.headerFontSize  || 18;
-  const inputFontSize   = d.inputFontSize   || 14;
-  const forumFontSize   = d.forumFontSize   || 14;
-
-  // Custom images / SVG emojis
-  const customImages = d.customImages || {};
-
-  const card = (title, inner, mb) =>
-    `<div class="admin-card" style="padding:16px;margin-bottom:${mb||12}px;">
-      <div class="admin-sec-title" style="margin-bottom:12px;">${title}</div>
-      ${inner}
-    </div>`;
-
-  let html = '<div class="admin-section">';
-  html += '<div class="admin-sec-title">🎨 Global Tasarım Yöneticisi</div>';
-  html += '<div style="font-size:.75rem;color:var(--muted);margin-bottom:14px;">Tüm değişiklikler Firebase\'e kaydedilir. Üyeler giriş yaptığında otomatik yeni tasarımı görür.</div>';
-
-  // ═══ 1. RENKLER ═══
-  let colHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
-  colors.forEach(c => {
-    const val = d['color_'+c.key] || c.def;
-    colHtml += `<div style="display:flex;flex-direction:column;gap:4px;">
-      <div style="font-size:.68rem;color:var(--muted);">${c.label}</div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input type="color" id="dc_${c.key}" value="${val}" style="width:38px;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);flex-shrink:0;" oninput="document.getElementById('dc_${c.key}_txt').value=this.value">
-        <input type="text" id="dc_${c.key}_txt" value="${val}" placeholder="#rrggbb" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:.7rem;font-family:monospace;" oninput="const v=this.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v)){document.getElementById('dc_${c.key}').value=v;}">
-      </div>
-    </div>`;
-  });
-  colHtml += '</div>';
-  html += card('🖌️ Renkler', colHtml);
-
-  // ═══ 2. YAZI TİPİ & BOYUTLAR ═══
-  let fontHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
-
-  // Font family
-  fontHtml += `<div style="grid-column:1/-1;"><div style="font-size:.7rem;color:var(--muted);margin-bottom:5px;">Yazı Tipi (Tüm Uygulama)</div>
-    <select id="dc_font" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;" onchange="void 0">`;
-  fonts.forEach(f => { fontHtml += `<option value="${f.value}" ${curFont===f.value?'selected':''}>${f.label}</option>`; });
-  fontHtml += '</select></div>';
-
-  // Font sizes
-  const textSizes = [
-    { id:'dc_msgFontSize',     label:'💬 Mesaj Yazısı (px)',      val:msgFontSize,     min:11, max:20 },
-    { id:'dc_sidebarFontSize', label:'📋 Sidebar Yazısı (px)',    val:sidebarFontSize, min:11, max:20 },
-    { id:'dc_headerFontSize',  label:'🏷️ Başlık Yazısı (px)',     val:headerFontSize,  min:13, max:28 },
-    { id:'dc_inputFontSize',   label:'✏️ Mesaj Giriş Kutusu (px)',val:inputFontSize,   min:11, max:20 },
-    { id:'dc_forumFontSize',   label:'📰 Forum Yazısı (px)',      val:forumFontSize,   min:11, max:20 },
-  ];
-  textSizes.forEach(s => {
-    fontHtml += `<div>
-      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span></div>
-      <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
-        oninput="document.getElementById('${s.id}_val').textContent=this.value">
-    </div>`;
-  });
-
-  fontHtml += '</div>';
-  html += card('🔤 Yazı Tipi & Boyutlar', fontHtml);
-
-  // ═══ 3. İKON BOYUTLARI ═══
-  const iconSizeDefs = [
-    { id:'dc_tabIconSize',  label:'📱 Alt Tab İkon Boyutu (px)', val:tabIconSize,  min:14, max:32 },
-    { id:'dc_tabLabelSize', label:'📱 Alt Tab Etiket Boyutu (px)',val:tabLabelSize, min:7,  max:14 },
-    { id:'dc_navIconSize',  label:'🖥️ Sol Nav İkon Boyutu (px)',  val:navIconSize,  min:14, max:32 },
-  ];
-  let iconHtml = '<div style="display:flex;flex-direction:column;gap:12px;">';
-  iconSizeDefs.forEach(s => {
-    iconHtml += `<div>
-      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span>px</div>
-      <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
-        oninput="document.getElementById('${s.id}_val').textContent=this.value">
-    </div>`;
-  });
-  iconHtml += '</div>';
-  html += card('📐 İkon Boyutları', iconHtml);
-
-  // ═══ 4. TAB SIRASI & GÖRÜNÜRLÜKLERİ ═══
-  const orderedTabs = savedTabOrder.map(id => defaultTabs.find(t=>t.id===id)).filter(Boolean);
-  // Add any tabs not in savedTabOrder
-  defaultTabs.forEach(t => { if(!orderedTabs.find(o=>o.id===t.id)) orderedTabs.push(t); });
-
-  let tabHtml = `<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px;">Sekmeleri sürükle-bırak ile yeniden sırala. Gizlemek için göz ikonuna tıkla.</div>
-  <div id="dc_tab_list" style="display:flex;flex-direction:column;gap:6px;">`;
-  orderedTabs.forEach((t,i) => {
+  const savedTabOrder = d.tabOrder||defaultTabs.map(t=>t.id);
+  const hiddenTabs = d.hiddenTabs||[];
+  const orderedTabs = savedTabOrder.map(id=>defaultTabs.find(t=>t.id===id)).filter(Boolean);
+  let tabHtml = '<div id="dc_tab_list" style="display:flex;flex-direction:column;gap:4px;">';
+  orderedTabs.forEach(t => {
     const hidden = hiddenTabs.includes(t.id);
-    tabHtml += `<div id="dctab_${t.id}" data-tab-id="${t.id}" draggable="true"
-      ondragstart="adminTabDragStart(event)" ondragover="adminTabDragOver(event)" ondrop="adminTabDrop(event)"
-      style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);cursor:grab;${hidden?'opacity:.45':''}">
-      <span style="font-size:1.1rem;">${t.emoji}</span>
-      <span style="flex:1;font-size:.85rem;font-weight:700;color:var(--text-hi);">${t.label}</span>
-      <span style="font-size:.7rem;color:var(--muted);">☰</span>
-      <button onclick="adminTabToggleVisibility('${t.id}',this)" title="${hidden?'Göster':'Gizle'}"
-        style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.75rem;color:${hidden?'var(--green)':'var(--muted)'};">
-        ${hidden?'👁 Göster':'🚫 Gizle'}
-      </button>
+    tabHtml += `<div data-tab-id="${t.id}" draggable="true"
+      style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);
+             border:1px solid var(--border);border-radius:8px;cursor:move;opacity:${hidden?.45:1};"
+      ondragstart="adminTabDragStart(event)" ondragover="adminTabDragOver(event)" ondrop="adminTabDrop(event)">
+      <span style="font-size:1rem;">${t.emoji}</span>
+      <span style="flex:1;font-size:.82rem;font-weight:700;">${t.label}</span>
+      <button onclick="adminTabToggleVisibility(this.closest('[data-tab-id]'))"
+        style="padding:4px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);
+               font-size:.72rem;cursor:pointer;">${hidden?'👁️ Göster':'🙈 Gizle'}</button>
     </div>`;
   });
-  tabHtml += '</div>';
-  html += card('🗂️ Sekme Sırası & Görünürlük', tabHtml);
+  tabHtml += '</div><div style="font-size:.68rem;color:var(--muted);margin-top:6px;">↕️ Sürükle-bırak ile sırala</div>';
+  iconHtml += sec('🔢 Tab Sırası & Görünürlük', tabHtml);
 
-  // ═══ 5. GÖRSELLER & SVG EMOJİLER ═══
-  const imageSlots = [
-    { key:'appLogo',       label:'🍃 Uygulama Logosu (SVG/URL)',       placeholder:'https://... veya SVG kodu' },
-    { key:'loginBg',       label:'🖼️ Giriş Ekranı Arka Planı (URL)',   placeholder:'https://resim-url.jpg' },
-    { key:'emptyRoomImg',  label:'📭 Boş Sohbet Görseli (URL/emoji)',  placeholder:'https://... veya 🌿' },
-    { key:'botAvatar',     label:'🤖 NatureBot Avatarı (URL)',          placeholder:'https://resim-url.png' },
-    { key:'customEmoji1',  label:'😊 Özel Emoji 1 (URL/SVG)',          placeholder:'https://... veya SVG' },
-    { key:'customEmoji2',  label:'😎 Özel Emoji 2 (URL/SVG)',          placeholder:'https://... veya SVG' },
+  // ────────────────────────────────
+  // TAB 5: ✨ ANİMASYON & EFEKT
+  // ────────────────────────────────
+  let animHtml = sec('✨ Animasyonlar', [
+    toggle('animMessages','💬 Mesaj Giriş Animasyonu',true),
+    toggle('animSidebar','📋 Sidebar Hover Efekti',true),
+    toggle('animButtons','🔘 Buton Hover Animasyonu',true),
+    toggle('animTyping','⌨️ Yazıyor Göstergesi',true),
+  ].join(''));
+  animHtml += sec('🪟 Görsel Efektler', [
+    toggle('glassEffect','🪟 Frosted Glass (Header/Modal)',true),
+    toggle('gradientBg','🌈 Gradient Arka Plan',false),
+    toggle('compactMode','📦 Kompakt Mod (daha az boşluk)',false),
+    toggle('roundedEverything','⭕ Her Şey Yuvarlak',false),
+  ].join(''));
+  animHtml += sec('👁️ Göster / Gizle', [
+    toggle('showAvatars','👤 Avatarları Göster',true),
+    toggle('showTimestamps','🕐 Zaman Damgaları',true),
+    toggle('showReactions','😊 Reaksiyon Butonları',true),
+    toggle('showUserStatus','🟢 Kullanıcı Durumu',true),
+    toggle('showMemberCount','👥 Üye Sayısı',true),
+    toggle('showOnlineCount','🟢 Çevrimiçi Sayısı',true),
+    toggle('showCarbonWidget','🌿 Karbon Widget',true),
+    toggle('showMusicWidget','🎵 Müzik Butonu',true),
+    toggle('showNatureBot','🤖 NatureBot',true),
+  ].join(''));
+
+  // ────────────────────────────────
+  // TAB 6: 🖼️ LOGO & MEDYA
+  // ────────────────────────────────
+  const imgRow = (id,lbl,ph) => row(lbl,
+    inp('dci_'+id,(d.customImages||{})[id]||'',ph) +
+    `<div style="font-size:.62rem;color:var(--muted);margin-top:3px;">URL veya <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">data:image/...</code> base64 formatı</div>`
+  );
+  let logoHtml = sec('🌿 Uygulama İkonları', [
+    imgRow('appLogo','🌿 Uygulama Logosu (Header/PWA)','https://...png veya data:image/svg+xml,...'),
+    imgRow('favicon','⭐ Favicon (Tarayıcı Sekmesi)','https://...ico veya .png'),
+    imgRow('defaultAvatar','👤 Varsayılan Kullanıcı Avatarı','https://...'),
+  ].join(''));
+  logoHtml += sec('🖼️ Arka Planlar', [
+    imgRow('loginBg','🔐 Giriş Sayfası Arka Planı','https://...'),
+    imgRow('emptyRoomBg','🏜️ Boş Oda Arka Planı','https://...'),
+    imgRow('sidebarBanner','📋 Sidebar Üst Banner','https://...'),
+    imgRow('homeBg','🏠 Ana Sayfa Arka Planı','https://...'),
+  ].join(''));
+  logoHtml += sec('🤖 Bot & Özel', [
+    imgRow('botAvatar','🤖 NatureBot Avatarı (URL veya Emoji)','🤖 veya https://...'),
+    imgRow('customEmoji1','🎨 Özel Emoji 1','🌿'),
+    imgRow('customEmoji2','🎨 Özel Emoji 2','🌱'),
+  ].join(''));
+
+  // ────────────────────────────────
+  // TAB 7: 📝 İÇERİK & METİN
+  // ────────────────────────────────
+  const ct = d.content||{};
+  let contentHtml = sec('🏠 Ana Sayfa', [
+    row('🏷️ Sunucu Adı (Header)',inp('dct_serverName',ct.serverName||'Nature.co','Nature.co'),'Tüm sayfalarda görünür'),
+    row('📝 Sunucu Alt Başlığı',inp('dct_serverSubtitle',ct.serverSubtitle||'Kanallar & Gruplar','Kanallar & Gruplar')),
+    row('👋 Karşılama Başlığı',inp('dct_welcomeTitle',ct.welcomeTitle||"Nature.co'ya Hoş Geldin","Nature.co'ya Hoş Geldin")),
+    row('📋 Karşılama Alt Metni',inp('dct_welcomeSubtitle',ct.welcomeSubtitle||'Soldaki listeden bir kanal seç','Soldaki listeden...')),
+    row('🔘 Karşılama Buton 1',inp('dct_welcomeBtn1',ct.welcomeBtn1||'💬 Kanal Seç','💬 Kanal Seç')),
+    row('🔘 Karşılama Buton 2',inp('dct_welcomeBtn2',ct.welcomeBtn2||'👥 Arkadaşlar','👥 Arkadaşlar')),
+  ].join(''));
+  contentHtml += sec('📋 Sidebar Etiketleri', [
+    row('🤖 NatureBot Bölümü',inp('dct_secNaturebot',ct.secNaturebot||'NatureBot','NatureBot')),
+    row('📡 Kanallar Bölümü',inp('dct_secChannels',ct.secChannels||'Kanallar','Kanallar')),
+    row('👥 Gruplar Bölümü',inp('dct_secGroups',ct.secGroups||'Gruplar','Gruplar')),
+    row('💬 Direkt Mesajlar',inp('dct_secDMs',ct.secDMs||'Direkt Mesajlar','Direkt Mesajlar')),
+  ].join(''));
+  contentHtml += sec('🔐 Giriş Sayfası', [
+    row('🏷️ Giriş Başlığı',inp('dct_loginTitle',ct.loginTitle||'Giriş Yap','Giriş Yap')),
+    row('📝 Giriş Alt Metni',inp('dct_loginSubtitle',ct.loginSubtitle||'','Hoş geldin, doğaya bağlan...')),
+    row('🔘 Giriş Butonu',inp('dct_loginBtnText',ct.loginBtnText||'Giriş Yap','Giriş Yap')),
+    row('🔘 Kayıt Butonu',inp('dct_registerBtnText',ct.registerBtnText||'Kayıt Ol','Kayıt Ol')),
+  ].join(''));
+  contentHtml += sec('🔢 Alt Navigasyon (Mobil)', [
+    row('🏠 Ana Sayfa Etiketi',inp('dct_tabHome',ct.tabHome||'Ana Sayfa','Ana Sayfa')),
+    row('💬 Mesajlar Etiketi',inp('dct_tabMsgs',ct.tabMsgs||'Mesajlar','Mesajlar')),
+    row('📋 Forum Etiketi',inp('dct_tabForum',ct.tabForum||'Forum','Forum')),
+    row('👥 Arkadaşlar Etiketi',inp('dct_tabFriends',ct.tabFriends||'Arkadaşlar','Arkadaşlar')),
+    row('📺 İzle Etiketi',inp('dct_tabWatch',ct.tabWatch||'İzle','İzle')),
+  ].join(''));
+  contentHtml += sec('📢 Bildirim & Sistem Mesajları', [
+    row('📢 Duyuru Kanalı Adı',inp('dct_announceChannel',ct.announceChannel||'Genel Duyuru','Genel Duyuru')),
+    row('🌿 Footer / Dipnot',inp('dct_footerText',ct.footerText||'','© 2025 Nature.co')),
+    row('🔔 Bildirim İzin Mesajı',ta('dct_pushPromptText',ct.pushPromptText||'','Apple Watch dahil tüm cihazlarda bildirim almak ister misin?',2)),
+  ].join(''));
+
+  // ────────────────────────────────
+  // TAB 8: ⚙️ CSS / JS
+  // ────────────────────────────────
+  let cssHtml = sec('🎨 Özel CSS', row('',
+    `<div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;">Tüm sitenin üzerine eklenir. <code style="background:var(--surface2);padding:2px 4px;border-radius:3px;">!important</code> gerektiğinde kullan.</div>` +
+    `<textarea id="dr_customCSS" rows="10" placeholder=".ws-header { background: #ff0000 !important; }"
+       style="width:100%;background:#050a06;border:1px solid var(--border);border-radius:8px;
+              padding:10px;color:#6dbf67;font-family:'DM Mono',monospace;font-size:.76rem;resize:vertical;">${d.customCSS||''}</textarea>`
+  ));
+  cssHtml += sec('⚡ Özel JavaScript', row('',
+    `<div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;">Her sayfa yüklemesinde çalışır. DOM manipülasyonu, widget vb.</div>` +
+    `<textarea id="dr_customJS" rows="6" placeholder="// document.body.classList.add('my-theme');"
+       style="width:100%;background:#050a06;border:1px solid var(--border);border-radius:8px;
+              padding:10px;color:#6dbf67;font-family:'DM Mono',monospace;font-size:.76rem;resize:vertical;">${d.customJS||''}</textarea>`
+  ));
+
+  // ────────────────────────────────
+  // TAB 9: 🏷️ UYGULAMA BİLGİSİ
+  // ────────────────────────────────
+  let appInfoHtml = sec('🏷️ Temel Bilgiler', [
+    row('🌿 Uygulama Adı',inp('dr_appName',d.appName||'Nature.co','Nature.co')),
+    row('📝 Kısa Açıklama',inp('dr_appSlogan',d.appSlogan||'Kanallar & Gruplar','...')),
+    row('🔗 Site URL',inp('dr_siteUrl',d.siteUrl||'','https://natureco.me')),
+    row('📧 İletişim E-posta',inp('dr_contactEmail',d.contactEmail||'','admin@natureco.me')),
+  ].join(''));
+  appInfoHtml += sec('🔒 Gizlilik & Kurallar', [
+    row('📜 Kullanım Koşulları URL',inp('dr_tosUrl',d.tosUrl||'','https://...')),
+    row('🔒 Gizlilik Politikası URL',inp('dr_privacyUrl',d.privacyUrl||'','https://...')),
+    row('📋 Sunucu Kuralları',ta('dr_serverRules',d.serverRules||'','1. Saygılı ol\n2. ...',5)),
+  ].join(''));
+
+  // ────────────────────────────────
+  // TAB 10: 🎭 TEMALAR
+  // ────────────────────────────────
+  const themes = [
+    {name:'🌿 Nature (Varsayılan)',key:'nature'},{name:'🌙 Midnight Dark',key:'midnight'},
+    {name:'🌊 Ocean Blue',key:'ocean'},{name:'🎨 Neon Cyber',key:'neon'},
+    {name:'📰 Editorial Light',key:'light'},{name:'🌸 Soft Pastel',key:'pastel'},
+    {name:'🔥 Warm Ember',key:'ember'},
   ];
-  let imgHtml = '<div style="display:flex;flex-direction:column;gap:10px;">';
-  imageSlots.forEach(s => {
-    const val = customImages[s.key] || '';
-    imgHtml += `<div>
-      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}</div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <input type="text" id="dci_${s.key}" value="${val.replace(/"/g,'&quot;')}" placeholder="${s.placeholder}"
-          style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:.75rem;">
-        <div id="dci_${s.key}_prev" style="width:36px;height:36px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:1px solid var(--border);overflow:hidden;">
-          ${val ? (val.startsWith('http')?`<img src="${val}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='?'">`:'📷') : '—'}
-        </div>
-      </div>
-    </div>`;
+  let themeHtml = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
+  themes.forEach(t => {
+    themeHtml += `<button onclick="applyDesignTheme('${t.key}')"
+      style="padding:10px;background:var(--surface2);border:1px solid var(--border);
+             border-radius:8px;font-size:.82rem;cursor:pointer;color:var(--text);
+             transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)'"
+             onmouseout="this.style.borderColor='var(--border)'">${t.name}</button>`;
   });
-  imgHtml += '</div>';
-  html += card('🖼️ Görseller & SVG Emojiler', imgHtml);
+  themeHtml += '</div>';
+  themeHtml += `<div style="margin-top:16px;font-size:.72rem;color:var(--muted);">Temayı seçtikten sonra <b style="color:var(--accent)">Kaydet</b> butonu ile kalıcı yap.</div>`;
 
-  // ═══ 6. GENEL STİL ═══
-  const curBgStyle = d.bgStyle || 'solid';
-  let styleHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
-  styleHtml += `<div>
-    <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Köşe Yuvarlaklığı: <span id="dc_radius_val">${curRadius}px</span></div>
-    <input type="range" id="dc_radius" min="0" max="24" value="${curRadius}" style="width:100%;"
-      oninput="document.getElementById('dc_radius_val').textContent=this.value+'px'">
-  </div>`;
-  styleHtml += `<div>
-    <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Arka Plan Stili</div>
-    <select id="dc_bgstyle" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;">
-      <option value="solid" ${curBgStyle==='solid'?'selected':''}>Düz Renk</option>
-      <option value="gradient" ${curBgStyle==='gradient'?'selected':''}>Yumuşak Gradyan</option>
-      <option value="deep" ${curBgStyle==='deep'?'selected':''}>Derin Karanlık</option>
-    </select>
-  </div>`;
-  styleHtml += '</div>';
-  html += card('⚙️ Genel Stil', styleHtml);
+  // ────────────────────────────────
+  // RENDER
+  // ────────────────────────────────
+  const TAB_LABELS = ['🖌️ Renkler','🔤 Yazı','📐 Boyutlar','🌑 Gölge','📱 İkon','✨ Efekt','🖼️ Medya','📝 İçerik','⚙️ CSS/JS','🏷️ Uygulama','🎭 Temalar'];
+  const TAB_CONTENT = [colHtml,fontHtml,layoutHtml,shadowHtml,iconHtml,animHtml,logoHtml,contentHtml,cssHtml,appInfoHtml,themeHtml];
 
-  // ═══ Kaydet / Sıfırla ═══
-  html += `<div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
-    <button onclick="adminDesignPreview()" style="padding:13px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">👁 Önizle</button>
-    <button onclick="saveAdminDesign()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.9rem;cursor:pointer;">💾 Tüm Üyelere Uygula & Kaydet</button>
-    <button onclick="resetAdminDesign()" style="padding:13px 16px;background:var(--surface2);color:var(--red);border:1px solid var(--red);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">↺ Sıfırla</button>
+  let html = '<div style="max-width:100%;">';
+  html += '<div style="font-size:1.1rem;font-weight:900;margin-bottom:4px;">🎨 Görsel Tasarım Stüdyosu</div>';
+  html += '<div style="font-size:.72rem;color:var(--muted);margin-bottom:14px;">Tüm değişiklikler Firebase\'e kaydedilir. Üyeler yenileyince görür. <b style="color:var(--accent)">👁️ Önizle</b> ile kaydetmeden test et.</div>';
+
+  html += `<div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button onclick="_previewDesignAll()" style="flex:1;padding:9px;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-weight:700;font-size:.82rem;cursor:pointer;">👁️ Canlı Önizle</button>
+    <button onclick="_resetDesignPreview()" style="padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.82rem;cursor:pointer;">↺ Sıfırla</button>
+  </div>`;
+
+  // Sub-tabs - scrollable
+  html += `<div id="designSubTabs" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;">`;
+  TAB_LABELS.forEach((t,i) => {
+    html += `<button onclick="showDesignTab(${i})" id="dst_${i}"
+      style="padding:5px 10px;border-radius:100px;font-size:.72rem;font-weight:700;
+             border:1px solid var(--border);cursor:pointer;transition:all .15s;white-space:nowrap;
+             background:${i===0?'var(--accent)':'var(--surface2)'};
+             color:${i===0?'#fff':'var(--muted)'}">${t}</button>`;
+  });
+  html += '</div>';
+
+  TAB_CONTENT.forEach((content,i) => {
+    html += `<div id="dstc_${i}" style="display:${i===0?'block':'none'}">${content}</div>`;
+  });
+
+  html += `<div style="display:flex;gap:8px;margin-top:20px;position:sticky;bottom:0;background:var(--bg);padding:12px 0;border-top:1px solid var(--border);">
+    <button onclick="saveAdminDesign()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.88rem;cursor:pointer;">💾 Kaydet & Tüm Üyelere Uygula</button>
+    <button onclick="resetAdminDesign()" style="padding:13px 16px;background:var(--surface2);color:var(--red);border:1px solid var(--red);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">🗑️</button>
   </div>`;
   html += '</div>';
+
   body.innerHTML = html;
 }
+
+// Live preview helpers
+function _liveApply(id,val,unit){
+  const CSS_MAP = {
+    borderRadius:'--radius',msgRadius:'--msg-radius',cardRadius:'--card-radius',
+    inputRadius:'--input-radius',btnRadius:'--btn-radius',
+    sidebarWidth:'--sidebar-w',railWidth:'--rail-w',
+    headerHeight:'--header-h',tabBarHeight:'--tab-bar-h',
+    avatarSize:'--avatar-size',inputHeight:'--input-h',
+    cardShadow:'--card-shadow-blur',headerBlur:'--header-blur',
+    sidebarBlur:'--sidebar-blur',
+  };
+  const root = document.documentElement;
+  if(CSS_MAP[id]) root.style.setProperty(CSS_MAP[id], val+unit);
+}
+function _liveApplyToggle(id,val){
+  if(id==='compactMode') document.body.classList.toggle('compact-mode',val);
+  if(id==='glassEffect') document.body.classList.toggle('glass-effect',val);
+  // update toggle thumb position
+  const thumb = document.getElementById('drth_'+id);
+  if(thumb) thumb.style.left = val ? '20px' : '2px';
+}
+function _liveApplyFont(val){
+  document.body.style.fontFamily = val;
+}
+
+
+function showDesignTab(i){
+  document.querySelectorAll('[id^="dstc_"]').forEach((el,j)=>{ el.style.display = j===i?'block':'none'; });
+  document.querySelectorAll('[id^="dst_"]').forEach((el,j)=>{
+    el.style.background = j===i?'var(--accent)':'var(--surface2)';
+    el.style.color = j===i?'#fff':'var(--muted)';
+  });
+}
+
+function adminTabToggle(id){
+  const el = document.getElementById('dctab_'+id);
+  if(!el) return;
+  const hidden = el.style.opacity === '0.4';
+  el.style.opacity = hidden ? '1' : '0.4';
+  const btn = el.querySelector('button');
+  if(btn) btn.textContent = hidden ? '🙈' : '👁️';
+}
+
+function _previewColor(key, val){
+  const cssVarMap = {
+    bg:'--bg', bg2:'--bg2', surface:'--surface', surface2:'--surface2',
+    border:'--border', text:'--text', textHi:'--text-hi', muted:'--muted',
+    accent:'--accent', purple:'--purple', green:'--green', red:'--red',
+    yellow:'--yellow', ownBg:'--own-bg', incomingBg:'--incoming-bg',
+    sidebarBg:'--sidebar-bg', navBg:'--nav-bg', tabBarBg:'--tabbar-bg',
+  };
+  const cssVar = cssVarMap[key];
+  if(cssVar) document.documentElement.style.setProperty(cssVar, val);
+}
+
+function _previewDesignAll(){
+  const g = id => document.getElementById(id);
+  const root = document.documentElement;
+  ['bg','bg2','surface','surface2','border','text','textHi','muted','accent','purple',
+   'green','red','yellow','ownBg','incomingBg','sidebarBg','navBg','tabBarBg'].forEach(k=>{
+    const el = g('dc_'+k); if(el) _previewColor(k, el.value);
+  });
+  const fontEl = g('dr_fontFamily'); if(fontEl) document.body.style.fontFamily = fontEl.value;
+  const cssEl = g('dr_customCSS');
+  if(cssEl) injectDesignCSS('nc-custom-preview', cssEl.value);
+  showToast('👁️ Önizleme aktif — kaydetmek için Kaydet butonuna bas');
+}
+
+function _resetDesignPreview(){
+  location.reload();
+}
+
+function applyDesignTheme(key){
+  const themes = {
+    nature:{bg:'#0d1a0f',bg2:'#122016',surface:'#1a2e1e',surface2:'#213826',border:'#2d5a28',text:'#d4e8d0',textHi:'#a8e6a0',muted:'#5a8a56',accent:'#4a8f40',purple:'#0e1f10',green:'#4a8f40'},
+    midnight:{bg:'#090d18',bg2:'#0f1520',surface:'#161c2d',surface2:'#1c2438',border:'#2a3350',text:'#c8d0e8',textHi:'#ffffff',muted:'#6b7899',accent:'#4f7fff',purple:'#080d18'},
+    neon:{bg:'#090010',bg2:'#100020',surface:'#180030',surface2:'#200040',border:'#4400aa',text:'#e0d0ff',textHi:'#ffffff',muted:'#8855cc',accent:'#aa00ff',purple:'#050008',green:'#00ff88'},
+    light:{bg:'#f0f2f5',bg2:'#e8eaed',surface:'#ffffff',surface2:'#f4f5f8',border:'#d0d3db',text:'#1a1d25',textHi:'#000000',muted:'#6b7280',accent:'#3b82f6',purple:'#e8eaed'},
+    pastel:{bg:'#1a0f2e',bg2:'#251540',surface:'#301c50',surface2:'#3c2460',border:'#5a3880',text:'#f0e6ff',textHi:'#ffffff',muted:'#9b77cc',accent:'#c084fc',purple:'#180e28'},
+    ember:{bg:'#1a0a00',bg2:'#241000',surface:'#321500',surface2:'#401c00',border:'#6b3300',text:'#ffd0a0',textHi:'#ffffff',muted:'#996633',accent:'#ff6600',purple:'#160800'},
+  };
+  const t = themes[key];
+  if(!t) return;
+  Object.entries(t).forEach(([k,v])=>{
+    const colorEl = document.getElementById('dc_'+k);
+    const textEl  = document.getElementById('dc_'+k+'_t');
+    if(colorEl) colorEl.value = v;
+    if(textEl)  textEl.value  = v;
+    _previewColor(k, v);
+  });
+  showToast('🎭 Tema uygulandı! Kaydet butonuna basarak kalıcı yap.');
+}
+
 
 // Tab sürükle-bırak
 let _dragTabId = null;
@@ -686,142 +974,281 @@ function adminDesignPreview(){
 
 async function saveAdminDesign(){
   const g = id => document.getElementById(id);
-  const colorKeys = ['bg','bg2','surface','surface2','border','text','textHi','muted','accent','green','red','ownBg','incomingBg'];
+  const gv = id => { const el=g(id); return el ? el.value : undefined; };
+  const gn = id => { const el=g(id); return el ? parseFloat(el.value) : undefined; };
+  const gb = id => { const el=g(id); return el ? el.checked : undefined; };
+
   const obj = { updatedAt: Date.now(), updatedBy: _cu };
 
-  // Renkler
-  colorKeys.forEach(k => { const el=g('dc_'+k); if(el) obj['color_'+k]=el.value; });
+  // ── Renkler ──
+  const COLOR_IDS = ['bg','bg2','surface','surface2','border','text','textHi','muted','accent',
+    'green','red','yellow','purple','sidebarBg','sidebarItem','navBg','tabBarBg',
+    'ownBg','incomingBg','ownText','incomingText','inputBg','inputBorder'];
+  COLOR_IDS.forEach(k => { const el=g('dc_'+k); if(el) obj['color_'+k]=el.value; });
 
-  // Font
-  const fontEl = g('dc_font');
+  // ── Font ──
+  const fontEl = g('dr_fontFamily');
   if(fontEl) obj.fontFamily = fontEl.value;
 
-  // Font sizes
-  const textFields = ['msgFontSize','sidebarFontSize','headerFontSize','inputFontSize','forumFontSize'];
-  textFields.forEach(k => { const el=g('dc_'+k); if(el) obj[k]=parseInt(el.value); });
+  // ── Tüm range slider'lar ──
+  const RANGES = [
+    'fontSize','msgFontSize','sidebarFontSize','headerFontSize','inputFontSize',
+    'forumFontSize','sidebarItemFontSize','timestampSize','usernameFontSize','letterSpacing',
+    'borderRadius','cardRadius','msgRadius','inputRadius','btnRadius','avatarRadius',
+    'sidebarWidth','railWidth','headerHeight','tabBarHeight','inputHeight','avatarSize',
+    'msgPaddingH','msgPaddingV','sidebarItemPad','sectionGap','msgGap','railPad',
+    'cardShadow','headerShadow','sidebarShadow','inputShadow','bubbleShadow','btnShadow',
+    'headerBlur','sidebarBlur','modalBlur','overlayOpacity',
+    'tabIconSize','tabLabelSize','tabBarPad','navIconSize','railBtnRadius','railBtnSize',
+    'msgIconSize','statusDotSize','reactionSize',
+  ];
+  RANGES.forEach(k => { const v=gn('dr_'+k); if(v!==undefined && !isNaN(v)) obj[k]=v; });
 
-  // Icon sizes
-  const iconFields = ['tabIconSize','tabLabelSize','navIconSize'];
-  iconFields.forEach(k => { const el=g('dc_'+k); if(el) obj[k]=parseInt(el.value); });
+  // ── Toggle'lar ──
+  const TOGGLES = [
+    'animMessages','animSidebar','animButtons','animTyping',
+    'glassEffect','gradientBg','compactMode','roundedEverything',
+    'showAvatars','showTimestamps','showReactions','showUserStatus',
+    'showMemberCount','showOnlineCount','showCarbonWidget','showMusicWidget','showNatureBot',
+  ];
+  TOGGLES.forEach(k => { const el=g('dr_'+k); if(el) obj[k]=el.checked; });
 
-  // Radius & bgStyle
-  const radiusEl = g('dc_radius');
-  const bgEl = g('dc_bgstyle');
-  if(radiusEl) obj.borderRadius = parseInt(radiusEl.value);
-  if(bgEl)     obj.bgStyle      = bgEl.value;
+  // ── Logo & Medya ──
+  const IMG_KEYS = ['appLogo','favicon','defaultAvatar','loginBg','emptyRoomBg',
+                    'sidebarBanner','homeBg','botAvatar','customEmoji1','customEmoji2'];
+  const customImages = {};
+  IMG_KEYS.forEach(k => { const v=gv('dci_'+k); if(v&&v.trim()) customImages[k]=v.trim(); });
+  obj.customImages = customImages;
 
-  // Tab order & visibility
-  const tabList = document.getElementById('dc_tab_list');
+  // ── İçerik & Metin ──
+  const CONTENT_KEYS = [
+    'serverName','serverSubtitle','welcomeTitle','welcomeSubtitle','welcomeBtn1','welcomeBtn2',
+    'secNaturebot','secChannels','secGroups','secDMs',
+    'loginTitle','loginSubtitle','loginBtnText','registerBtnText',
+    'tabHome','tabMsgs','tabForum','tabFriends','tabWatch',
+    'announceChannel','footerText','pushPromptText',
+  ];
+  const content = {};
+  CONTENT_KEYS.forEach(k => { const v=gv('dct_'+k); if(v!==undefined) content[k]=v; });
+  obj.content = content;
+
+  // ── CSS / JS ──
+  const cssEl=g('dr_customCSS'), jsEl=g('dr_customJS');
+  if(cssEl) obj.customCSS = cssEl.value;
+  if(jsEl)  obj.customJS  = jsEl.value;
+
+  // ── Uygulama Bilgisi ──
+  ['appName','appSlogan','siteUrl','contactEmail','tosUrl','privacyUrl','serverRules'].forEach(k => {
+    const v=gv('dr_'+k); if(v!==undefined) obj[k]=v;
+  });
+
+  // ── Tab sırası ──
+  const tabList = g('dc_tab_list');
   if(tabList){
     obj.tabOrder = [...tabList.children].map(el=>el.dataset.tabId);
-    obj.hiddenTabs = [...tabList.children].filter(el=>el.style.opacity==='0.45').map(el=>el.dataset.tabId);
+    obj.hiddenTabs = [...tabList.children].filter(el=>parseFloat(el.style.opacity)<1).map(el=>el.dataset.tabId);
   }
-
-  // Custom images
-  const imgKeys = ['appLogo','loginBg','emptyRoomImg','botAvatar','customEmoji1','customEmoji2'];
-  const customImages = {};
-  imgKeys.forEach(k => { const el=g('dci_'+k); if(el && el.value.trim()) customImages[k]=el.value.trim(); });
-  obj.customImages = customImages;
 
   try {
     await adminRestSet('settings/design', obj);
-    showToast('✅ Tasarım kaydedildi! Üyeler yenileyince görecek.');
     applyGlobalDesign(obj);
+    showToast('✅ Tasarım kaydedildi! Üyeler yenileyince görecek.');
   } catch(e) {
     showToast('❌ Kaydetme hatası: '+e.message);
   }
 }
 
-async function resetAdminDesign(){
-  if(!confirm('Tasarımı varsayılana sıfırlamak istediğinizden emin misiniz?')) return;
-  try {
-    await adminRestSet('settings/design', null);
-    showToast('↺ Tasarım sıfırlandı.');
-    setTimeout(()=>location.reload(), 800);
-  } catch(e) { showToast('Hata: '+e.message); }
-}
 
 function applyGlobalDesign(d){
   if(!d) return;
   const root = document.documentElement;
-  const colorMap = {
+
+  // ── CSS Değişkenleri — Renkler ──
+  const COLOR_MAP = {
     color_bg:'--bg', color_bg2:'--bg2', color_surface:'--surface',
     color_surface2:'--surface2', color_border:'--border', color_text:'--text',
     color_textHi:'--text-hi', color_muted:'--muted', color_accent:'--accent',
-    color_green:'--green', color_red:'--red', color_ownBg:'--own-bg',
-    color_incomingBg:'--incoming-bg'
+    color_green:'--green', color_red:'--red', color_yellow:'--yellow',
+    color_purple:'--purple', color_sidebarBg:'--sidebar-bg', color_sidebarItem:'--sidebar-item',
+    color_navBg:'--nav-bg', color_tabBarBg:'--tabbar-bg',
+    color_ownBg:'--own-bg', color_incomingBg:'--incoming-bg',
+    color_ownText:'--own-text', color_incomingText:'--incoming-text',
+    color_inputBg:'--input-bg', color_inputBorder:'--input-border',
   };
-  Object.entries(colorMap).forEach(([dKey,cssVar]) => { if(d[dKey]) root.style.setProperty(cssVar, d[dKey]); });
+  Object.entries(COLOR_MAP).forEach(([dk,cv]) => { if(d[dk]) root.style.setProperty(cv, d[dk]); });
+
+  // ── Font ──
   if(d.fontFamily) document.body.style.fontFamily = d.fontFamily;
-  if(d.borderRadius !== undefined) root.style.setProperty('--radius', d.borderRadius+'px');
 
-  // Text sizes
-  if(d.msgFontSize)     addDesignStyle('--d-msg-size',    d.msgFontSize+'px',     '.msg-text,.msg-body,.m-text');
-  if(d.sidebarFontSize) addDesignStyle('--d-side-size',   d.sidebarFontSize+'px', '.r-label');
-  if(d.headerFontSize)  addDesignStyle('--d-hdr-size',    d.headerFontSize+'px',  '.ws-name');
-  if(d.inputFontSize)   addDesignStyle('--d-inp-size',    d.inputFontSize+'px',   '#msgInput,textarea');
+  // ── Range → CSS Vars ──
+  const RANGE_MAP = {
+    borderRadius:['--radius','px'], cardRadius:['--card-radius','px'],
+    msgRadius:['--msg-radius','px'], inputRadius:['--input-radius','px'],
+    btnRadius:['--btn-radius','px'], avatarRadius:['--avatar-radius','px'],
+    sidebarWidth:['--sidebar-w','px'], railWidth:['--rail-w','px'],
+    headerHeight:['--header-h','px'], tabBarHeight:['--tab-bar-h','px'],
+    avatarSize:['--avatar-size','px'], inputHeight:['--input-h','px'],
+    cardShadow:['--card-shadow-blur','px'], headerBlur:['--header-blur','px'],
+    sidebarBlur:['--sidebar-blur','px'], modalBlur:['--modal-blur','px'],
+    overlayOpacity:['--overlay-opacity','%'],
+    msgPaddingH:['--msg-pad-h','px'], msgPaddingV:['--msg-pad-v','px'],
+    sectionGap:['--section-gap','px'], msgGap:['--msg-gap','px'],
+  };
+  Object.entries(RANGE_MAP).forEach(([k,[cv,u]]) => {
+    if(d[k]!==undefined) root.style.setProperty(cv, d[k]+u);
+  });
 
-  // Icon sizes
-  if(d.tabIconSize){
-    const tabCss = `.tab-ic svg { width:${d.tabIconSize}px!important; height:${d.tabIconSize}px!important; }`;
-    injectDesignCSS('nc-tab-icon-size', tabCss);
+  // ── Yazı boyutları → direkt CSS ──
+  const textCSS = [];
+  if(d.msgFontSize)           textCSS.push(`.msg-text,.msg-body,.m-text{font-size:${d.msgFontSize}px!important}`);
+  if(d.sidebarFontSize)       textCSS.push(`.r-label,.sec-hdr,.dsk-sec-hdr{font-size:${d.sidebarFontSize}px!important}`);
+  if(d.headerFontSize)        textCSS.push(`.ws-name{font-size:${d.headerFontSize}px!important}`);
+  if(d.inputFontSize)         textCSS.push(`#msgInput,textarea{font-size:${d.inputFontSize}px!important}`);
+  if(d.forumFontSize)         textCSS.push(`.forum-post-body,.forum-body{font-size:${d.forumFontSize}px!important}`);
+  if(d.sidebarItemFontSize)   textCSS.push(`.r-label,.ch-title{font-size:${d.sidebarItemFontSize}px!important}`);
+  if(d.timestampSize)         textCSS.push(`.msg-time,.timestamp{font-size:${d.timestampSize}px!important}`);
+  if(d.usernameFontSize)      textCSS.push(`.msg-author,.username{font-size:${d.usernameFontSize}px!important}`);
+  if(d.letterSpacing!==undefined) textCSS.push(`body{letter-spacing:${d.letterSpacing}px!important}`);
+  if(textCSS.length) injectDesignCSS('nc-text-sizes', textCSS.join('\n'));
+
+  // ── İkon boyutları ──
+  const iconCSS = [];
+  if(d.tabIconSize)   iconCSS.push(`.tab-ic svg{width:${d.tabIconSize}px!important;height:${d.tabIconSize}px!important}`);
+  if(d.tabLabelSize)  iconCSS.push(`.tab-lb{font-size:${d.tabLabelSize}px!important}`);
+  if(d.navIconSize)   iconCSS.push(`.rail-btn-ic svg{width:${d.navIconSize}px!important;height:${d.navIconSize}px!important}`);
+  if(d.railBtnRadius) iconCSS.push(`.rail-btn{border-radius:${d.railBtnRadius}px!important}`);
+  if(d.railBtnSize)   iconCSS.push(`.rail-btn{width:${d.railBtnSize}px!important;height:${d.railBtnSize}px!important}`);
+  if(d.statusDotSize) iconCSS.push(`.sdot,.status-dot{width:${d.statusDotSize}px!important;height:${d.statusDotSize}px!important}`);
+  if(d.avatarSize)    iconCSS.push(`.ws-av,.av-wrap,.av{width:${d.avatarSize}px!important;height:${d.avatarSize}px!important}`);
+  if(iconCSS.length)  injectDesignCSS('nc-icon-sizes', iconCSS.join('\n'));
+
+  // ── Layout ──
+  const layoutCSS = [];
+  if(d.sidebarWidth)    layoutCSS.push(`#sidebar,.sidebar{width:${d.sidebarWidth}px!important;min-width:${d.sidebarWidth}px!important}`);
+  if(d.railWidth)       layoutCSS.push(`#rail,.rail{width:${d.railWidth}px!important;min-width:${d.railWidth}px!important}`);
+  if(d.headerHeight)    layoutCSS.push(`.ws-header{height:${d.headerHeight}px!important;min-height:${d.headerHeight}px!important}`);
+  if(d.tabBarHeight)    layoutCSS.push(`.tab-bar{height:${d.tabBarHeight}px!important;min-height:${d.tabBarHeight}px!important}`);
+  if(d.inputHeight)     layoutCSS.push(`#msgInput{height:${d.inputHeight}px!important;min-height:${d.inputHeight}px!important}`);
+  if(d.sidebarItemPad)  layoutCSS.push(`.r-item,.ch-item{padding-top:${d.sidebarItemPad}px!important;padding-bottom:${d.sidebarItemPad}px!important}`);
+  if(d.msgGap!==undefined) layoutCSS.push(`.msg-wrap,.msg-row{margin-bottom:${d.msgGap}px!important}`);
+  if(d.sectionGap!==undefined) layoutCSS.push(`.sec-hdr,.dsk-sec-hdr{margin-top:${d.sectionGap}px!important}`);
+  if(layoutCSS.length)  injectDesignCSS('nc-layout-sizes', layoutCSS.join('\n'));
+
+  // ── Gölge & Blur ──
+  const shadowCSS = [];
+  if(d.cardShadow!==undefined)   shadowCSS.push(`.card,.r-card,.msg-card{box-shadow:0 4px ${d.cardShadow}px rgba(0,0,0,.4)!important}`);
+  if(d.headerShadow!==undefined) shadowCSS.push(`.ws-header{box-shadow:0 2px ${d.headerShadow}px rgba(0,0,0,.5)!important}`);
+  if(d.headerBlur!==undefined)   shadowCSS.push(`.ws-header{backdrop-filter:blur(${d.headerBlur}px)!important;-webkit-backdrop-filter:blur(${d.headerBlur}px)!important}`);
+  if(d.bubbleShadow!==undefined) shadowCSS.push(`.msg-own,.msg-in,.msg-bubble{box-shadow:0 2px ${d.bubbleShadow}px rgba(0,0,0,.3)!important}`);
+  if(shadowCSS.length)           injectDesignCSS('nc-shadows', shadowCSS.join('\n'));
+
+  // ── Toggle'lar ──
+  if(d.compactMode!==undefined)       document.body.classList.toggle('compact-mode', !!d.compactMode);
+  if(d.glassEffect!==undefined)       document.body.classList.toggle('glass-effect', !!d.glassEffect);
+  if(d.roundedEverything!==undefined) document.body.classList.toggle('rounded-all', !!d.roundedEverything);
+  if(d.gradientBg!==undefined)        document.body.classList.toggle('gradient-bg', !!d.gradientBg);
+  if(d.showAvatars===false)   injectDesignCSS('nc-no-avatars','.ws-av,.av-wrap,.av{display:none!important}');
+  if(d.showTimestamps===false)injectDesignCSS('nc-no-timestamps','.msg-time,.timestamp{display:none!important}');
+  if(d.showReactions===false) injectDesignCSS('nc-no-reactions','.reaction-row,.msg-react{display:none!important}');
+  if(d.showCarbonWidget===false) { document.querySelectorAll('#carbonWidget').forEach(e=>e.style.display='none'); }
+  if(d.showMusicWidget===false)  { document.querySelectorAll('.ambiance-btn,[onclick*="Ambiance"]').forEach(e=>e.style.display='none'); }
+  if(d.showNatureBot===false)    { document.querySelectorAll('#natureBotPet,#botKennel').forEach(e=>e.style.display='none'); }
+
+  // ── İçerik & Metin ──
+  const ct = d.content||{};
+  window._nc_labels = ct; // rooms.js ve desktop.js bundan okur
+
+  if(ct.serverName){
+    document.querySelectorAll('#wsHeaderName,.ws-name:first-of-type').forEach(el=>{ if(!el.classList.contains('ch-title')) el.textContent=ct.serverName; });
+    document.title = ct.serverName + ' — Ana Sayfa';
   }
-  if(d.tabLabelSize){
-    injectDesignCSS('nc-tab-lb-size', `.tab-lb { font-size:${d.tabLabelSize}px!important; }`);
+  if(ct.serverSubtitle){
+    document.querySelectorAll('.ws-sub,.server-subtitle').forEach(el=>el.textContent=ct.serverSubtitle);
+    const subn = document.querySelector('.ws-name + *');
+    if(subn && subn.classList.contains('ws-sub')) subn.textContent = ct.serverSubtitle;
   }
-  if(d.navIconSize){
-    injectDesignCSS('nc-nav-icon-size', `.rail-btn-ic svg { width:${d.navIconSize}px!important; height:${d.navIconSize}px!important; }`);
+  if(ct.welcomeTitle){
+    document.querySelectorAll('.big-title,[data-ct="welcomeTitle"]').forEach(el=>el.textContent=ct.welcomeTitle);
+  }
+  if(ct.welcomeSubtitle){
+    document.querySelectorAll('.big-sub,[data-ct="welcomeSubtitle"]').forEach(el=>el.textContent=ct.welcomeSubtitle);
   }
 
-  // Tab order & visibility
+  // Tab etiketleri
+  const tabLabelMap = {tabHome:'home',tabMsgs:'msgs',tabForum:'forum',tabFriends:'friends',tabWatch:'watch'};
+  Object.entries(tabLabelMap).forEach(([ctKey,tabId]) => {
+    if(ct[ctKey]){
+      document.querySelectorAll(`.tab-lb,[data-tab="${tabId}"] .tab-lb`).forEach(el=>{
+        if(el.closest(`[onclick*="${tabId}"]`)||el.closest(`#tab${tabId.charAt(0).toUpperCase()+tabId.slice(1)}`)){
+          el.textContent=ct[ctKey];
+        }
+      });
+    }
+  });
+
+  // ── Özel Medya ──
+  if(d.customImages){
+    const ci = d.customImages;
+    if(ci.appLogo){
+      document.querySelectorAll('#myAvatar,#deskRailUser,.app-logo').forEach(el=>{
+        el.innerHTML = ci.appLogo.startsWith('http')||ci.appLogo.startsWith('data')
+          ? `<img src="${ci.appLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
+          : ci.appLogo;
+      });
+    }
+    if(ci.botAvatar){
+      document.querySelectorAll('#natureBotPet .bot-head,.naturebot-avatar').forEach(el=>{
+        el.innerHTML = ci.botAvatar.startsWith('http')||ci.botAvatar.startsWith('data')
+          ? `<img src="${ci.botAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+          : ci.botAvatar;
+      });
+    }
+    if(ci.loginBg){
+      const ls = document.getElementById('loginScreen');
+      if(ls) ls.style.backgroundImage = `url('${ci.loginBg}')`;
+    }
+  }
+
+  // ── Tab sırası & görünürlük ──
   if(d.tabOrder && d.tabOrder.length){
-    const tabIdMap = { home:'tabHome', forum:'tabForum' };
     document.querySelectorAll('.tab-bar').forEach(bar => {
       const tabs = [...bar.children];
-      d.tabOrder.forEach((id, idx) => {
+      d.tabOrder.forEach((id,idx) => {
         const el = tabs.find(t => {
-          const onclick = t.getAttribute('onclick')||'';
-          const tabId = t.id || '';
-          if(id==='home')    return tabId==='tabHome'    || onclick.includes("'home'");
-          if(id==='msgs')    return onclick.includes('openDMModal');
-          if(id==='forum')   return tabId==='tabForum'   || onclick.includes("'forum'");
-          if(id==='friends') return onclick.includes('openFriendsModal') || onclick.includes("'friends'");
-          if(id==='watch')   return onclick.includes("'watch'");
+          const oc=t.getAttribute('onclick')||'', tid=t.id||'';
+          if(id==='home')    return tid==='tabHome'||oc.includes("'home'");
+          if(id==='msgs')    return oc.includes('openDMModal');
+          if(id==='forum')   return tid==='tabForum'||oc.includes("'forum'");
+          if(id==='friends') return oc.includes('openFriendsModal')||oc.includes("'friends'");
+          if(id==='watch')   return oc.includes("'watch'");
           return false;
         });
         if(el) el.style.order = idx;
       });
       if(d.hiddenTabs) d.hiddenTabs.forEach(id => {
         const el = tabs.find(t => {
-          const onclick = t.getAttribute('onclick')||'';
-          if(id==='home')    return t.id==='tabHome'    || onclick.includes("'home'");
-          if(id==='msgs')    return onclick.includes('openDMModal');
-          if(id==='forum')   return t.id==='tabForum'   || onclick.includes("'forum'");
-          if(id==='friends') return onclick.includes('openFriendsModal');
-          if(id==='watch')   return onclick.includes("'watch'");
+          const oc=t.getAttribute('onclick')||'',tid=t.id||'';
+          if(id==='home')    return tid==='tabHome'||oc.includes("'home'");
+          if(id==='msgs')    return oc.includes('openDMModal');
+          if(id==='forum')   return tid==='tabForum'||oc.includes("'forum'");
+          if(id==='friends') return oc.includes('openFriendsModal');
+          if(id==='watch')   return oc.includes("'watch'");
           return false;
         });
-        if(el) el.style.display = 'none';
+        if(el) el.style.display='none';
       });
     });
   }
 
-  // Custom images
-  if(d.customImages){
-    const ci = d.customImages;
-    if(ci.appLogo){
-      document.querySelectorAll('#myAvatar,#deskRailUser').forEach(el=>{
-        if(ci.appLogo.startsWith('http')){ el.innerHTML=`<img src="${ci.appLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`; }
-        else { el.textContent=ci.appLogo; }
-      });
-    }
-    if(ci.botAvatar){
-      document.querySelectorAll('.naturebot-avatar,[id*="botAvatar"]').forEach(el=>{
-        el.innerHTML = ci.botAvatar.startsWith('http') ? `<img src="${ci.botAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : ci.botAvatar;
-      });
-    }
+  // ── Özel CSS ──
+  if(d.customCSS) injectDesignCSS('nc-custom-css', d.customCSS);
+
+  // ── Özel JS ──
+  if(d.customJS){
+    try { (new Function(d.customJS))(); } catch(e){ console.warn('customJS error:',e); }
   }
 }
+
 
 function addDesignStyle(varName, value, selector){
   injectDesignCSS('nc-ds-'+varName.replace(/[^a-z0-9]/g,''), `${selector} { font-size:${value}!important; }`);
