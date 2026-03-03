@@ -4,7 +4,14 @@
 // ── FCM VAPID Key ──
 // Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Key pair
 // Aşağıdaki değeri kendi VAPID public key'iniz ile değiştirin
-const FCM_VAPID_KEY = 'BURAYA_FCM_VAPID_KEY_YAZIN';
+// Her sunucu icin ayri VAPID key
+const FCM_VAPID_KEYS = {
+  'sohbet': 'BDqV62xUvhOyafHiqEV4QEXgqgwAc1AKF5jVX1yDGXAYALauSDZmYSVGtWgMP5VIl02jNamn6uXo5CQTRrVLOEk', // Biyom (layla-d3710)
+  'chat':   'BCJehpZUtoODCfqCeaIqSibDvGEijqdCfn1hfRsRoZsY9UZ1ZpNUjjeYdASl9-Z9Ma8HLNV0ViXPKE6_n48CYzI'  // Ekosistem Chat (lisa-518f0)
+};
+// Aktif sunucunun key'ini al
+function getVapidKey(){ return FCM_VAPID_KEYS[_activeServer] || null; }
+const FCM_VAPID_KEY = 'multi'; // Artık getVapidKey() kullaniliyor
 
 let _pushToken = null;
 
@@ -14,7 +21,7 @@ function isPushSupported(){
     'PushManager' in window &&
     'Notification' in window &&
     typeof firebase !== 'undefined' &&
-    FCM_VAPID_KEY !== 'BURAYA_FCM_VAPID_KEY_YAZIN'
+    FCM_VAPID_KEY !== 'BDqV62xUvhOyafHiqEV4QEXgqgwAc1AKF5jVX1yDGXAYALauSDZmYSVGtWgMP5VIl02jNamn6uXo5CQTRrVLOEk'
   );
 }
 
@@ -34,7 +41,8 @@ async function getPushToken(){
     if(!app) return null;
     const messaging = firebase.messaging(app);
     const sw = await navigator.serviceWorker.ready;
-    const token = await messaging.getToken({ vapidKey: FCM_VAPID_KEY, serviceWorkerRegistration: sw });
+    const vapidKey = getVapidKey(); if(!vapidKey) return null;
+    const token = await messaging.getToken({ vapidKey, serviceWorkerRegistration: sw });
     if(token){ _pushToken = token; await savePushToken(token); return token; }
     return null;
   }catch(e){ console.warn('FCM token hatasi:', e); return null; }
