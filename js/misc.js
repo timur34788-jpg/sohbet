@@ -2014,7 +2014,8 @@ let _screenStream = null;
 let _callType = null;
 let _callOther = null;         // İlk davet edilen (display için)
 let _isCaller = false;
-let _isMuted = false;
+if(typeof window._isMuted === "undefined") window._isMuted = false;
+var _isMuted = window._isMuted;
 let _isSharingScreen = false;
 let _isCameraOn = true;
 let _callTimer = null;
