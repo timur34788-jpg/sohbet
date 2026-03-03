@@ -14,7 +14,7 @@
 // Telefon: 320-430px → < 768 = ASLA masaüstü
 // iPad/Tablet: 768px+ → masaüstü olabilir
 // Desktop: her zaman >= 768
-const IS_DESKTOP = () => {
+var IS_DESKTOP = () => {
   const minScreenDim = Math.min(screen.width || 0, screen.height || 0);
   // Eğer cihaz gerçekten küçükse (telefon) → her zaman mobil
   if (minScreenDim > 0 && minScreenDim < 600) return false;
