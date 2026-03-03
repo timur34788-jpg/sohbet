@@ -23,7 +23,7 @@
 
 /* ══ GÜVENLİK: Brute Force Koruması ══ */
 
-const _loginAttempts = {}; // {username: {count, lastAttempt, lockedUntil}}
+var _loginAttempts = {}; // {username: {count, lastAttempt, lockedUntil}}
 
 function recordLoginAttempt(username, success){
   const key = username.toLowerCase();
@@ -82,7 +82,7 @@ function sanitizeMessage(str, maxLen=2000){
 
 /* ══ GÜVENLİK: Rate Limiting (API çağrıları) ══ */
 
-const _apiCallLog = {};
+var _apiCallLog = {};
 function checkRateLimit(action, maxPerMin=20){
   const now = Date.now();
   if(!_apiCallLog[action]) _apiCallLog[action] = [];
