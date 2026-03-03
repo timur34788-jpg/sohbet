@@ -102,42 +102,46 @@ async function submitLogin(){
     const keys = typeof FB_SERVERS !== 'undefined' ? Object.keys(FB_SERVERS) : [];
     if (keys.length === 1 && typeof selectServer === 'function') {
       selectServer(keys[0]);
-      setTimeout(submitLogin, 1000);
+      setTimeout(submitLogin, 1500);
       return;
     }
     showLoginErr('Lütfen önce bir sunucu seçin.');
     return;
   }
-  // IP ban kontrolü — arka planda, login'i bloke etmez
-  checkIPBan().then(ipBanned => { if(ipBanned) showLoginErr('Bu IP adresi yasaklıdır.'); }).catch(()=>{});
+
   const user=document.getElementById('loginUser').value.trim();
   const pass=document.getElementById('loginPass').value;
   if(!user){showLoginErr('Kullanıcı adı girin.');return;}
   if(!pass){showLoginErr('Şifre girin.');return;}
 
-  // Brute force kontrolü
   const lockCheck = checkLoginLock(user);
-  if(!lockCheck.allowed){
-    showLoginErr('⏳ Çok fazla hatalı deneme. ' + lockCheck.mins + ' dakika bekleyin.');
-    return;
-  }
-
-  // Rate limit kontrolü
-  if(!checkRateLimit('login', 10)){
-    showLoginErr('⚠️ Çok hızlı istek gönderiyorsunuz. Lütfen bekleyin.');
-    return;
-  }
+  if(!lockCheck.allowed){ showLoginErr('⏳ Çok fazla hatalı deneme. ' + lockCheck.mins + ' dakika bekleyin.'); return; }
+  if(!checkRateLimit('login', 10)){ showLoginErr('⚠️ Çok hızlı istek gönderiyorsunuz. Lütfen bekleyin.'); return; }
 
   const btn=document.getElementById('loginBtn');
-  btn.textContent='Giriş yapılıyor...';
+  btn.textContent='Bağlanıyor...';
   btn.disabled=true;
+
+  // Firebase hazır değilse init et ve bekle
+  if(!_db){
+    btn.textContent='Firebase başlatılıyor...';
+    const ok = await fbInit().catch(()=>false);
+    if(!ok || !_db){
+      showLoginErr('Sunucuya bağlanılamadı. Sayfayı yenileyip tekrar deneyin.');
+      btn.textContent='Giriş Yap →'; btn.disabled=false;
+      return;
+    }
+  }
+
+  btn.textContent='Giriş yapılıyor...';
+  // IP ban arka planda
+  checkIPBan().then(ipBanned => { if(ipBanned){ showLoginErr('Bu IP adresi yasaklıdır.'); btn.textContent='Giriş Yap →'; btn.disabled=false; } }).catch(()=>{});
 
   const ph=await hashStr(pass+user);
   try{
     // ── Admin girişi — Cloud Function bağımlılığı yok, doğrudan DB (REST) ──
     if(ADMIN_USERNAME && user===ADMIN_USERNAME){
       try{
-        if(!_db){ const ok = await fbInit().catch(()=>false); if(!ok||!_db){ showLoginErr('Sunucuya bağlanılamadı.'); resetBtn(); return; } }
         const adminData = await fbRestGet('users/'+user).catch(()=>null);
         const phLegacy  = hashStrSync(pass+user);
         if(!adminData){
