@@ -650,7 +650,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .r-row.act .r-label{color:#fff;}
 .ubadge{background:var(--red);color:#fff;font-size:.62rem;font-weight:900;border-radius:100px;padding:1px 6px;min-width:18px;text-align:center;flex-shrink:0;}
 
-.tab-bar{display:flex;background:var(--purple-dark);border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;padding-bottom:max(calc(var(--safe-bot) * 0.5), 4px);backdrop-filter:blur(20px);}
+.tab-bar{display:flex;background:var(--purple-dark);border-top:1px solid rgba(255,255,255,.07);flex-shrink:0;padding-bottom:max(var(--safe-bot),8px);backdrop-filter:blur(20px);}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;padding:7px 4px 5px;cursor:pointer;opacity:.45;transition:opacity .2s,transform .15s;user-select:none;position:relative;}
 .tab.act{opacity:1;}
 .tab.act .tab-ic-wrap{background:rgba(91,155,213,.18);border-radius:10px;}
@@ -3654,7 +3654,7 @@ a:hover, .link:hover { color: #6ee7b7 !important; }
   </div>
   <div class="tab-bar">
     <div class="tab act" id="tabHome" onclick="switchMainTab('home')"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg></div></div><div class="tab-lb">Ana Sayfa</div></div>
-    <div class="tab" onclick="openDMModal()"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div></div><div class="tab-lb">Mesajlar</div></div>
+    <div class="tab" onclick="openDMModal()" style="position:relative;"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div></div><div class="tab-lb">Mesajlar</div><div class="tab-badge hidden" id="dmTabBadge"></div></div>
     <div class="tab" id="tabForum" onclick="switchMainTab('forum')"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M9 12h6m-6 4h4"/></svg></div></div><div class="tab-lb">Forum</div></div>
     <div class="tab-wrap" onclick="openFriendsModal()"><div class="tab"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-2a3 3 0 0 0-3-3h-2"/></svg></div></div><div class="tab-lb">Arkadaşlar</div></div><div class="notif-dot" id="frNotifDot"></div></div>
     <div class="tab" onclick="switchMainTab('watch')"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="15" rx="2"/><path d="M8 21h8m-4-3v3"/></svg></div></div><div class="tab-lb">İzle</div></div>
@@ -18817,6 +18817,99 @@ window.nc_replaceIcons = runIconSystem;
   border-color: rgba(var(--glow-rgb,91,155,213),0.25) !important;
   color: var(--accent) !important;
 }
+
+/* ══════════════════════════════════════
+   ✦ UI IMPROVEMENTS — ALL IN ONE
+══════════════════════════════════════ */
+
+/* 1. LOGO FIX — kırpılma önleme */
+#wsHeaderName {
+  font-size: 0.82rem !important;
+  letter-spacing: -0.01em !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  max-width: 90px !important;
+}
+
+/* 2. TAB BAR IŞIMA EFEKTİ */
+.tab {
+  transition: opacity .2s, transform .15s !important;
+  position: relative !important;
+}
+.tab.act .tab-ic-wrap {
+  background: rgba(52,211,153,0.14) !important;
+  box-shadow: 0 0 14px rgba(52,211,153,0.22) !important;
+  border-radius: 12px !important;
+}
+/* Aktif sekme üst çizgi indikatörü */
+.tab.act::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 20px !important;
+  height: 3px !important;
+  border-radius: 3px 3px 0 0 !important;
+  background: #34d399 !important;
+}
+/* Dokunma animasyonu */
+.tab:active .tab-ic-wrap {
+  animation: tabBounce .35s cubic-bezier(.4,0,.2,1) !important;
+}
+@keyframes tabBounce {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.28); }
+  70%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+/* 3. BADGE SİSTEMİ */
+.tab-badge {
+  position: absolute !important;
+  top: 2px !important;
+  right: calc(50% - 18px) !important;
+  background: #ef4444 !important;
+  color: #fff !important;
+  border-radius: 100px !important;
+  min-width: 16px !important;
+  height: 16px !important;
+  font-size: 9px !important;
+  font-weight: 800 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border: 2px solid var(--bg, #070d1a) !important;
+  padding: 0 3px !important;
+  z-index: 10 !important;
+  animation: badgePop .3s cubic-bezier(.4,0,.2,1) !important;
+}
+.tab-badge.hidden { display: none !important; }
+@keyframes badgePop {
+  from { transform: scale(0) rotate(-10deg); }
+  80%  { transform: scale(1.15) rotate(3deg); }
+  to   { transform: scale(1) rotate(0deg); }
+}
+
+/* 4. CO2 SAYAÇ ANİMASYONU */
+#carbonCount, #deskCarbonCount {
+  display: inline-block !important;
+  transition: transform .1s ease !important;
+}
+@keyframes co2CountUp {
+  0%   { transform: translateY(60%); opacity: 0; }
+  100% { transform: translateY(0);   opacity: 1; }
+}
+.co2-animating {
+  animation: co2CountUp 0.4s cubic-bezier(.4,0,.2,1) !important;
+}
+
+/* 5. SWIPE NAVIGATION */
+.screen-swipeable {
+  touch-action: pan-y !important;
+}
+
 </style>
 
 <!-- ════════════════════════════════════
@@ -19437,6 +19530,150 @@ document.addEventListener('click', e => {
     panel.classList.remove('open');
   }
 }, true);
+</script>
+
+<script>
+/* ══════════════════════════════════════
+   ✦ UI IMPROVEMENTS — JavaScript
+══════════════════════════════════════ */
+
+/* ── 1. LOGO FIX: selectServer sonrası wsHeaderName güncelle ── */
+const _origSelectServer = window.selectServer;
+if(typeof selectServer === 'function'){
+  const _origSS = selectServer;
+  window.selectServer = function(key){
+    _origSS.call(this, key);
+    setTimeout(()=>{
+      const el = document.getElementById('wsHeaderName');
+      if(el && window.FB_SERVERS && window.FB_SERVERS[key]){
+        el.textContent = window.FB_SERVERS[key].label || 'Nature.co';
+      }
+    }, 100);
+  };
+}
+
+/* ── 2. TAB DOKUNMA ANİMASYONU ── */
+document.addEventListener('click', function(e){
+  const tab = e.target.closest('.tab');
+  if(!tab) return;
+  const wrap = tab.querySelector('.tab-ic-wrap');
+  if(!wrap) return;
+  wrap.style.animation = 'none';
+  wrap.offsetHeight;
+  wrap.style.animation = 'tabBounce .35s cubic-bezier(.4,0,.2,1)';
+  wrap.addEventListener('animationend', ()=>{ wrap.style.animation = ''; }, {once:true});
+}, true);
+
+/* ── 3. DM BADGE SİSTEMİ ── */
+function updateDMBadge(count){
+  const badge = document.getElementById('dmTabBadge');
+  if(!badge) return;
+  if(count > 0){
+    badge.textContent = count > 99 ? '99+' : count;
+    badge.classList.remove('hidden');
+    badge.style.animation = 'none';
+    badge.offsetHeight;
+    badge.style.animation = 'badgePop .3s cubic-bezier(.4,0,.2,1)';
+  } else {
+    badge.classList.add('hidden');
+  }
+}
+window.updateDMBadge = updateDMBadge;
+
+// DM unread dinleyici — giriş sonrası başlat
+const _origOnLoginSuccess = window.onLoginSuccess;
+if(typeof onLoginSuccess === 'function'){
+  const _origOLS = onLoginSuccess;
+  window.onLoginSuccess = function(){
+    _origOLS.call(this);
+    setTimeout(startDMBadgeListener, 1500);
+  };
+}
+
+function startDMBadgeListener(){
+  if(!window._db || !window._cu) return;
+  try{
+    window._db.ref('dms').on('value', snap => {
+      const dms = snap.val() || {};
+      let unread = 0;
+      Object.entries(dms).forEach(([key, dm]) => {
+        if(!key.includes(window._cu)) return;
+        const msgs = dm.msgs || dm || {};
+        Object.values(msgs).forEach(m => {
+          if(m && m.user && m.user !== window._cu && !m.read) unread++;
+        });
+      });
+      updateDMBadge(unread);
+    });
+  }catch(e){}
+}
+
+/* ── 4. CO2 SAYAÇ ANİMASYONU ── */
+(function(){
+  const _patchCO2 = () => {
+    const targets = ['carbonCount','deskCarbonCount'];
+    targets.forEach(id => {
+      const el = document.getElementById(id);
+      if(!el || el._co2patched) return;
+      el._co2patched = true;
+      const obs = new MutationObserver(() => {
+        el.classList.remove('co2-animating');
+        void el.offsetWidth;
+        el.classList.add('co2-animating');
+        el.addEventListener('animationend', () => el.classList.remove('co2-animating'), {once:true});
+      });
+      obs.observe(el, {childList:true, characterData:true, subtree:true});
+    });
+  };
+  // DOM hazır olunca ve giriş sonrası dene
+  setTimeout(_patchCO2, 2000);
+  document.addEventListener('DOMContentLoaded', () => setTimeout(_patchCO2, 500));
+})();
+
+/* ── 5. SWIPE NAVİGASYON ── */
+(function(){
+  const TAB_ORDER = ['home','msgs','forum','friends','watch'];
+  const TAB_ACTIONS = {
+    home:    () => typeof switchMainTab === 'function' && switchMainTab('home'),
+    msgs:    () => typeof openDMModal   === 'function' && openDMModal(),
+    forum:   () => typeof switchMainTab === 'function' && switchMainTab('forum'),
+    friends: () => typeof openFriendsModal === 'function' && openFriendsModal(),
+    watch:   () => typeof switchMainTab === 'function' && switchMainTab('watch'),
+  };
+
+  let touchStartX = 0, touchStartY = 0, _swiping = false;
+
+  function getCurrentTab(){
+    if(typeof _activeMainTab !== 'undefined') return _activeMainTab;
+    return 'home';
+  }
+
+  document.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    _swiping = false;
+  }, {passive:true});
+
+  document.addEventListener('touchend', e => {
+    if(_swiping) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    // Yatay hareket dikeyin 1.5 katından fazlaysa swipe say
+    if(Math.abs(dx) < 50 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+
+    const current = getCurrentTab();
+    const idx = TAB_ORDER.indexOf(current);
+    if(idx === -1) return;
+
+    const nextIdx = dx < 0 ? idx + 1 : idx - 1; // sola = ileri, sağa = geri
+    if(nextIdx < 0 || nextIdx >= TAB_ORDER.length) return;
+
+    const nextTab = TAB_ORDER[nextIdx];
+    const action = TAB_ACTIONS[nextTab];
+    if(action) action();
+    _swiping = true;
+  }, {passive:true});
+})();
 </script>
 </body>
 </html>
