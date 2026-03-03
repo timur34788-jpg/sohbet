@@ -776,9 +776,10 @@ function _renderDesignPanel(d){
   html += '<div style="font-size:1.1rem;font-weight:900;margin-bottom:4px;">🎨 Görsel Tasarım Stüdyosu</div>';
   html += '<div style="font-size:.72rem;color:var(--muted);margin-bottom:14px;">Tüm değişiklikler Firebase\'e kaydedilir. Üyeler yenileyince görür. <b style="color:var(--accent)">👁️ Önizle</b> ile kaydetmeden test et.</div>';
 
-  html += `<div style="display:flex;gap:8px;margin-bottom:14px;">
-    <button onclick="_previewDesignAll()" style="flex:1;padding:9px;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-weight:700;font-size:.82rem;cursor:pointer;">👁️ Canlı Önizle</button>
+  html += `<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+    <button onclick="_previewDesignAll()" style="flex:1;min-width:120px;padding:9px;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-weight:700;font-size:.82rem;cursor:pointer;">👁️ Canlı Önizle</button>
     <button onclick="_resetDesignPreview()" style="padding:9px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.82rem;cursor:pointer;">↺ Sıfırla</button>
+    <button onclick="openSimulator()" style="flex:1;min-width:120px;padding:9px;background:linear-gradient(135deg,#6d28d9,#2563eb);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;">📱 Simülatör</button>
   </div>`;
 
   // Sub-tabs - scrollable
@@ -1050,11 +1051,19 @@ async function saveAdminDesign(){
   }
 
   try {
-    await adminRestSet('settings/design', obj);
+    // SDK üzerinden kaydet (REST token sorunu yok)
+    await dbRef('settings/design').set(obj);
     applyGlobalDesign(obj);
     showToast('✅ Tasarım kaydedildi! Üyeler yenileyince görecek.');
   } catch(e) {
-    showToast('❌ Kaydetme hatası: '+e.message);
+    // SDK başarısız → REST dene
+    try {
+      await adminRestSet('settings/design', obj);
+      applyGlobalDesign(obj);
+      showToast('✅ Tasarım kaydedildi!');
+    } catch(e2) {
+      showToast('❌ Kaydetme hatası: ' + (e2.message||e.message));
+    }
   }
 }
 
@@ -1259,6 +1268,151 @@ function injectDesignCSS(id, css){
   if(!el){ el=document.createElement('style'); el.id=id; document.head.appendChild(el); }
   el.textContent = css;
 }
+
+
+
+/* ═══════════════════════════════════════════════════
+   📱 MOBİL / TABLET / MASAÜSTÜ SİMÜLATÖRÜ
+   ═══════════════════════════════════════════════════ */
+
+function openSimulator(){
+  const existing = document.getElementById('ncSimOverlay');
+  if(existing){ existing.remove(); return; }
+
+  const DEVICES = [
+    { id:'iphone15',   name:'iPhone 15 Pro',     w:393,  h:852,  mobile:true  },
+    { id:'iphone_se',  name:'iPhone SE (3.nesil)',w:375,  h:667,  mobile:true  },
+    { id:'iphone_max', name:'iPhone 15 Pro Max',  w:430,  h:932,  mobile:true  },
+    { id:'ipad',       name:'iPad Air 11"',        w:820,  h:1180, mobile:true  },
+    { id:'android_s',  name:'Samsung S24',         w:360,  h:780,  mobile:true  },
+    { id:'android_m',  name:'Pixel 8 Pro',         w:412,  h:915,  mobile:true  },
+    { id:'desktop_sm', name:'Laptop 1366×768',     w:1366, h:768,  mobile:false },
+    { id:'desktop_lg', name:'Desktop 1920×1080',   w:1920, h:1080, mobile:false },
+  ];
+
+  let activeDev = DEVICES[0];
+  let isLandscape = false;
+  let zoomVal = 0.58;
+
+  function gW(){ return isLandscape ? activeDev.h : activeDev.w; }
+  function gH(){ return isLandscape ? activeDev.w : activeDev.h; }
+
+  function updateFrame(){
+    const iframe = document.getElementById('simIframe');
+    const bezel  = document.getElementById('simBezel');
+    const info   = document.getElementById('simSizeInfo');
+    const notch  = document.getElementById('simNotch');
+    const homebar= document.getElementById('simHomebar');
+    if(iframe){ iframe.style.width = gW()+'px'; iframe.style.height = gH()+'px'; }
+    if(bezel)  bezel.style.transform = 'scale('+zoomVal+')';
+    if(info)   info.textContent = gW()+'×'+gH();
+    if(notch)  notch.style.display = activeDev.mobile ? 'flex' : 'none';
+    if(homebar)homebar.style.display = activeDev.mobile ? 'flex' : 'none';
+    // Bezel border-radius desktop'ta düz
+    const shell = document.getElementById('simBezel');
+    if(shell) shell.style.borderRadius = activeDev.mobile ? '40px' : '8px';
+  }
+
+  const overlay = document.createElement('div');
+  overlay.id = 'ncSimOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(5,5,15,.95);display:flex;flex-direction:column;';
+
+  const devOptions = DEVICES.map(d =>
+    '<option value="'+d.id+'" '+(d.id===activeDev.id?'selected':'')+'>'+
+    (d.mobile?'📱':'🖥️')+' '+d.name+' ('+d.w+'×'+d.h+')</option>'
+  ).join('');
+
+  const btnStyle = 'padding:6px 12px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;border:1px solid #3a3a5e;background:#1a1a2e;color:#c4b5fd;';
+
+  overlay.innerHTML =
+    // ── Toolbar ──
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#080812;border-bottom:1px solid #1e1e3a;flex-shrink:0;flex-wrap:wrap;">'+
+      '<button onclick="document.getElementById(\'ncSimOverlay\').remove()" style="padding:6px 12px;background:#dc2626;border:none;border-radius:7px;color:#fff;font-weight:900;cursor:pointer;font-size:.82rem;">✕</button>'+
+      '<span style="color:#fff;font-weight:900;font-size:.88rem;">📱 Simülatör</span>'+
+      '<select id="simDevSel" style="'+btnStyle+'max-width:220px;padding:6px 8px;" onchange="window._simChange(this.value)">'+devOptions+'</select>'+
+      '<button id="simOrientBtn" style="'+btnStyle+'" onclick="window._simOrient()">🔄 Dikey</button>'+
+      '<div style="display:flex;align-items:center;gap:5px;">'+
+        '<span style="color:#6b7280;font-size:.7rem;">Zoom</span>'+
+        '<input type="range" id="simZoomR" min="15" max="95" value="58" style="width:80px;accent-color:#7c3aed;" oninput="window._simZoom(this.value)">'+
+        '<span id="simZoomLbl" style="color:#c4b5fd;font-size:.72rem;min-width:32px;">58%</span>'+
+      '</div>'+
+      '<span id="simSizeInfo" style="margin-left:auto;color:#6b7280;font-size:.72rem;font-family:monospace;">'+gW()+'×'+gH()+'</span>'+
+      '<button style="'+btnStyle+'" onclick="window._simReload()">↺ Yenile</button>'+
+      // Ön hazır zoom butonları
+      '<div style="display:flex;gap:4px;">'+
+        '<button style="'+btnStyle+'font-size:.68rem;padding:4px 7px;" onclick="window._simZoom(35)">35%</button>'+
+        '<button style="'+btnStyle+'font-size:.68rem;padding:4px 7px;" onclick="window._simZoom(58)">58%</button>'+
+        '<button style="'+btnStyle+'font-size:.68rem;padding:4px 7px;" onclick="window._simZoom(80)">80%</button>'+
+      '</div>'+
+    '</div>'+
+    // ── Stage ──
+    '<div id="simStage" style="flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:30px;">'+
+      '<div id="simBezel" style="'+
+        'border-radius:40px;'+
+        'background:linear-gradient(145deg,#252535,#141420);'+
+        'padding:16px 14px;'+
+        'box-shadow:0 0 0 2px #3a3a5e,0 0 0 4px #1a1a2e,0 24px 80px rgba(0,0,0,.9),inset 0 0 20px rgba(255,255,255,.02);'+
+        'transform-origin:center center;'+
+        'transform:scale('+zoomVal+');'+
+        'transition:transform .2s;'+
+      '">'+
+        // Notch
+        '<div id="simNotch" style="width:100%;display:flex;justify-content:center;margin-bottom:5px;">'+
+          '<div style="width:100px;height:7px;background:#0a0a14;border-radius:4px;"></div>'+
+        '</div>'+
+        // Screen
+        '<div style="border-radius:22px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'+
+          '<iframe id="simIframe" style="display:block;border:none;background:#1a1e25;" width="'+gW()+'" height="'+gH()+'" src="'+location.href.split('#')[0]+'"></iframe>'+
+        '</div>'+
+        // Home bar
+        '<div id="simHomebar" style="width:100%;display:flex;justify-content:center;margin-top:6px;">'+
+          '<div style="width:110px;height:4px;background:rgba(255,255,255,.18);border-radius:2px;"></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  document.body.appendChild(overlay);
+
+  // Iframe yüklenince oturumu aktar
+  document.getElementById('simIframe').addEventListener('load', function(){
+    try{
+      const iw = this.contentWindow;
+      if(!iw || !window._cu) return;
+      // localStorage üzerinden session
+      iw.localStorage && Object.entries(localStorage).forEach(([k,v])=>{
+        if(k.startsWith('sohbet_')) try{ iw.localStorage.setItem(k,v); }catch{}
+      });
+    }catch(e){}
+  });
+
+  // Global helpers
+  window._simChange = function(devId){
+    activeDev = DEVICES.find(d=>d.id===devId)||DEVICES[0];
+    isLandscape = false;
+    const orientBtn = document.getElementById('simOrientBtn');
+    if(orientBtn) orientBtn.textContent = '🔄 Dikey';
+    updateFrame();
+  };
+  window._simOrient = function(){
+    isLandscape = !isLandscape;
+    const btn = document.getElementById('simOrientBtn');
+    if(btn) btn.textContent = isLandscape ? '🔄 Yatay' : '🔄 Dikey';
+    updateFrame();
+  };
+  window._simZoom = function(val){
+    zoomVal = val/100;
+    const lbl = document.getElementById('simZoomLbl');
+    const r   = document.getElementById('simZoomR');
+    if(lbl) lbl.textContent = Math.round(val)+'%';
+    if(r) r.value = val;
+    updateFrame();
+  };
+  window._simReload = function(){
+    const iframe = document.getElementById('simIframe');
+    if(iframe) iframe.src = iframe.src;
+  };
+}
+
 
 // Sayfa yüklenince global tasarımı Firebase'den çekip uygula
 (function initGlobalDesign(){
