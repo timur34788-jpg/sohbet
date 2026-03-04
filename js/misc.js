@@ -422,29 +422,79 @@ function toggleRoomMute(roomId){
 }
 
 function openMsgSearch(){
-  // Simple prompt-based search for now
-  const q = prompt('Mesajlarda ara:');
-  if(!q||!q.trim()) return;
-  const term = q.trim().toLowerCase();
-  const msgs = document.querySelectorAll('#chatMsgs .mb-text, #chatMsgs .ob');
-  let found = 0;
-  msgs.forEach(el=>{
-    const orig = el.innerHTML;
-    el.innerHTML = orig.replace(/<mark[^>]*>/g,'').replace(/<\/mark>/g,'');
-    const text = el.textContent;
-    if(text.toLowerCase().includes(term)){
-      el.innerHTML = el.textContent.replace(new RegExp('('+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark style="background:#f0c040;color:#000;border-radius:2px;padding:0 2px">$1</mark>');
-      found++;
-    }
-  });
-  if(found){ 
-    // Scroll to first match
-    const first = document.querySelector('#chatMsgs mark');
-    if(first) first.scrollIntoView({behavior:'smooth',block:'center'});
-    showToast(found+' sonuç bulundu.');
-  } else {
-    showToast('Sonuç bulunamadı.');
+  // Mobil: native chat search bar kullan
+  if(window.innerWidth < 768){
+    toggleChatSearch();
+    return;
   }
+  // Desktop: floating search panel
+  // Mevcut arama paneli varsa kapat
+  const existing = document.getElementById('_msgSearchBar');
+  if(existing){ existing.remove(); _clearMsgHighlights(); return; }
+
+  const bar = document.createElement('div');
+  bar.id = '_msgSearchBar';
+  bar.style.cssText = 'position:absolute;top:0;left:0;right:0;z-index:500;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;padding:8px 12px;';
+  bar.innerHTML = `
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input id="_msgSearchInp" placeholder="Mesajlarda ara..." autocomplete="off" autocorrect="off" style="flex:1;background:transparent;border:none;outline:none;color:var(--text-hi);font-size:.88rem;min-width:0;">
+    <span id="_msgSearchCount" style="font-size:.72rem;color:var(--muted);flex-shrink:0;white-space:nowrap;"></span>
+    <div id="_msgSearchPrev" onclick="_msgSearchNav(-1)" style="cursor:pointer;padding:3px 6px;border-radius:5px;background:var(--surface);color:var(--text-hi);font-size:.8rem;user-select:none;">▲</div>
+    <div id="_msgSearchNext" onclick="_msgSearchNav(1)" style="cursor:pointer;padding:3px 6px;border-radius:5px;background:var(--surface);color:var(--text-hi);font-size:.8rem;user-select:none;">▼</div>
+    <div onclick="document.getElementById('_msgSearchBar').remove();_clearMsgHighlights();" style="cursor:pointer;padding:4px;color:var(--muted);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </div>`;
+
+  // Chat header'ın altına ekle
+  const chatHdr = document.querySelector('#chatScreen .chat-hdr') || document.querySelector('#chatScreen .ws-header');
+  const chatArea = document.getElementById('chatScreen');
+  if(chatHdr) chatHdr.insertAdjacentElement('afterend', bar);
+  else if(chatArea) chatArea.insertAdjacentElement('afterbegin', bar);
+
+  const inp = document.getElementById('_msgSearchInp');
+  inp.focus();
+  window._msgSearchIdx = 0;
+  inp.addEventListener('input', ()=>{ _runMsgSearch(inp.value); });
+  inp.addEventListener('keydown', e=>{
+    if(e.key==='Enter') _msgSearchNav(e.shiftKey?-1:1);
+    if(e.key==='Escape'){ bar.remove(); _clearMsgHighlights(); }
+  });
+}
+
+let _msgSearchMatches = [];
+function _clearMsgHighlights(){
+  document.querySelectorAll('#chatMsgs mark.msg-hl').forEach(m=>{
+    const parent = m.parentNode;
+    parent.replaceChild(document.createTextNode(m.textContent), m);
+    parent.normalize();
+  });
+  _msgSearchMatches = [];
+}
+function _runMsgSearch(q){
+  _clearMsgHighlights();
+  const countEl = document.getElementById('_msgSearchCount');
+  if(!q||!q.trim()){ if(countEl) countEl.textContent=''; return; }
+  const term = q.trim();
+  const re = new RegExp('('+term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');
+  const bubbles = document.querySelectorAll('#chatMsgs .mb-text, #chatMsgs .ob');
+  bubbles.forEach(el=>{
+    if(!el.textContent.toLowerCase().includes(term.toLowerCase())) return;
+    el.innerHTML = el.innerHTML.replace(re,'<mark class="msg-hl" style="background:#f0c040;color:#000;border-radius:2px;padding:0 2px;">$1</mark>');
+  });
+  _msgSearchMatches = Array.from(document.querySelectorAll('#chatMsgs mark.msg-hl'));
+  window._msgSearchIdx = 0;
+  if(countEl) countEl.textContent = _msgSearchMatches.length ? '1 / '+_msgSearchMatches.length : 'Sonuç yok';
+  if(_msgSearchMatches.length) _msgSearchMatches[0].scrollIntoView({behavior:'smooth',block:'center'});
+}
+function _msgSearchNav(dir){
+  if(!_msgSearchMatches.length) return;
+  _msgSearchMatches[window._msgSearchIdx]?.classList.remove('msg-hl-active');
+  window._msgSearchIdx = (window._msgSearchIdx + dir + _msgSearchMatches.length) % _msgSearchMatches.length;
+  const el = _msgSearchMatches[window._msgSearchIdx];
+  el.classList.add('msg-hl-active');
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  const countEl = document.getElementById('_msgSearchCount');
+  if(countEl) countEl.textContent = (window._msgSearchIdx+1)+' / '+_msgSearchMatches.length;
 }
 
 function showGroupMembers(room){
@@ -486,7 +536,7 @@ function openGroupPanel(roomId) {
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:.85rem;font-weight:700;color:var(--text-hi);">${esc(u)}${isMe?' <span style="font-size:.65rem;color:var(--muted)">(sen)</span>':''}</div>
-            ${isOwner?'<div style="font-size:.65rem;color:var(--accent);font-weight:700;">👑 Kurucu</div>':''}
+            ${isOwner?'<div style="font-size:.65rem;color:var(--accent);font-weight:700;display:flex;align-items:center;gap:3px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M5 20V8l7-5 7 5v12"/></svg>Kurucu</div>':''}
           </div>
           ${canManage && !isMe ? `<button onclick="adminKickFromGroupPanel('${esc(roomId)}','${esc(u)}')" style="background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.3);border-radius:7px;color:#e05555;font-size:.65rem;font-weight:700;padding:4px 9px;cursor:pointer;">Çıkar</button>` : ''}
         </div>`;
@@ -499,7 +549,7 @@ function openGroupPanel(roomId) {
 
         <!-- Header -->
         <div style="display:flex;align-items:center;gap:12px;padding:16px 18px 12px;flex-shrink:0;">
-          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#9b72ff,#c4a7ff);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">👥</div>
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#9b72ff,#c4a7ff);display:flex;align-items:center;justify-content:center;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-2a3 3 0 0 0-3-3h-2"/></svg></div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:1rem;font-weight:900;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(room.name||roomId)}</div>
             <div style="font-size:.72rem;color:var(--muted);">${members.length} üye · ${onlines.length} çevrimiçi</div>
@@ -1431,7 +1481,7 @@ function adminTab(tab){
   if(IS_DESKTOP()){ deskAdminTab(tab); return; }
   _adminTab=tab;
   document.querySelectorAll('.atab').forEach((el,i)=>{
-    el.classList.toggle('act',['users','rooms','msgs','forum','announce','games','health','security','ipbans','settings','design','naturebot','create_user','invite'][i]===tab);
+    el.classList.toggle('act', el.getAttribute('onclick')===`adminTab('${tab}')`);
   });
   // Online sayısını güncelle
   const badge = document.getElementById('adminOnlineBadge');
@@ -1452,6 +1502,10 @@ function adminTab(tab){
   else if(tab==='settings') loadAdminSettings();
   else if(tab==='design') loadAdminDesign();
   else if(tab==='naturebot') loadAdminNatureBot();
+  else if(tab==='reports') { if(typeof loadAdminReports==='function') loadAdminReports(); else body.innerHTML='<p style="color:var(--muted);padding:20px">Yükleniyor...</p>'; }
+  else if(tab==='growth') { if(typeof loadAdminGrowthChart==='function') loadAdminGrowthChart(); else body.innerHTML='<p style="color:var(--muted);padding:20px">Yükleniyor...</p>'; }
+  else if(tab==='stats') { if(typeof loadAdminStats==='function') loadAdminStats(); else body.innerHTML='<p style="color:var(--muted);padding:20px">Yükleniyor...</p>'; }
+  else if(tab==='activity') { if(typeof loadAdminActivityFull==='function') loadAdminActivityFull(); }
   else if(tab==='create_user') { if(typeof window._renderCreateUser==='function') window._renderCreateUser(body); }
   else if(tab==='invite') { if(typeof window._renderInviteLinks==='function') window._renderInviteLinks(body); }
 }

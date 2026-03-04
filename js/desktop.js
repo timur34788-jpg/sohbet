@@ -333,6 +333,8 @@ function deskOpenRoom(roomId) {
       document.getElementById('deskCallVideo').style.display = 'none';
       document.getElementById('deskCallScreen').style.display = 'none';
       document.getElementById('deskToggleMembers').style.display = room.type === 'group' ? 'flex' : 'none';
+      const mgBtn = document.getElementById('deskManageGroup');
+      if(mgBtn) mgBtn.style.display = room.type === 'group' ? 'flex' : 'none';
     }
 
     // Spy banner
@@ -464,11 +466,13 @@ function deskLoadMembers(room) {
 }
 
 function deskMemberRow(u, online) {
-  return '<div class="desk-member-row">' +
+  const isSelf = u === _cu;
+  return '<div class="desk-member-row" onclick="viewUserProfile(\''+u+'\')" title="Profili görüntüle">' +
     '<div class="desk-m-av" style="background:' + strColor(u) + '">' + initials(u) +
     '<div class="r-dot ' + (online ? 'on' : 'off') + '"></div></div>' +
-    '<div class="desk-m-name">' + esc(u) + '</div>' +
+    '<div class="desk-m-name">' + esc(u) + (isSelf ? ' <span style="font-size:.65rem;color:var(--muted);">(Sen)</span>' : '') + '</div>' +
     (online ? '<div style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>' : '') +
+    (!isSelf ? '<div onclick="event.stopPropagation();startDMWithUser(\''+u+'\')" title="Mesaj gönder" style="cursor:pointer;color:var(--muted);padding:3px;border-radius:5px;transition:color .1s;" onmouseover="this.style.color=\'var(--text-hi)\'" onmouseout="this.style.color=\'var(--muted)\'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>' : '') +
     '</div>';
 }
 
@@ -957,8 +961,8 @@ function deskAdminTab(tab) {
     });
   }
   // Also sync mobile atabs if present
-  document.querySelectorAll('.atab').forEach((el, i) => {
-    el.classList.toggle('act', ['users','rooms','msgs','forum','announce','stats','settings'][i] === tab);
+  document.querySelectorAll('.atab').forEach(el => {
+    el.classList.toggle('act', el.getAttribute('onclick') === `adminTab('${tab}')`);
   });
   const body = document.getElementById('adminBody');
   if (!body) return;
@@ -974,6 +978,12 @@ function deskAdminTab(tab) {
   else if (tab === 'security') loadAdminSecurity();
   else if (tab === 'settings') loadAdminSettings();
   else if (tab === 'naturebot') loadAdminNatureBot();
+  else if (tab === 'design') loadAdminDesign();
+  else if (tab === 'ipbans') loadAdminIPBans();
+  else if (tab === 'reports') { if(typeof loadAdminReports==='function') loadAdminReports(); }
+  else if (tab === 'growth') { if(typeof loadAdminGrowthChart==='function') loadAdminGrowthChart(); }
+  else if (tab === 'create_user') { if(typeof window._renderCreateUser==='function'){ const b=document.getElementById('adminBody'); if(b) window._renderCreateUser(b); } }
+  else if (tab === 'invite') { if(typeof window._renderInviteLinks==='function'){ const b=document.getElementById('adminBody'); if(b) window._renderInviteLinks(b); } }
 }
 
 

@@ -269,10 +269,10 @@ function updateProfileBadges(msgCount){
   const box=document.getElementById('profBadgesRow');
   if(!box) return;
   const badges=[];
-  if(msgCount>=1) badges.push({icon:'⭐',label:'İlk Mesaj',color:'rgba(245,158,11,.2)',border:'rgba(245,158,11,.4)',text:'#f59e0b'});
-  if(msgCount>=100) badges.push({icon:'💬',label:'100 Mesaj',color:'rgba(91,155,213,.2)',border:'rgba(91,155,213,.4)',text:'#5b9bd5'});
-  if(msgCount>=500) badges.push({icon:'🔥',label:'500 Mesaj',color:'rgba(239,68,68,.2)',border:'rgba(239,68,68,.4)',text:'#ef4444'});
-  if(_isAdmin) badges.push({icon:'👑',label:'Admin',color:'rgba(245,158,11,.2)',border:'rgba(245,158,11,.5)',text:'#f59e0b'});
+  if(msgCount>=1) badges.push({icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>`,label:'İlk Mesaj',color:'rgba(245,158,11,.2)',border:'rgba(245,158,11,.4)',text:'#f59e0b'});
+  if(msgCount>=100) badges.push({icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,label:'100 Mesaj',color:'rgba(91,155,213,.2)',border:'rgba(91,155,213,.4)',text:'#5b9bd5'});
+  if(msgCount>=500) badges.push({icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 0 1-7 7 7 7 0 0 1-7-7c0-1.53.4-2.97 1-4.17C6 10 6.5 11 7 12.5c.5 1.5.5 2.5 1.5 2z"/></svg>`,label:'500 Mesaj',color:'rgba(239,68,68,.2)',border:'rgba(239,68,68,.4)',text:'#ef4444'});
+  if(_isAdmin) badges.push({icon:`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20M5 20V8l7-5 7 5v12"/><path d="M12 3v5M5 8l7 4 7-4"/></svg>`,label:'Admin',color:'rgba(245,158,11,.2)',border:'rgba(245,158,11,.5)',text:'#f59e0b'});
   box.innerHTML=badges.map(b=>`<span title="${b.label}" style="background:${b.color};border:1px solid ${b.border};color:${b.text};font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:100px;display:flex;align-items:center;gap:3px;">${b.icon} ${b.label}</span>`).join('');
 }
 
