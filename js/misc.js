@@ -242,7 +242,7 @@ function showScreen(id){
     _activeMainTab=Object.keys(_mainScreenIds).find(k=>_mainScreenIds[k]===id)||'home';
   }
 }
-function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();document.getElementById('callAudioBtn').style.display='none';document.getElementById('callVideoBtn').style.display='none';document.getElementById('callScreenBtn').style.display='none';switchMainTab('home');loadRooms();}
+function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};document.getElementById('callScreenBtn').style.display='none';switchMainTab('home');loadRooms();}
 
 
 /* ── Chat Context Menu ── */
