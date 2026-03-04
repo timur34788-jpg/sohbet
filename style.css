@@ -4780,3 +4780,30 @@ body.in-chat .tab-bar {
   padding-bottom: max(env(safe-area-inset-bottom), 16px) !important;
   background: #080a10 !important;
 }
+
+/* ══ Tab bar - Safari toolbar boşluğunu kapat ══ */
+.tab-bar {
+  padding-bottom: max(env(safe-area-inset-bottom), 20px) !important;
+  margin-bottom: 0 !important;
+}
+.tab-bar::after {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: #080a10;
+  z-index: -1;
+}
+
+/* ══ Tab bar - iPhone home indicator için sabit padding ══ */
+.tab-bar {
+  padding-bottom: 20px !important;
+}
+@supports (padding-bottom: constant(safe-area-inset-bottom)) {
+  .tab-bar { padding-bottom: max(constant(safe-area-inset-bottom), 20px) !important; }
+}
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .tab-bar { padding-bottom: max(env(safe-area-inset-bottom), 20px) !important; }
+}
