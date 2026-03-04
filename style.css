@@ -4389,3 +4389,9 @@ body {
     height: 100dvh !important;
   }
 }
+
+/* Chat ekranı açıkken tab bar gizle */
+#chatScreen.active ~ .tab-bar,
+body:has(#chatScreen.active) .tab-bar {
+  display: none !important;
+}
