@@ -816,6 +816,19 @@ class NatureBotPet {
     this.wanderStartTime = Date.now();
   }
 
+  updateBubblePos() {
+    if (!this.bubble || this.bubble.style.display === 'none') return;
+    const bRect = this.el.getBoundingClientRect();
+    this.bubble.style.left = Math.round(this.x - 10) + 'px';
+    this.bubble.style.top  = Math.round(this.y - this.bubble.offsetHeight - 10) + 'px';
+  }
+
+  updateVoiceWavePos() {
+    if (!this.voiceWave || this.voiceWave.style.display === 'none') return;
+    this.voiceWave.style.left = Math.round(this.x + 20) + 'px';
+    this.voiceWave.style.top  = Math.round(this.y - 10) + 'px';
+  }
+
   loop() {
     if (IS_MOBILE()) return;
     if (!this.isDragging) {

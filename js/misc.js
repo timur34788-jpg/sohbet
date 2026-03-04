@@ -4998,7 +4998,8 @@ function openCallInviteDialog() {
   });
 }
 
-
+// Gelen arama dinle (login sonrası çağrılır)
+function listenIncomingCalls() {
   if(!_cu || !_db) return;
   dbRef('callInvites/'+_cu).on('child_added', snap => {
     const inv = snap.val();
