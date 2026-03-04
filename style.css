@@ -4566,3 +4566,56 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+/* ══ NUCLEAR FIXES ══ */
+
+/* Balon çerçevesi - tamamen kaldır */
+.mb-bubble-wrap,
+.mb.own .mb-bubble-wrap {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* inp-box - sadece subtle border, focus'ta değişmesin */
+.inp-box,
+.inp-box:focus-within,
+.inp-box:focus,
+#chatInputRow .inp-box {
+  border: 1.5px solid rgba(255,255,255,0.08) !important;
+  border-radius: 22px !important;
+  background: var(--surface) !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+/* Textarea - tamamen içeride kal */
+#msgInp,
+textarea#msgInp {
+  display: block !important;
+  width: 100% !important;
+  min-height: 40px !important;
+  max-height: 120px !important;
+  padding: 10px 14px 8px !important;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  resize: none !important;
+  caret-color: #10b981 !important;
+  color: var(--text-hi) !important;
+  font-size: .9rem !important;
+  font-family: inherit !important;
+  line-height: 1.45 !important;
+  overflow: hidden !important;
+}
+
+/* inp-wrap - border kaldır */
+.inp-wrap,
+#chatInputRow {
+  border-top: 1px solid rgba(255,255,255,0.06) !important;
+  background: var(--bg) !important;
+  padding: 8px 10px !important;
+  padding-bottom: max(env(safe-area-inset-bottom, 8px), 8px) !important;
+}
