@@ -4628,3 +4628,39 @@ textarea#msgInp {
   box-shadow: none !important;
   padding: 0 !important;
 }
+
+/* ══ FINAL FIX ══ */
+
+/* Gelen mesaj dış kutuyu tamamen kaldır */
+.mb-body {
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  max-width: 78% !important;
+}
+.mb.own .mb-body {
+  align-items: flex-end !important;
+}
+
+/* İnp-btm butonları göster */
+.inp-btm {
+  display: flex !important;
+  align-items: center !important;
+  padding: 2px 8px 6px !important;
+  gap: 4px !important;
+  border-top: none !important;
+}
+.ii, .inp-btm-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  color: var(--muted) !important;
+  opacity: 0.75 !important;
+  cursor: pointer !important;
+  border: none !important;
+  background: none !important;
+}
