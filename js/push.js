@@ -1,16 +1,15 @@
 /* Nature.co — push.js */
 /* Web Push / Firebase Cloud Messaging entegrasyonu */
 
-// ── FCM VAPID Key ──
-// Firebase Console → Project Settings → Cloud Messaging → Web Push certificates → Key pair
-// Aşağıdaki değeri kendi VAPID public key'iniz ile değiştirin
-// Her sunucu icin ayri VAPID key
+// ── FCM VAPID Keys (sunucu bazında) ──
 const FCM_VAPID_KEYS = {
-  'sohbet': 'BDqV62xUvhOyafHiqEV4QEXgqgwAc1AKF5jVX1yDGXAYALauSDZmYSVGtWgMP5VIl02jNamn6uXo5CQTRrVLOEk',
-  'chat':   'BCJehpZUtoODCfqCeaIqSibDvGEijqdCfn1hfRsRoZsY9UZ1ZpNUjjeYdASl9-Z9Ma8HLNV0ViXPKE6_n48CYzI'
+  sohbet: 'BDqV62xUvhOyafHiqEV4QEXgqgwAc1AKF5jVX1yDGXAYALauSDZmYSVGtWgMP5VIl02jNamn6uXo5CQTRrVLOEk', // layla-d3710 (Lala)
+  chat:   'BCJehpZUtoODCfqCeaIqSibDvGEijqdCfn1hfRsRoZsY9UZ1ZpNUjjeYdASl9-Z9Ma8HLNV0ViXPKE6_n48CYzI'  // lisa-518f0  (Lisa)
 };
-function getVapidKey(){ return FCM_VAPID_KEYS[_activeServer] || null; }
-const FCM_VAPID_KEY = 'multi';
+
+function getVapidKey(){
+  return FCM_VAPID_KEYS[_activeServer] || null;
+}
 
 let _pushToken = null;
 
@@ -20,7 +19,7 @@ function isPushSupported(){
     'PushManager' in window &&
     'Notification' in window &&
     typeof firebase !== 'undefined' &&
-    typeof getVapidKey === 'function' && !!getVapidKey()
+    !!getVapidKey()
   );
 }
 
@@ -40,8 +39,7 @@ async function getPushToken(){
     if(!app) return null;
     const messaging = firebase.messaging(app);
     const sw = await navigator.serviceWorker.ready;
-    const vapidKey = getVapidKey(); if(!vapidKey) return null;
-    const token = await messaging.getToken({ vapidKey, serviceWorkerRegistration: sw });
+    const token = await messaging.getToken({ vapidKey: getVapidKey(), serviceWorkerRegistration: sw });
     if(token){ _pushToken = token; await savePushToken(token); return token; }
     return null;
   }catch(e){ console.warn('FCM token hatasi:', e); return null; }
@@ -69,12 +67,20 @@ async function initPushAfterLogin(){
   }
 }
 
-
+function showPushPermissionPrompt(){
+  if(document.getElementById('pushPrompt')) return;
+  if(Notification.permission !== 'default') return;
+  const el = document.createElement('div');
+  el.id = 'pushPrompt';
+  el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0f2015;border:1px solid #2d5a28;border-radius:14px;padding:14px 18px;z-index:9000;max-width:320px;width:calc(100% - 32px);display:flex;gap:12px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,.6);';
+  el.innerHTML = '<div style="font-size:22px">\uD83D\uDD14</div><div style="flex:1"><div style="font-size:13px;font-weight:700;color:#d4e8d0;margin-bottom:3px">Bildirimler</div><div style="font-size:11px;color:#4a6b46;line-height:1.5">Yeni mesaj ve isteklerden haberdar ol. Apple Watch'ta da gorunur.</div></div><div style="display:flex;flex-direction:column;gap:6px"><button onclick="acceptPushPrompt()" style="padding:6px 12px;background:#2d5a28;border:none;border-radius:8px;color:#6dbf67;font-size:11px;font-weight:700;cursor:pointer">Ac</button><button onclick="dismissPushPrompt()" style="padding:6px 12px;background:transparent;border:1px solid #1a3018;border-radius:8px;color:#4a6b46;font-size:11px;cursor:pointer">Hayir</button></div>';
+  document.body.appendChild(el);
+}
 
 async function acceptPushPrompt(){
   dismissPushPrompt();
   const token = await requestPushPermission();
-  if(token && typeof showToast === 'function') showToast("Bildirimler acildi! Apple Watch'ta da alirsin.");
+  if(token && typeof showToast === 'function') showToast('Bildirimler acildi! Apple Watch'ta da alirsin.');
 }
 
 function dismissPushPrompt(){
@@ -94,29 +100,8 @@ function initForegroundPushListener(){
       const body  = (payload.notification && payload.notification.body)  || '';
       if(typeof showToast === 'function') showToast('\uD83D\uDD14 ' + (body || title));
       if(Notification.permission === 'granted'){
-        new Notification(title, { body, tag:'natureco' });
+        new Notification(title, { body, icon:'data:image/svg+xml,<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><path d="M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z" fill="%230e2b0c" stroke="%234a8f40" stroke-width='1.2'/>\u003c/svg>', tag:'natureco' });
       }
     });
   }catch(e){ console.warn('FCM foreground listener hatasi:', e); }
-}
-
-function showPushPermissionPrompt(){
-  if(document.getElementById('pushPrompt')) return;
-  if(Notification.permission !== 'default') return;
-  var dismissed = localStorage.getItem('push_dismissed');
-  if(dismissed && Date.now() - parseInt(dismissed) < 7*24*60*60*1000) return;
-  var el = document.createElement('div');
-  el.id = 'pushPrompt';
-  el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#0f2015;border:1px solid #2d5a28;border-radius:14px;padding:14px 18px;z-index:9000;max-width:320px;width:calc(100% - 32px);display:flex;gap:12px;align-items:center;box-shadow:0 8px 32px rgba(0,0,0,.6);';
-  var bell = document.createElement('div'); bell.style.fontSize = '22px'; bell.textContent = String.fromCodePoint(0x1F514);
-  var info = document.createElement('div'); info.style.flex = '1';
-  var t1 = document.createElement('div'); t1.style.cssText = 'font-size:13px;font-weight:700;color:#d4e8d0;margin-bottom:3px'; t1.textContent = 'Bildirimler';
-  var t2 = document.createElement('div'); t2.style.cssText = 'font-size:11px;color:#4a6b46;line-height:1.5'; t2.textContent = 'Yeni mesaj ve isteklerden haberdar ol.';
-  info.appendChild(t1); info.appendChild(t2);
-  var btns = document.createElement('div'); btns.style.cssText = 'display:flex;flex-direction:column;gap:6px';
-  var bYes = document.createElement('button'); bYes.style.cssText = 'padding:6px 12px;background:#2d5a28;border:none;border-radius:8px;color:#6dbf67;font-size:11px;font-weight:700;cursor:pointer'; bYes.textContent = 'Ac'; bYes.onclick = acceptPushPrompt;
-  var bNo = document.createElement('button'); bNo.style.cssText = 'padding:6px 12px;background:transparent;border:1px solid #1a3018;border-radius:8px;color:#4a6b46;font-size:11px;cursor:pointer'; bNo.textContent = 'Hayir'; bNo.onclick = dismissPushPrompt;
-  btns.appendChild(bYes); btns.appendChild(bNo);
-  el.appendChild(bell); el.appendChild(info); el.appendChild(btns);
-  document.body.appendChild(el);
 }
