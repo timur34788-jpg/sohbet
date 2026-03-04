@@ -4738,3 +4738,8 @@ textarea#msgInp {
   font-weight: 500 !important;
   white-space: nowrap !important;
 }
+
+/* ══ Tab bar - masaüstünde gizle ══ */
+@media (min-width: 768px) {
+  .tab-bar { display: none !important; }
+}
