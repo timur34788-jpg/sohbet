@@ -320,6 +320,8 @@ function openRoom(roomId){
   document.getElementById('chatMsgs').innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
   dbRef('rooms/'+roomId).once('value').then(snap=>{
     const room=snap.val();if(!room)return;
+    // @mention önbelleği için üyeleri sakla
+    if(typeof cacheRoomMembers==='function') cacheRoomMembers(roomId, room.members||[]);
     if(room.type==='dm'){
       const other=(room.members||[]).find(m=>m!==_cu)||'?';
       const ic=document.getElementById('chatHdrIcon');
