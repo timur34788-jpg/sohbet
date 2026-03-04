@@ -234,6 +234,10 @@ function showScreen(id){
   // Tab bar her zaman görünür
   var tb=document.querySelector('.tab-bar');
   if(tb) tb.style.display='flex';
+  // Chat'te NatureBot gizle
+  if(window._natureBotInstance && window._natureBotInstance.el){
+    window._natureBotInstance.el.style.display = (id==='chatScreen') ? 'none' : '';
+  }
   // loginScreen display'ini sıfırla (onLoginSuccess'ta none yapılmış olabilir)
   const ls=document.getElementById('loginScreen');
   if(ls) ls.style.display='';
@@ -248,20 +252,18 @@ function showScreen(id){
 function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
 
 /* ── Klavye açılınca tab bar gizle ── */
-if(window.visualViewport){
-  window.visualViewport.addEventListener('resize', function(){
-    var tb = document.querySelector('.tab-bar');
-    if(!tb) return;
-    var viewH = window.visualViewport.height;
-    var winH = window.innerHeight;
-    // Klavye açıksa viewport yüksekliği küçülür
-    if(viewH < winH * 0.85) {
-      tb.style.display = 'none';
-    } else {
-      tb.style.display = 'flex';
-    }
-  });
+function _updateTabBarForKeyboard(){
+  var tb = document.querySelector('.tab-bar');
+  if(!tb) return;
+  var viewH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  var winH = window.screen.height;
+  tb.style.display = (viewH < winH * 0.75) ? 'none' : 'flex';
 }
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', _updateTabBarForKeyboard);
+  window.visualViewport.addEventListener('scroll', _updateTabBarForKeyboard);
+}
+window.addEventListener('resize', _updateTabBarForKeyboard);
 
 
 
