@@ -33,11 +33,22 @@ async function submitRegister(){
   if(pass!==pass2){showLoginErr('Şifreler eşleşmiyor.');return;}
   if(!origin){showLoginErr('Köken/uyruk seçin.');return;}
 
+  // Davet linki token doğrulama (URL hash: #inv_TOKEN)
+  const _invToken = window._pendingInviteToken || null;
+  if(_invToken) {
+    try {
+      const inv = await fbRestGet('invites/' + _invToken).catch(()=>null);
+      if(!inv) { showLoginErr('Davet linki geçersiz veya silinmiş.'); return; }
+      if(inv.expiresAt && Date.now() > inv.expiresAt) { showLoginErr('Davet linkinin süresi dolmuş.'); return; }
+      if(inv.maxUses && (inv.usedCount||0) >= inv.maxUses) { showLoginErr('Bu davet linki maksimum kullanım sayısına ulaştı.'); return; }
+    } catch(e) { showLoginErr('Davet linki kontrol edilemedi.'); return; }
+  }
+
   // Davet kodu doğrulama (Firebase'de settings/inviteCode varsa zorunlu)
   const inviteCodeInput = (document.getElementById('regInviteCode')?.value||'').trim();
   try{
     const inviteCode = await fbRestGet('settings/inviteCode').catch(()=>null);
-    if(inviteCode){
+    if(inviteCode && !_invToken){
       if(!inviteCodeInput){showLoginErr('Davet kodu gereklidir.');return;}
       if(inviteCodeInput !== String(inviteCode)){showLoginErr('Davet kodu hatalı.');return;}
     }
@@ -66,10 +77,29 @@ async function submitRegister(){
     try{
       const ex2 = await fbRestGet('users/'+user).catch(()=>null);
       if(ex2){ showLoginErr('Bu kullanıcı adı alınmış.'); rstReg(); return; }
+      const _newUserId2 = 'U' + Date.now().toString().slice(-8) + Math.floor(1000+Math.random()*9000);
+      const _regIp2 = await getUserIP().catch(()=>null);
       await fbRestSet('users/'+user,{
         username:user, email:email, createdAt:Date.now(),
-        isAdmin:false, banned:false, passwordHash:ph, origin:origin
+        isAdmin:false, banned:false, passwordHash:ph, origin:origin,
+        userId: _newUserId2,
+        regIP: _regIp2 || null,
+        inviteToken: window._pendingInviteToken || null
       });
+      if(window._pendingInviteToken) {
+        try {
+          const inv = await fbRestGet('invites/' + window._pendingInviteToken).catch(()=>null);
+          if(inv) {
+            const useKey = Date.now().toString(36);
+            await fbRestSet('invites/' + window._pendingInviteToken + '/uses/' + useKey, {
+              username: user, email: email, origin: origin, joinedAt: Date.now(),
+              userId: _newUserId2, ip: _regIp2 || null
+            });
+            await fbRestSet('invites/' + window._pendingInviteToken + '/usedCount', (inv.usedCount||0) + 1);
+          }
+        } catch(e2) {}
+        window._pendingInviteToken = null;
+      }
       _passwordHash=ph; _cu=user; _isAdmin=false;
       _regPending=null;
       onLoginSuccess();
@@ -112,6 +142,8 @@ async function verifyRegCode(){
   try{
     const ex=await fbRestGet('users/'+_regPending.user);
     if(ex){showLoginErr('Bu kullanıcı adı artık alınmış.');_resetRegForm();return;}
+    const _newUserId = 'U' + Date.now().toString().slice(-8) + Math.floor(1000+Math.random()*9000);
+    const _regIp = await getUserIP().catch(()=>null);
     await fbRestSet('users/'+_regPending.user,{
       username:_regPending.user,
       email:_regPending.email,
@@ -120,8 +152,30 @@ async function verifyRegCode(){
       isAdmin:false,
       banned:false,
       passwordHash:_regPending.pass,
-      origin:_regPending.origin
+      origin:_regPending.origin,
+      userId: _newUserId,
+      regIP: _regIp || null,
+      inviteToken: window._pendingInviteToken || null
     });
+    // Davet linki kullanımını kaydet
+    if(window._pendingInviteToken) {
+      try {
+        const inv = await fbRestGet('invites/' + window._pendingInviteToken).catch(()=>null);
+        if(inv) {
+          const useKey = Date.now().toString(36);
+          await fbRestSet('invites/' + window._pendingInviteToken + '/uses/' + useKey, {
+            username: _regPending.user,
+            email: _regPending.email,
+            origin: _regPending.origin,
+            joinedAt: Date.now(),
+            userId: _newUserId,
+            ip: _regIp || null
+          });
+          await fbRestSet('invites/' + window._pendingInviteToken + '/usedCount', (inv.usedCount||0) + 1);
+        }
+      } catch(e2) {}
+      window._pendingInviteToken = null;
+    }
     _passwordHash=_regPending.pass;_cu=_regPending.user;_isAdmin=false;
     _regPending=null;
     onLoginSuccess();
@@ -220,15 +274,6 @@ async function checkIPBan(){
   }catch(e){ return false; }
 }
 function onLoginSuccess(){
-  // Anonymous Auth token garantisi — Firebase Rules auth!=null için gerekli
-  (async () => {
-    if(_auth && !_auth.currentUser){
-      try{ await _auth.signInAnonymously(); }catch(e){}
-    }
-  })();
-  // Web Push / Apple Watch bildirim kaydı
-  if(typeof initPushAfterLogin === 'function') initPushAfterLogin();
-  if(typeof initForegroundPushListener === 'function') initForegroundPushListener();
   loadCustomGameImages();
   loadCustomGames();
   loadUserSecurityData();

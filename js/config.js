@@ -157,13 +157,6 @@ let _activeMainTab='home';
 
 function switchMainTab(tab){
   _activeMainTab=tab;
-  // Tab bar göster + aktif sekmeyi işaretle (masaüstünde gösterme)
-  var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display = window.innerWidth >= 768 ? 'none' : 'flex';
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('act');});
-  var tabIds={home:'tabHome',msgs:'tabMsgs',forum:'tabForum',friends:'tabFriends',games:'tabGames',watch:'tabWatch',profile:'tabProfile'};
-  var activeEl=document.getElementById(tabIds[tab]);
-  if(activeEl) activeEl.classList.add('act');
   // Track last mobile tab for orientation restore
   if(['home','forum','watch','msgs','friends'].includes(tab)) {
     if(typeof _lastMobileTab !== 'undefined') _lastMobileTab = tab;
@@ -172,14 +165,12 @@ function switchMainTab(tab){
   // Hide all screens except login/chat/admin
   ['roomsScreen','forumScreen','msgsScreen','friendsScreen','profileScreen','chatScreen','adminPanel','gamesScreen','watchScreen'].forEach(id=>{
     var el=document.getElementById(id);
-    if(el){ el.classList.remove('active'); el.style.display='none'; }
+    if(el) el.classList.remove('active');
   });
-  // Tab bar göster
-  var _tb=document.querySelector('.tab-bar'); if(_tb) _tb.style.display='flex';
   // Show target screen
   var targetId=_mainScreenIds[tab]||'roomsScreen';
   var el=document.getElementById(targetId);
-  if(el){ el.style.display='flex'; el.classList.add('active'); }
+  if(el) el.classList.add('active');
   // Tab specific actions
   if(tab==='forum'){
     var fav=document.getElementById('forumMyAv');
@@ -219,8 +210,8 @@ function switchMainTab(tab){
           bot.el.style.left = 'auto';
           bot.el.style.top = 'auto';
           bot.el.style.transform = 'none';
-          bot.el.style.width = '30px';
-          bot.el.style.height = '30px';
+          bot.el.style.width = '44px';
+          bot.el.style.height = '54px';
           bot.isAtHome = false;
           bot.el.classList.remove('at-home');
         }
@@ -254,11 +245,6 @@ function switchMainTab(tab){
     setTimeout(()=>{ switchProfTab('profile'); }, 50);
   }
   setTimeout(()=>applyTabIcons(true), 0);
-  // Tab bar aktif sekmeyi güncelle
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('act'));
-  const tabMap = {home:'tabHome',msgs:'tabMsgs',forum:'tabForum',friends:'tabFriends',games:'tabGames',watch:'tabWatch',profile:'tabProfile'};
-  const activeTabEl = document.getElementById(tabMap[tab]);
-  if(activeTabEl) activeTabEl.classList.add('act');
 }
 
 let _stopMsg=null,_stopOnl=null,_hbTimer=null,_stopReads=null;
@@ -889,8 +875,7 @@ function applyCustomGameImages(){ return Promise.resolve(); }
   const TAB_HASH = {
     home: '', forum: 'forum', msgs: 'mesajlar',
     friends: 'arkadaslar', profile: 'profil',
-    games: 'oyunlar', watch: 'izle'
-    // 'admin' kasıtlı olarak URL hash sistemine dahil edilmedi (güvenlik)
+    games: 'oyunlar', watch: 'izle', admin: 'admin'
   };
   const HASH_TAB = {};
   Object.entries(TAB_HASH).forEach(([t,h])=>{ HASH_TAB[h]=t; });
@@ -909,12 +894,6 @@ function applyCustomGameImages(){ return Promise.resolve(); }
   window.addEventListener('hashchange', function(){
     const hash = location.hash.replace('#','').replace('/','');
     const tab = HASH_TAB[hash] || 'home';
-    // ── GÜVENLİK: admin hash'i sadece gerçek admin erişebilir ──
-    if(tab === 'admin' && !window._isAdmin){
-      history.replaceState(null,'',location.pathname+'#');
-      if(typeof showToast === 'function') showToast('⛔ Yetkisiz erişim.');
-      return;
-    }
     if(typeof IS_DESKTOP === 'function' && IS_DESKTOP()){
       if(typeof deskNav === 'function') deskNav(tab);
     } else {
@@ -923,17 +902,22 @@ function applyCustomGameImages(){ return Promise.resolve(); }
   });
   window.addEventListener('DOMContentLoaded', function(){
     const hash = location.hash.replace('#','').replace('/','');
-    const tab = HASH_TAB[hash];
-    if(tab && tab !== 'home'){
-      // admin hash'i oturum açmadan veya yetkisiz kullana engelle
-      if(tab === 'admin') {
-        history.replaceState(null,'',location.pathname);
-      } else {
+    // Davet linki token kontrolü: #inv_TOKEN
+    if(hash.startsWith('inv_')) {
+      window._pendingInviteToken = hash.slice(4);
+      history.replaceState(null, '', location.pathname);
+      // Kayıt ekranını aç
+      window._pendingHashNav = null;
+      if(typeof showRegForm === 'function') setTimeout(showRegForm, 500);
+      else window._openRegOnLoad = true;
+    } else {
+      const tab = HASH_TAB[hash];
+      if(tab && tab !== 'home'){
         window._pendingHashNav = tab;
       }
-    }
-    if(hash && hash !== '') {
-      history.replaceState(null, '', location.pathname);
+      if(hash && hash !== '') {
+        history.replaceState(null, '', location.pathname);
+      }
     }
     // Sunucu listesini ilk yüklemede doldur
     if(typeof renderServerSelect === 'function') renderServerSelect();

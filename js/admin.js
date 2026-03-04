@@ -15,14 +15,21 @@ async function loadAdminUsers(){
     if(!list.length){body.innerHTML='<p style="color:var(--muted)">Kullanıcı yok.</p>';return;}
 
     let h='<div class="admin-section">';
-    // Başlık + Toplu işlem araç çubuğu
-    h+=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-      <div class="admin-sec-title" style="margin:0">Tüm Kullanıcılar (${list.length})</div>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.78rem;color:var(--muted);">
-          <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers(this)"> Tümünü Seç
-        </label>
-        <button class="a-btn red" id="bulkDeleteBtn" style="display:none;padding:6px 12px;font-size:.75rem;" onclick="bulkDeleteUsers()">🗑️ Seçilenleri Sil</button>
+    // Başlık + Arama + Toplu işlem araç çubuğu
+    h+=`<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <div class="admin-sec-title" style="margin:0">Tüm Kullanıcılar (${list.length})</div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:.78rem;color:var(--muted);">
+            <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers(this)"> Tümünü Seç
+          </label>
+          <button class="a-btn red" id="bulkDeleteBtn" style="display:none;padding:6px 12px;font-size:.75rem;" onclick="bulkDeleteUsers()">🗑️ Seçilenleri Sil</button>
+          <button onclick="adminExportUsersXLS()" style="padding:6px 12px;background:#1d6f42;color:#fff;border:none;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;">📥 XLS İndir</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input id="adminUserSearch" class="admin-inp" placeholder="👤 Kullanıcı adı ara..." oninput="filterAdminUsers()" style="flex:1;">
+        <input id="adminIdSearch" class="admin-inp" placeholder="🆔 ID ile ara..." oninput="filterAdminUsers()" style="flex:1;">
       </div>
     </div>`;
     h+='<div class="admin-card">';
@@ -32,7 +39,7 @@ async function loadAdminUsers(){
       const isAdminUser=!!u.isAdmin;
       const isMe=u.username===_cu;
       const on=!!_online[u.username];
-      h+=`<div class="admin-row" id="urow-${esc(u.username)}">
+      h+=`<div class="admin-row" id="urow-${esc(u.username)}" data-username="${esc((u.username||'').toLowerCase())}" data-userid="${esc((u.userId||'').toLowerCase())}">
         <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
           ${!isMe?`<input type="checkbox" class="user-select-cb" data-u="${esc(u.username)}" onchange="onUserCheckChange()" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;">`:'<div style="width:16px;flex-shrink:0;"></div>'}
           <div class="admin-row-av" style="background:${strColor(u.username)}">${initials(u.username)}</div>
@@ -42,7 +49,7 @@ async function loadAdminUsers(){
               ${isAdminUser?'<span class="admin-tag">Admin</span>':''}
               ${isBanned?'<span class="banned-tag">Banlı</span>':''}
             </div>
-            <div class="admin-row-sub">${on?'🟢 Çevrimiçi':'⚫ Çevrimdışı'} · ${u.origin||'—'} · 🏢 ${u._ws||'?'} · 📅 ${u.createdAt?new Date(u.createdAt).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Bilinmiyor'}</div>
+            <div class="admin-row-sub">${on?'🟢 Çevrimiçi':'⚫ Çevrimdışı'} · ${u.origin||'—'} · 🏢 ${u._ws||'?'} · 📅 ${u.createdAt?new Date(u.createdAt).toLocaleString('tr-TR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'Bilinmiyor'}${u.userId?` · <span style="font-family:monospace;color:var(--accent);font-size:.68rem;">🆔 ${esc(u.userId)}</span>`:''}</div>
             ${u.lastIP?`<div style="font-size:11px;color:#e67e22;margin-top:2px;font-family:monospace;">🌐 ${esc(u.lastIP)}</div>`:''}
           </div>
         </div>
@@ -60,7 +67,54 @@ async function loadAdminUsers(){
     });
     h+='</div></div>';
     body.innerHTML=h;
+    // Store list for export
+    body._userList = list;
   }}catch(e){body.innerHTML='<p style="color:var(--muted);padding:20px">Yüklenemedi: '+(e&&e.message||e)+'</p>';}
+}
+
+function filterAdminUsers(){
+  const sq = (document.getElementById('adminUserSearch')?.value||'').toLowerCase().trim();
+  const iq = (document.getElementById('adminIdSearch')?.value||'').toLowerCase().trim();
+  document.querySelectorAll('.admin-row[data-username]').forEach(row=>{
+    const uMatch = !sq || row.dataset.username.includes(sq);
+    const iMatch = !iq || row.dataset.userid.includes(iq);
+    row.style.display = (uMatch && iMatch) ? '' : 'none';
+  });
+}
+
+async function adminExportUsersXLS(){
+  const body = document.getElementById('adminBody');
+  const users = await adminRestGet('users').catch(()=>null)||{};
+  const list = Object.values(users).filter(u=>u&&u.username).sort((a,b)=>(a.username||'').localeCompare(b.username||''));
+  
+  // Build XLS (TSV-based, opens in Excel)
+  const headers = ['Kullanıcı Adı','ID','E-posta','Köken','Son IP','Kayıt Tarihi','Son Görülme','Admin','Banlı'];
+  const rows = list.map(u=>[
+    u.username||'',
+    u.userId||'',
+    u.email||'',
+    u.origin||'',
+    u.lastIP||'',
+    u.createdAt?new Date(u.createdAt).toLocaleString('tr-TR'):'',
+    u.lastSeen?new Date(u.lastSeen).toLocaleString('tr-TR'):'',
+    u.isAdmin?'Evet':'Hayır',
+    u.banned?'Evet':'Hayır'
+  ]);
+  
+  // Create proper XLS via HTML table (Excel compatible)
+  let xlsHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
+  xlsHtml += '<head><meta charset="UTF-8"><style>td{mso-number-format:"@";}</style></head><body><table>';
+  xlsHtml += '<tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
+  rows.forEach(r=>{ xlsHtml += '<tr>' + r.map(c=>`<td>${String(c).replace(/</g,'&lt;')}</td>`).join('') + '</tr>'; });
+  xlsHtml += '</table></body></html>';
+  
+  const blob = new Blob([xlsHtml], {type:'application/vnd.ms-excel;charset=UTF-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'natureco_uyeler_' + new Date().toISOString().slice(0,10) + '.xls';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('📥 XLS indirildi! (' + list.length + ' üye)');
 }
 
 function onUserCheckChange(){
@@ -403,620 +457,213 @@ async function adminDeleteForumPost(key){
 async function loadAdminDesign(){
   const body = document.getElementById('adminBody');
   body.innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
-  _db.ref('settings/design').once('value').then(snap=>{
-    const d = snap.val()||{};
-    _renderDesignPanel(d);
-  }).catch(()=>_renderDesignPanel({}));
-}
+  const d = await adminRestGet('settings/design').catch(()=>null)||{};
 
-function _renderDesignPanel(d){
-  const body = document.getElementById('adminBody');
-  if(!body) return;
+  // ── Renk Tanımları ──
+  const colors = [
+    { key:'bg',         label:'Ana Arka Plan',       def:'#1a1e25' },
+    { key:'bg2',        label:'İkincil Arka Plan',   def:'#22262d' },
+    { key:'surface',    label:'Yüzey (Kartlar)',     def:'#2a303c' },
+    { key:'surface2',   label:'Yüzey 2',             def:'#333c4a' },
+    { key:'border',     label:'Kenarlık',            def:'#434c5e' },
+    { key:'text',       label:'Normal Yazı',         def:'#dde2ea' },
+    { key:'textHi',     label:'Başlık Yazı',         def:'#ffffff' },
+    { key:'muted',      label:'Soluk Yazı',          def:'#8f9ab0' },
+    { key:'accent',     label:'Vurgu Rengi',         def:'#4a9e7a' },
+    { key:'green',      label:'Yeşil (Online)',      def:'#2ecc71' },
+    { key:'red',        label:'Kırmızı (Hata)',      def:'#e05555' },
+    { key:'ownBg',      label:'Kendi Mesaj Balonu',  def:'#1f4a3a' },
+    { key:'incomingBg', label:'Gelen Mesaj Balonu',  def:'#1e2e35' },
+  ];
 
-  // ── Yardımcı: slider + number input birlikte (0.5–200 aralığı) ──
-  const range = (id, min, max, def, unit, lbl) => {
-    const cur = d[id] !== undefined ? d[id] : def;
-    const step = unit === '%' ? 1 : 0.5;
-    return `<div style="margin-bottom:10px;">
-      <div style="font-size:.68rem;color:var(--muted);margin-bottom:4px;">${lbl}</div>
-      <div style="display:flex;align-items:center;gap:6px;">
-        <input type="range" id="dr_${id}" min="0.5" max="200" step="${step}" value="${cur}"
-          style="flex:1;accent-color:var(--accent);"
-          oninput="
-            document.getElementById('drn_${id}').value=this.value;
-            _liveApply('${id}',parseFloat(this.value),'${unit}');
-          ">
-        <input type="number" id="drn_${id}" value="${cur}" min="0.5" max="200" step="${step}"
-          style="width:58px;background:var(--surface2);border:1px solid var(--border);
-                 border-radius:6px;padding:3px 6px;color:var(--accent);font-size:.78rem;
-                 font-weight:700;text-align:right;"
-          oninput="
-            document.getElementById('dr_${id}').value=this.value;
-            _liveApply('${id}',parseFloat(this.value),'${unit}');
-          ">
-        <span style="font-size:.68rem;color:var(--muted);min-width:16px;">${unit}</span>
+  const fonts = [
+    { value:'DM Sans,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif', label:'DM Sans (Varsayılan)' },
+    { value:'"Inter",sans-serif',       label:'Inter' },
+    { value:'"Roboto",sans-serif',      label:'Roboto' },
+    { value:'"Nunito",sans-serif',      label:'Nunito' },
+    { value:'"Poppins",sans-serif',     label:'Poppins' },
+    { value:'"Montserrat",sans-serif',  label:'Montserrat' },
+    { value:'monospace',                label:'Monospace' },
+  ];
+
+  const curFont    = d.fontFamily || fonts[0].value;
+  const curSize    = d.fontSize   || '15px';
+  const curRadius  = d.borderRadius !== undefined ? d.borderRadius : 12;
+
+  // Tab order & visibility
+  const defaultTabs = [
+    { id:'home',    label:'Ana Sayfa',  emoji:'🏠', action:"switchMainTab('home')" },
+    { id:'msgs',    label:'Mesajlar',   emoji:'💬', action:"openDMModal()" },
+    { id:'forum',   label:'Forum',      emoji:'📋', action:"switchMainTab('forum')" },
+    { id:'friends', label:'Arkadaşlar', emoji:'👥', action:"openFriendsModal()" },
+    { id:'watch',   label:'İzle',       emoji:'📺', action:"switchMainTab('watch')" },
+  ];
+  const savedTabOrder  = d.tabOrder   || defaultTabs.map(t=>t.id);
+  const hiddenTabs     = d.hiddenTabs || [];
+
+  // Icon sizes
+  const tabIconSize  = d.tabIconSize  || 20;
+  const tabLabelSize = d.tabLabelSize || 9;
+  const navIconSize  = d.navIconSize  || 19;
+
+  // Text sizes
+  const msgFontSize     = d.msgFontSize     || 14;
+  const sidebarFontSize = d.sidebarFontSize || 15;
+  const headerFontSize  = d.headerFontSize  || 18;
+  const inputFontSize   = d.inputFontSize   || 14;
+  const forumFontSize   = d.forumFontSize   || 14;
+
+  // Custom images / SVG emojis
+  const customImages = d.customImages || {};
+
+  const card = (title, inner, mb) =>
+    `<div class="admin-card" style="padding:16px;margin-bottom:${mb||12}px;">
+      <div class="admin-sec-title" style="margin-bottom:12px;">${title}</div>
+      ${inner}
+    </div>`;
+
+  let html = '<div class="admin-section">';
+  html += '<div class="admin-sec-title">🎨 Global Tasarım Yöneticisi</div>';
+  html += '<div style="font-size:.75rem;color:var(--muted);margin-bottom:14px;">Tüm değişiklikler Firebase\'e kaydedilir. Üyeler giriş yaptığında otomatik yeni tasarımı görür.</div>';
+
+  // ═══ 1. RENKLER ═══
+  let colHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  colors.forEach(c => {
+    const val = d['color_'+c.key] || c.def;
+    colHtml += `<div style="display:flex;flex-direction:column;gap:4px;">
+      <div style="font-size:.68rem;color:var(--muted);">${c.label}</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="color" id="dc_${c.key}" value="${val}" style="width:38px;height:32px;border-radius:6px;border:1px solid var(--border);cursor:pointer;padding:2px;background:var(--surface2);flex-shrink:0;" oninput="document.getElementById('dc_${c.key}_txt').value=this.value">
+        <input type="text" id="dc_${c.key}_txt" value="${val}" placeholder="#rrggbb" style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text);font-size:.7rem;font-family:monospace;" oninput="const v=this.value.trim();if(/^#[0-9a-fA-F]{6}$/.test(v)){document.getElementById('dc_${c.key}').value=v;}">
       </div>
     </div>`;
-  };
+  });
+  colHtml += '</div>';
+  html += card('🖌️ Renkler', colHtml);
 
-  const inp  = (id,val,ph,extra='') =>
-    `<input type="text" id="${id}" value="${val||''}" placeholder="${ph}"
-     style="width:100%;background:var(--surface2);border:1px solid var(--border);
-            border-radius:7px;padding:7px 10px;color:var(--text);font-size:.78rem;" ${extra}>`;
-  const ta   = (id,val,ph,rows=4) =>
-    `<textarea id="${id}" rows="${rows}" placeholder="${ph}"
-     style="width:100%;background:var(--surface2);border:1px solid var(--border);
-            border-radius:7px;padding:8px 10px;color:var(--text);font-size:.78rem;
-            resize:vertical;font-family:inherit;">${val||''}</textarea>`;
-  const row  = (lbl,inner,tip='') =>
-    `<div style="margin-bottom:12px;">
-       <div style="font-size:.7rem;font-weight:700;color:var(--muted);margin-bottom:5px;">${lbl}${tip?`<span style="font-weight:400;opacity:.6;margin-left:5px;">${tip}</span>`:''}</div>
-       ${inner}
-     </div>`;
-  const toggle = (id,lbl,def) => {
-    const checked = d[id]!==undefined ? d[id] : def;
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
-      <span style="font-size:.82rem;">${lbl}</span>
-      <label style="position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;">
-        <input type="checkbox" id="dr_${id}" ${checked?'checked':''} style="opacity:0;width:0;height:0;"
-               onchange="_liveApplyToggle('${id}',this.checked)">
-        <span onclick="var cb=this.previousElementSibling;cb.checked=!cb.checked;this.style.background=cb.checked?'var(--accent)':'var(--border)';document.getElementById('drth_${id}').style.left=cb.checked?'20px':'2px';_liveApplyToggle('${id}',cb.checked)"
-          style="position:absolute;inset:0;background:${checked?'var(--accent)':'var(--border)'};border-radius:11px;transition:.2s;cursor:pointer;"></span>
-        <span id="drth_${id}" style="position:absolute;left:${checked?'20':'2'}px;top:2px;width:18px;height:18px;background:#fff;border-radius:50%;transition:.2s;pointer-events:none;"></span>
-      </label>
+  // ═══ 2. YAZI TİPİ & BOYUTLAR ═══
+  let fontHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+
+  // Font family
+  fontHtml += `<div style="grid-column:1/-1;"><div style="font-size:.7rem;color:var(--muted);margin-bottom:5px;">Yazı Tipi (Tüm Uygulama)</div>
+    <select id="dc_font" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;" onchange="void 0">`;
+  fonts.forEach(f => { fontHtml += `<option value="${f.value}" ${curFont===f.value?'selected':''}>${f.label}</option>`; });
+  fontHtml += '</select></div>';
+
+  // Font sizes
+  const textSizes = [
+    { id:'dc_msgFontSize',     label:'💬 Mesaj Yazısı (px)',      val:msgFontSize,     min:11, max:20 },
+    { id:'dc_sidebarFontSize', label:'📋 Sidebar Yazısı (px)',    val:sidebarFontSize, min:11, max:20 },
+    { id:'dc_headerFontSize',  label:'🏷️ Başlık Yazısı (px)',     val:headerFontSize,  min:13, max:28 },
+    { id:'dc_inputFontSize',   label:'✏️ Mesaj Giriş Kutusu (px)',val:inputFontSize,   min:11, max:20 },
+    { id:'dc_forumFontSize',   label:'📰 Forum Yazısı (px)',      val:forumFontSize,   min:11, max:20 },
+  ];
+  textSizes.forEach(s => {
+    fontHtml += `<div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span></div>
+      <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
+        oninput="document.getElementById('${s.id}_val').textContent=this.value">
     </div>`;
-  };
-  const clr  = (id,def,lbl) => {
-    const cur = d['color_'+id]||def;
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <input type="color" id="dc_${id}" value="${cur}"
-        style="width:36px;height:36px;border-radius:8px;border:2px solid var(--border);
-               cursor:pointer;padding:2px;background:var(--surface2);flex-shrink:0;"
-        oninput="_previewColor('${id}',this.value)">
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:.72rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${lbl}</div>
-        <div style="font-size:.65rem;color:var(--muted);" id="dcc_${id}">${cur}</div>
+  });
+
+  fontHtml += '</div>';
+  html += card('🔤 Yazı Tipi & Boyutlar', fontHtml);
+
+  // ═══ 3. İKON BOYUTLARI ═══
+  const iconSizeDefs = [
+    { id:'dc_tabIconSize',  label:'📱 Alt Tab İkon Boyutu (px)', val:tabIconSize,  min:14, max:32 },
+    { id:'dc_tabLabelSize', label:'📱 Alt Tab Etiket Boyutu (px)',val:tabLabelSize, min:7,  max:14 },
+    { id:'dc_navIconSize',  label:'🖥️ Sol Nav İkon Boyutu (px)',  val:navIconSize,  min:14, max:32 },
+  ];
+  let iconHtml = '<div style="display:flex;flex-direction:column;gap:12px;">';
+  iconSizeDefs.forEach(s => {
+    iconHtml += `<div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}: <span id="${s.id}_val">${s.val}</span>px</div>
+      <input type="range" id="${s.id}" min="${s.min}" max="${s.max}" value="${s.val}" style="width:100%;"
+        oninput="document.getElementById('${s.id}_val').textContent=this.value">
+    </div>`;
+  });
+  iconHtml += '</div>';
+  html += card('📐 İkon Boyutları', iconHtml);
+
+  // ═══ 4. TAB SIRASI & GÖRÜNÜRLÜKLERİ ═══
+  const orderedTabs = savedTabOrder.map(id => defaultTabs.find(t=>t.id===id)).filter(Boolean);
+  // Add any tabs not in savedTabOrder
+  defaultTabs.forEach(t => { if(!orderedTabs.find(o=>o.id===t.id)) orderedTabs.push(t); });
+
+  let tabHtml = `<div style="font-size:.72rem;color:var(--muted);margin-bottom:10px;">Sekmeleri sürükle-bırak ile yeniden sırala. Gizlemek için göz ikonuna tıkla.</div>
+  <div id="dc_tab_list" style="display:flex;flex-direction:column;gap:6px;">`;
+  orderedTabs.forEach((t,i) => {
+    const hidden = hiddenTabs.includes(t.id);
+    tabHtml += `<div id="dctab_${t.id}" data-tab-id="${t.id}" draggable="true"
+      ondragstart="adminTabDragStart(event)" ondragover="adminTabDragOver(event)" ondrop="adminTabDrop(event)"
+      style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);cursor:grab;${hidden?'opacity:.45':''}">
+      <span style="font-size:1.1rem;">${t.emoji}</span>
+      <span style="flex:1;font-size:.85rem;font-weight:700;color:var(--text-hi);">${t.label}</span>
+      <span style="font-size:.7rem;color:var(--muted);">☰</span>
+      <button onclick="adminTabToggleVisibility('${t.id}',this)" title="${hidden?'Göster':'Gizle'}"
+        style="background:none;border:1px solid var(--border);border-radius:6px;padding:4px 8px;cursor:pointer;font-size:.75rem;color:${hidden?'var(--green)':'var(--muted)'};">
+        ${hidden?'👁 Göster':'🚫 Gizle'}
+      </button>
+    </div>`;
+  });
+  tabHtml += '</div>';
+  html += card('🗂️ Sekme Sırası & Görünürlük', tabHtml);
+
+  // ═══ 5. GÖRSELLER & SVG EMOJİLER ═══
+  const imageSlots = [
+    { key:'appLogo',       label:'🍃 Uygulama Logosu (SVG/URL)',       placeholder:'https://... veya SVG kodu' },
+    { key:'loginBg',       label:'🖼️ Giriş Ekranı Arka Planı (URL)',   placeholder:'https://resim-url.jpg' },
+    { key:'emptyRoomImg',  label:'📭 Boş Sohbet Görseli (URL/emoji)',  placeholder:'https://... veya 🌿' },
+    { key:'botAvatar',     label:'🤖 NatureBot Avatarı (URL)',          placeholder:'https://resim-url.png' },
+    { key:'customEmoji1',  label:'😊 Özel Emoji 1 (URL/SVG)',          placeholder:'https://... veya SVG' },
+    { key:'customEmoji2',  label:'😎 Özel Emoji 2 (URL/SVG)',          placeholder:'https://... veya SVG' },
+  ];
+  let imgHtml = '<div style="display:flex;flex-direction:column;gap:10px;">';
+  imageSlots.forEach(s => {
+    const val = customImages[s.key] || '';
+    imgHtml += `<div>
+      <div style="font-size:.68rem;color:var(--muted);margin-bottom:5px;">${s.label}</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input type="text" id="dci_${s.key}" value="${val.replace(/"/g,'&quot;')}" placeholder="${s.placeholder}"
+          style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-size:.75rem;">
+        <div id="dci_${s.key}_prev" style="width:36px;height:36px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1.2rem;border:1px solid var(--border);overflow:hidden;">
+          ${val ? (val.startsWith('http')?`<img src="${val}" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent='?'">`:'📷') : '—'}
+        </div>
       </div>
     </div>`;
-  };
-  const grid2 = items => `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">${items.join('')}</div>`;
-  const grid1 = items => items.join('');
-  const sec   = (title,content) =>
-    `<div style="margin-bottom:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-       <div style="padding:9px 14px;background:var(--surface2);font-size:.68rem;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);">${title}</div>
-       <div style="padding:12px 14px;">${content}</div>
-     </div>`;
-
-  // ══════════════════════════════════════
-  // TAB 0: 🖌️ RENKLER
-  // ══════════════════════════════════════
-  const COLORS = [
-    {cat:'🏠 Arka Planlar',items:[
-      ['bg','#1a1e25','Ana Arka Plan'],['bg2','#22262d','İkincil Arka Plan'],
-      ['surface','#2a303c','Panel/Kart Yüzeyi'],['surface2','#333c4a','Panel Yüzeyi 2'],
-      ['border','#434c5e','Kenarlık'],
-    ]},
-    {cat:'✏️ Yazı Renkleri',items:[
-      ['text','#dde2ea','Normal Yazı'],['textHi','#ffffff','Başlık / Vurgu'],
-      ['muted','#8f9ab0','Soluk / Yardımcı'],
-    ]},
-    {cat:'🎯 Vurgu & Durum',items:[
-      ['accent','#4a9e7a','Aksan / CTA Rengi'],['green','#2ecc71','Çevrimiçi / Başarı'],
-      ['red','#e05555','Hata / Tehlike'],['yellow','#f59e0b','Uyarı / Bilgi'],
-      ['blue','#3b82f6','Bilgi / Link'],
-    ]},
-    {cat:'🗂️ Navigasyon',items:[
-      ['purple','#1e2030','Header Arka Plan'],['sidebarBg','#161a22','Sidebar Arka Plan'],
-      ['sidebarItem','#252d3d','Sidebar Seçili Öğe'],['sidebarHover','#1e2536','Sidebar Hover'],
-      ['navBg','#12151c','Sol Rail Arka Plan'],['tabBarBg','#12151c','Alt Tab Bar (Mobil)'],
-      ['tabActive','#4a9e7a','Aktif Tab Rengi'],['tabInactive','#6b7280','Pasif Tab Rengi'],
-    ]},
-    {cat:'💬 Mesajlaşma',items:[
-      ['ownBg','#1f4a3a','Kendi Mesaj Balonu'],['incomingBg','#1e2e35','Gelen Mesaj Balonu'],
-      ['ownText','#d4f1e4','Kendi Mesaj Yazısı'],['incomingText','#dde2ea','Gelen Mesaj Yazısı'],
-      ['inputBg','#1e2a3a','Mesaj Giriş Arka Plan'],['inputBorder','#3a4560','Giriş Kenarlığı'],
-      ['inputText','#dde2ea','Giriş Yazısı'],['inputPlaceholder','#6b7280','Placeholder'],
-    ]},
-    {cat:'🔐 Giriş Ekranı',items:[
-      ['loginBg','#0e1520','Login Arka Plan'],['loginCard','#161d2a','Login Kart'],
-      ['loginBorder','#2a3550','Login Kenarlık'],['loginText','#dde2ea','Login Yazı'],
-    ]},
-  ];
-  let colHtml = '';
-  COLORS.forEach(cat=>{
-    colHtml += sec(cat.cat, cat.items.map(([id,def,lbl])=>clr(id,def,lbl)).join(''));
   });
+  imgHtml += '</div>';
+  html += card('🖼️ Görseller & SVG Emojiler', imgHtml);
 
-  // ══════════════════════════════════════
-  // TAB 1: 🔤 YAZI & FONT
-  // ══════════════════════════════════════
-  const FONTS=[
-    {v:'DM Sans,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',l:'DM Sans (Varsayılan)'},
-    {v:'"Inter",sans-serif',l:'Inter'},{v:'"Roboto",sans-serif',l:'Roboto'},
-    {v:'"Nunito",sans-serif',l:'Nunito'},{v:'"Poppins",sans-serif',l:'Poppins'},
-    {v:'"Montserrat",sans-serif',l:'Montserrat'},{v:'"Syne",sans-serif',l:'Syne'},
-    {v:'"Space Grotesk",sans-serif',l:'Space Grotesk'},{v:'"DM Mono",monospace',l:'DM Mono'},
-    {v:'monospace',l:'Monospace'},{v:'serif',l:'Serif'},
-  ];
-  const curFont=d.fontFamily||FONTS[0].v;
-  let fontSel=`<select id="dr_fontFamily" onchange="_liveApplyFont(this.value)"
-    style="width:100%;background:var(--surface2);border:1px solid var(--border);
-           border-radius:7px;padding:8px 10px;color:var(--text);font-size:.82rem;margin-bottom:14px;">`;
-  FONTS.forEach(f=>{ fontSel+=`<option value="${f.v}" ${curFont===f.v?'selected':''}>${f.l}</option>`; });
-  fontSel+='</select>';
-
-  let fontHtml = row('📦 Font Ailesi', fontSel);
-  fontHtml += sec('📏 Genel Yazı Boyutları', grid2([
-    range('fontSize',8,200,15,'px','📝 Genel Yazı'),
-    range('msgFontSize',8,200,14,'px','💬 Mesaj Yazısı'),
-    range('usernameFontSize',8,200,13,'px','👤 Kullanıcı Adı'),
-    range('timestampSize',6,200,11,'px','🕐 Zaman Damgası'),
-    range('letterSpacing',0,20,0,'px','↔️ Harf Aralığı'),
-    range('lineHeight',10,40,16,'px','↕️ Satır Yüksekliği'),
-  ]));
-  fontHtml += sec('📋 Sidebar & Navigasyon', grid2([
-    range('sidebarFontSize',8,200,13,'px','📋 Sidebar Yazısı'),
-    range('sidebarItemFontSize',8,200,13,'px','📁 Sidebar Öğe'),
-    range('sectionHeaderSize',8,200,10,'px','📂 Bölüm Başlığı'),
-    range('navLabelSize',6,200,9,'px','🖥️ Rail Etiket'),
-    range('tabLabelSize',6,200,9,'px','📱 Tab Etiketi'),
-    range('badgeFontSize',6,200,9,'px','🔴 Rozet (Badge)'),
-  ]));
-  fontHtml += sec('🏷️ Header & Panel', grid2([
-    range('headerFontSize',10,200,18,'px','🏷️ Header Başlığı'),
-    range('headerSubtitleSize',8,200,11,'px','🏷️ Header Alt Başlık'),
-    range('inputFontSize',8,200,14,'px','✏️ Input Yazısı'),
-    range('forumFontSize',8,200,14,'px','📰 Forum Yazısı'),
-    range('modalTitleSize',12,200,16,'px','🗔 Modal Başlığı'),
-    range('toastFontSize',8,200,13,'px','🔔 Toast/Bildirim'),
-  ]));
-
-  // ══════════════════════════════════════
-  // TAB 2: 📐 BOYUTLAR & LAYOUT
-  // ══════════════════════════════════════
-  let layoutHtml='';
-  layoutHtml += sec('📐 Köşe Yuvarlamaları', grid2([
-    range('borderRadius',0,200,12,'px','🔵 Genel Köşe'),
-    range('cardRadius',0,200,10,'px','🃏 Kart / Panel'),
-    range('msgRadius',0,200,14,'px','💬 Mesaj Balonu'),
-    range('inputRadius',0,200,10,'px','✏️ Input / Textarea'),
-    range('btnRadius',0,200,8,'px','🔘 Buton'),
-    range('avatarRadius',0,200,8,'px','👤 Avatar'),
-    range('badgeRadius',0,200,100,'px','🔴 Rozet / Sayaç'),
-    range('modalRadius',0,200,14,'px','🗔 Modal / Diyalog'),
-    range('dropdownRadius',0,200,8,'px','📋 Dropdown'),
-    range('tagRadius',0,200,6,'px','🏷️ Etiket / Chip'),
-  ]));
-  layoutHtml += sec('📏 Genel Panel Boyutları', grid2([
-    range('sidebarWidth',100,200,260,'px','📋 Sidebar Genişliği'),
-    range('railWidth',36,200,68,'px','🛤️ Sol Rail Genişliği'),
-    range('headerHeight',36,200,56,'px','📏 Header Yüksekliği'),
-    range('tabBarHeight',40,200,60,'px','📱 Alt Tab Bar Yük.'),
-    range('inputHeight',28,200,44,'px','✏️ Input Yüksekliği'),
-    range('avatarSize',16,200,32,'px','👤 Genel Avatar'),
-    range('msgAvatarSize',20,200,36,'px','💬 Mesaj Avatarı'),
-    range('sidebarAvatarSize',16,200,28,'px','📋 Sidebar Avatarı'),
-  ]));
-  layoutHtml += sec('📱 Mobil — Alt Navigasyon (Tab Bar)', grid2([
-    range('tabBarHeight',40,200,60,'px','📱 Tab Bar Yüksekliği'),
-    range('tabIconSize',12,200,20,'px','📱 Tab İkon Boyutu'),
-    range('tabLabelSize',6,200,9,'px','📱 Tab Etiket Boyutu'),
-    range('tabBarPad',0,200,6,'px','📱 Tab Bar Padding'),
-    range('tabItemWidth',40,200,68,'px','📱 Tab Öğe Genişliği'),
-    range('tabIconGap',0,200,3,'px','📱 İkon–Etiket Arası'),
-    range('tabActiveBarH',0,200,2,'px','📱 Aktif Çizgi Kalınlığı'),
-    range('tabBadgeSize',10,200,16,'px','🔴 Tab Rozet Boyutu'),
-  ]));
-  layoutHtml += sec('📱 Mobil — Header & Üst Alan', grid2([
-    range('mobileHeaderH',40,200,56,'px','📏 Mobil Header Yük.'),
-    range('mobileHeaderPadH',8,200,16,'px','↔️ Header Yatay Pad'),
-    range('mobileHeaderPadV',6,200,8,'px','↕️ Header Dikey Pad'),
-    range('mobileAvatarSize',28,200,38,'px','👤 Header Avatar'),
-    range('mobileTitleSize',12,200,16,'px','🏷️ Header Başlık'),
-    range('mobileIconSize',16,200,22,'px','🔔 Header İkon'),
-  ]));
-  layoutHtml += sec('📱 Mobil — Mesaj Ekranı', grid2([
-    range('mobileMsgPadH',8,200,12,'px','↔️ Mesaj Yatay Pad'),
-    range('mobileMsgPadV',4,200,6,'px','↕️ Mesaj Dikey Pad'),
-    range('mobileMsgGap',2,200,4,'px','↕️ Mesajlar Arası'),
-    range('mobileBubbleMaxW',120,200,78,'%','💬 Balon Max Genişlik'),
-    range('mobileInputH',36,200,46,'px','✏️ Mobil Input Yük.'),
-    range('mobileInputPadH',8,200,12,'px','↔️ Input Yatay Pad'),
-    range('mobileInputPadV',6,200,10,'px','↕️ Input Dikey Pad'),
-    range('mobileSendBtnSize',32,200,40,'px','➤ Gönder Butonu'),
-  ]));
-  layoutHtml += sec('📱 Mobil — Sidebar / Çekmece', grid2([
-    range('mobileSidebarW',200,200,280,'px','📋 Mobil Sidebar Gen.'),
-    range('mobileSidebarPad',8,200,12,'px','↔️ Sidebar Padding'),
-    range('mobileRoomItemH',44,200,52,'px','📁 Oda Öğesi Yük.'),
-    range('mobileRoomItemPad',8,200,12,'px','📁 Oda Öğesi Pad'),
-    range('mobileSecHdrH',24,200,32,'px','📂 Bölüm Başlığı Yük.'),
-    range('mobileDMItemH',52,200,64,'px','💬 DM Öğesi Yüksekliği'),
-  ]));
-  layoutHtml += sec('🖥️ Masaüstü — Sol Rail', grid2([
-    range('navIconSize',12,200,19,'px','🖥️ Rail İkon Boyutu'),
-    range('railBtnRadius',0,200,12,'px','🛤️ Rail Buton Radius'),
-    range('railBtnSize',28,200,44,'px','🛤️ Rail Buton Boyutu'),
-    range('railBtnMar',2,200,6,'px','↕️ Rail Buton Arası'),
-    range('railLogoSize',24,200,34,'px','🌿 Logo Boyutu'),
-    range('railPad',4,200,10,'px','↔️ Rail Padding'),
-  ]));
-  layoutHtml += sec('↔️ Genel Boşluklar', grid2([
-    range('msgPaddingH',0,200,10,'px','↔️ Mesaj Yatay Pad'),
-    range('msgPaddingV',0,200,6,'px','↕️ Mesaj Dikey Pad'),
-    range('sidebarItemPad',0,200,8,'px','📁 Sidebar Öğe Pad'),
-    range('sectionGap',0,200,6,'px','↕️ Bölüm Arası'),
-    range('msgGap',0,200,4,'px','↕️ Mesajlar Arası'),
-    range('cardPad',4,200,14,'px','🃏 Kart İç Boşluk'),
-    range('btnPadH',4,200,14,'px','↔️ Buton Yatay Pad'),
-    range('btnPadV',3,200,8,'px','↕️ Buton Dikey Pad'),
-    range('inputPadH',6,200,12,'px','↔️ Input Yatay Pad'),
-    range('inputPadV',4,200,8,'px','↕️ Input Dikey Pad'),
-  ]));
-
-  // ══════════════════════════════════════
-  // TAB 3: 🌑 GÖLGE & BLUR
-  // ══════════════════════════════════════
-  let shadowHtml='';
-  shadowHtml += sec('🌑 Gölgeler', grid2([
-    range('cardShadow',0,200,12,'px','🃏 Kart Gölgesi'),
-    range('headerShadow',0,200,8,'px','🏷️ Header Gölgesi'),
-    range('sidebarShadow',0,200,0,'px','📋 Sidebar Gölgesi'),
-    range('inputShadow',0,200,0,'px','✏️ Input Gölgesi'),
-    range('bubbleShadow',0,200,8,'px','💬 Mesaj Balonu'),
-    range('btnShadow',0,200,0,'px','🔘 Buton Gölgesi'),
-    range('modalShadow',0,200,24,'px','🗔 Modal Gölgesi'),
-    range('navShadow',0,200,0,'px','🛤️ Rail/Nav Gölgesi'),
-    range('tabBarShadow',0,200,4,'px','📱 Tab Bar Gölgesi'),
-    range('avatarShadow',0,200,0,'px','👤 Avatar Gölgesi'),
-  ]));
-  shadowHtml += sec('💨 Blur & Opaklık Efektleri', grid2([
-    range('headerBlur',0,200,20,'px','🏷️ Header Frosted'),
-    range('sidebarBlur',0,200,0,'px','📋 Sidebar Blur'),
-    range('modalBlur',0,200,16,'px','🗔 Modal Arka Plan Blur'),
-    range('overlayOpacity',0,100,80,'%','🌑 Modal Overlay Opaklık'),
-    range('glassOpacity',0,100,88,'%','🪟 Glass Panel Opaklık'),
-    range('dimmedOpacity',0,100,45,'%','🌫️ Pasif Öğe Opaklık'),
-  ]));
-  shadowHtml += sec('🌈 Kenarlık Kalınlıkları', grid2([
-    range('borderWidth',0,20,1,'px','🔲 Genel Kenarlık'),
-    range('msgBorderWidth',0,20,0,'px','💬 Mesaj Balonu Kenarlık'),
-    range('inputBorderWidth',0,20,1,'px','✏️ Input Kenarlık'),
-    range('cardBorderWidth',0,20,1,'px','🃏 Kart Kenarlık'),
-    range('btnBorderWidth',0,20,0,'px','🔘 Buton Kenarlık'),
-    range('tabBarBorderWidth',0,20,1,'px','📱 Tab Bar Üst Kenarlık'),
-  ]));
-
-  // ══════════════════════════════════════
-  // TAB 4: 📱 İKON & TAB
-  // ══════════════════════════════════════
-  let iconHtml='';
-  iconHtml += sec('📱 Alt Tab Bar İkon Boyutları', grid2([
-    range('tabIconSize',12,200,20,'px','📱 Tab İkon'),
-    range('tabLabelSize',6,200,9,'px','📱 Tab Etiket'),
-    range('tabBarPad',0,200,6,'px','📱 Padding'),
-    range('tabActiveBarH',0,200,2,'px','📱 Aktif Çizgi'),
-    range('tabBadgeSize',10,200,16,'px','🔴 Badge Boyutu'),
-    range('tabItemWidth',40,200,68,'px','📱 Öğe Genişliği'),
-  ]));
-  iconHtml += sec('🖥️ Sol Rail İkon Boyutları', grid2([
-    range('navIconSize',12,200,19,'px','🖥️ Rail İkon'),
-    range('railBtnRadius',0,200,12,'px','🛤️ Buton Radius'),
-    range('railBtnSize',28,200,44,'px','🛤️ Buton Boyutu'),
-    range('railBtnMar',2,200,6,'px','↕️ Buton Arası'),
-  ]));
-  iconHtml += sec('💬 Mesaj & Reaksiyon İkonları', grid2([
-    range('msgIconSize',10,200,18,'px','💬 Mesaj İkonu'),
-    range('statusDotSize',4,200,11,'px','🟢 Durum Noktası'),
-    range('reactionSize',12,200,18,'px','😊 Reaksiyon İkonu'),
-    range('reactionBtnH',20,200,28,'px','😊 Reaksiyon Buton Yük.'),
-    range('attachIconSize',14,200,20,'px','📎 Ekle İkonu'),
-    range('emojiPickerSize',200,200,320,'px','😀 Emoji Picker Gen.'),
-  ]));
-
-  // Tab sırası
-  const defaultTabs=[
-    {id:'home',label:'Ana Sayfa',emoji:'🏠'},{id:'msgs',label:'Mesajlar',emoji:'💬'},
-    {id:'forum',label:'Forum',emoji:'📋'},{id:'friends',label:'Arkadaşlar',emoji:'👥'},
-    {id:'watch',label:'İzle',emoji:'📺'},
-  ];
-  const savedTabOrder=d.tabOrder||defaultTabs.map(t=>t.id);
-  const hiddenTabs=d.hiddenTabs||[];
-  const orderedTabs=savedTabOrder.map(id=>defaultTabs.find(t=>t.id===id)).filter(Boolean);
-  let tabListHtml='<div id="dc_tab_list" style="display:flex;flex-direction:column;gap:4px;">';
-  orderedTabs.forEach(t=>{
-    const hidden=hiddenTabs.includes(t.id);
-    tabListHtml+=`<div data-tab-id="${t.id}" draggable="true"
-      style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--surface2);
-             border:1px solid var(--border);border-radius:8px;cursor:move;opacity:${hidden?.45:1};"
-      ondragstart="adminTabDragStart(event)" ondragover="adminTabDragOver(event)" ondrop="adminTabDrop(event)">
-      <span>${t.emoji}</span>
-      <span style="flex:1;font-size:.82rem;font-weight:700;">${t.label}</span>
-      <button onclick="adminTabToggleVisibility(this.closest('[data-tab-id]'))"
-        style="padding:3px 8px;border-radius:5px;background:var(--surface);border:1px solid var(--border);
-               font-size:.7rem;cursor:pointer;">${hidden?'👁️ Göster':'🙈 Gizle'}</button>
-    </div>`;
-  });
-  tabListHtml+='</div><div style="font-size:.65rem;color:var(--muted);margin-top:6px;">↕️ Sürükle-bırak ile sıraları değiştir</div>';
-  iconHtml += sec('🔢 Tab Sırası & Görünürlük', tabListHtml);
-
-  // ══════════════════════════════════════
-  // TAB 5: ✨ ANİMASYON & EFEKT
-  // ══════════════════════════════════════
-  let animHtml = sec('✨ Animasyonlar', [
-    toggle('animMessages','💬 Mesaj Giriş Animasyonu',true),
-    toggle('animSidebar','📋 Sidebar Hover Efekti',true),
-    toggle('animButtons','🔘 Buton Hover Animasyonu',true),
-    toggle('animTyping','⌨️ Yazıyor Göstergesi',true),
-    toggle('animPageTransition','🌊 Sayfa Geçiş Animasyonu',true),
-    toggle('animScrollSmooth','🖱️ Smooth Scroll',true),
-  ].join(''));
-  animHtml += sec('🪟 Görsel Efektler', [
-    toggle('glassEffect','🪟 Frosted Glass (Header/Modal)',true),
-    toggle('gradientBg','🌈 Gradient Arka Plan',false),
-    toggle('compactMode','📦 Kompakt Mod',false),
-    toggle('roundedEverything','⭕ Her Şeyi Yuvarlak',false),
-    toggle('darkMode','🌙 Zorunlu Koyu Mod',true),
-  ].join(''));
-  animHtml += sec('👁️ Göster / Gizle', [
-    toggle('showAvatars','👤 Avatarları Göster',true),
-    toggle('showTimestamps','🕐 Zaman Damgaları',true),
-    toggle('showReactions','😊 Reaksiyon Butonları',true),
-    toggle('showUserStatus','🟢 Kullanıcı Durumu',true),
-    toggle('showMemberCount','👥 Üye Sayısı',true),
-    toggle('showOnlineCount','🟢 Çevrimiçi Sayısı',true),
-    toggle('showCarbonWidget','🌿 Karbon Widget',true),
-    toggle('showMusicWidget','🎵 Müzik Butonu',true),
-    toggle('showNatureBot','🤖 NatureBot',true),
-    toggle('showForumTab','📰 Forum Sekmesi',true),
-    toggle('showWatchTab','📺 İzle Sekmesi',true),
-    toggle('showMessagePreview','📨 Bildirim Önizleme',true),
-    toggle('showTypingIndicator','⌨️ Yazıyor... Göster',true),
-    toggle('showReadReceipts','✓✓ Okundu Bildirimi',false),
-  ].join(''));
-
-  // ══════════════════════════════════════
-  // TAB 6: 🖼️ MEDYA & LOGO
-  // ══════════════════════════════════════
-  const imgRow=(id,lbl,ph)=>row(lbl,
-    inp('dci_'+id,(d.customImages||{})[id]||'',ph)+
-    `<div style="font-size:.62rem;color:var(--muted);margin-top:3px;">URL veya <code style="background:var(--surface2);padding:1px 4px;border-radius:3px;">data:image/...</code></div>`
-  );
-  let logoHtml = sec('🌿 Uygulama İkonları',[
-    imgRow('appLogo','🌿 Uygulama Logosu (Header/PWA)','https://... veya data:image/svg+xml,...'),
-    imgRow('favicon','⭐ Favicon','https://...ico'),
-    imgRow('defaultAvatar','👤 Varsayılan Kullanıcı Avatarı','https://...'),
-    imgRow('loadingSpinner','⏳ Yükleniyor Görseli','https://...gif'),
-  ].join(''));
-  logoHtml += sec('🖼️ Arka Planlar',[
-    imgRow('loginBg','🔐 Giriş Sayfası Arka Planı','https://...'),
-    imgRow('emptyRoomBg','🏜️ Boş Oda Arka Planı','https://...'),
-    imgRow('sidebarBanner','📋 Sidebar Üst Banner','https://...'),
-    imgRow('homeBg','🏠 Ana Sayfa Arka Planı','https://...'),
-    imgRow('mobileHeaderBg','📱 Mobil Header Arka Planı','https://...'),
-  ].join(''));
-  logoHtml += sec('🤖 Bot & Özel',[
-    imgRow('botAvatar','🤖 NatureBot Avatarı','🤖 veya https://...'),
-    imgRow('customEmoji1','🎨 Özel Emoji 1','🌿'),
-    imgRow('customEmoji2','🎨 Özel Emoji 2','🌱'),
-  ].join(''));
-
-  // ══════════════════════════════════════
-  // TAB 7: 📝 İÇERİK & METİN
-  // ══════════════════════════════════════
-  const ct=d.content||{};
-  let contentHtml=sec('🏠 Ana Sayfa & Sunucu',[
-    row('🏷️ Sunucu Adı',inp('dct_serverName',ct.serverName||'Nature.co','Nature.co'),'header\'da görünür'),
-    row('📝 Sunucu Alt Başlığı',inp('dct_serverSubtitle',ct.serverSubtitle||'Kanallar & Gruplar','...')),
-    row('👋 Karşılama Başlığı',inp('dct_welcomeTitle',ct.welcomeTitle||"Nature.co'ya Hoş Geldin","...")),
-    row('📋 Karşılama Alt Metni',inp('dct_welcomeSubtitle',ct.welcomeSubtitle||'Soldaki listeden bir kanal seç','...')),
-    row('🔘 Karşılama Buton 1',inp('dct_welcomeBtn1',ct.welcomeBtn1||'💬 Kanal Seç','...')),
-    row('🔘 Karşılama Buton 2',inp('dct_welcomeBtn2',ct.welcomeBtn2||'👥 Arkadaşlar','...')),
-  ].join(''));
-  contentHtml+=sec('📋 Sidebar Etiketleri',[
-    row('🤖 NatureBot Bölümü',inp('dct_secNaturebot',ct.secNaturebot||'NatureBot','NatureBot')),
-    row('📡 Kanallar',inp('dct_secChannels',ct.secChannels||'Kanallar','Kanallar')),
-    row('👥 Gruplar',inp('dct_secGroups',ct.secGroups||'Gruplar','Gruplar')),
-    row('💬 Direkt Mesajlar',inp('dct_secDMs',ct.secDMs||'Direkt Mesajlar','Direkt Mesajlar')),
-  ].join(''));
-  contentHtml+=sec('🔐 Giriş Sayfası',[
-    row('🏷️ Giriş Başlığı',inp('dct_loginTitle',ct.loginTitle||'Giriş Yap','...')),
-    row('📝 Giriş Alt Metni',inp('dct_loginSubtitle',ct.loginSubtitle||'','...')),
-    row('🔘 Giriş Butonu',inp('dct_loginBtnText',ct.loginBtnText||'Giriş Yap →','...')),
-    row('🔘 Kayıt Butonu',inp('dct_registerBtnText',ct.registerBtnText||'Kayıt Ol →','...')),
-    row('📝 Kayıt Başarı Mesajı',inp('dct_registerSuccess',ct.registerSuccess||'Hoş geldin!','...')),
-  ].join(''));
-  contentHtml+=sec('🔢 Alt Navigasyon Etiketleri',[
-    row('🏠 Ana Sayfa',inp('dct_tabHome',ct.tabHome||'Ana Sayfa','Ana Sayfa')),
-    row('💬 Mesajlar',inp('dct_tabMsgs',ct.tabMsgs||'Mesajlar','Mesajlar')),
-    row('📋 Forum',inp('dct_tabForum',ct.tabForum||'Forum','Forum')),
-    row('👥 Arkadaşlar',inp('dct_tabFriends',ct.tabFriends||'Arkadaşlar','Arkadaşlar')),
-    row('📺 İzle',inp('dct_tabWatch',ct.tabWatch||'İzle','İzle')),
-  ].join(''));
-  contentHtml+=sec('📢 Bildirim & Sistem',[
-    row('📢 Duyuru Kanalı',inp('dct_announceChannel',ct.announceChannel||'Genel Duyuru','...')),
-    row('🌿 Footer / Dipnot',inp('dct_footerText',ct.footerText||'','© 2025 Nature.co')),
-    row('🔔 Push İzin Mesajı',ta('dct_pushPromptText',ct.pushPromptText||'','Bildirim almak ister misin?',2)),
-    row('👋 Bot Karşılama',inp('dct_botGreeting',ct.botGreeting||'','Merhaba! Nasıl yardımcı olabilirim?')),
-  ].join(''));
-
-  // ══════════════════════════════════════
-  // TAB 8: ⚙️ CSS/JS
-  // ══════════════════════════════════════
-  let cssHtml=sec('🎨 Özel CSS',row('',
-    `<div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;">Tüm sitenin üzerine eklenir.</div>`+
-    `<textarea id="dr_customCSS" rows="12" placeholder=".ws-header { background: #ff0000 !important; }"
-       style="width:100%;background:#050a06;border:1px solid var(--border);border-radius:8px;
-              padding:10px;color:#6dbf67;font-family:'DM Mono',monospace;font-size:.76rem;resize:vertical;">${d.customCSS||''}</textarea>`
-  ));
-  cssHtml+=sec('⚡ Özel JavaScript',row('',
-    `<div style="font-size:.72rem;color:var(--muted);margin-bottom:6px;">Her yüklemede çalışır.</div>`+
-    `<textarea id="dr_customJS" rows="6" placeholder="// document.body.classList.add('my-theme');"
-       style="width:100%;background:#050a06;border:1px solid var(--border);border-radius:8px;
-              padding:10px;color:#6dbf67;font-family:'DM Mono',monospace;font-size:.76rem;resize:vertical;">${d.customJS||''}</textarea>`
-  ));
-
-  // ══════════════════════════════════════
-  // TAB 9: 🏷️ UYGULAMA
-  // ══════════════════════════════════════
-  let appInfoHtml=sec('🏷️ Temel Bilgiler',[
-    row('🌿 Uygulama Adı',inp('dr_appName',d.appName||'Nature.co','Nature.co')),
-    row('📝 Kısa Açıklama',inp('dr_appSlogan',d.appSlogan||'Kanallar & Gruplar','...')),
-    row('🔗 Site URL',inp('dr_siteUrl',d.siteUrl||'','https://natureco.me')),
-    row('📧 İletişim E-posta',inp('dr_contactEmail',d.contactEmail||'','admin@...')),
-  ].join(''));
-  appInfoHtml+=sec('🔒 Gizlilik & Kurallar',[
-    row('📜 Kullanım Koşulları URL',inp('dr_tosUrl',d.tosUrl||'','https://...')),
-    row('🔒 Gizlilik Politikası URL',inp('dr_privacyUrl',d.privacyUrl||'','https://...')),
-    row('📋 Sunucu Kuralları',ta('dr_serverRules',d.serverRules||'','1. Saygılı ol\n2. ...',5)),
-  ].join(''));
-
-  // ══════════════════════════════════════
-  // TAB 10: 🎭 TEMALAR
-  // ══════════════════════════════════════
-  const themes=[
-    {name:'🌿 Nature (Varsayılan)',key:'nature'},{name:'🌙 Midnight Dark',key:'midnight'},
-    {name:'🌊 Ocean Blue',key:'ocean'},{name:'🎨 Neon Cyber',key:'neon'},
-    {name:'📰 Editorial Light',key:'light'},{name:'🌸 Soft Pastel',key:'pastel'},
-    {name:'🔥 Warm Ember',key:'ember'},
-  ];
-  let themeHtml=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">`;
-  themes.forEach(t=>{
-    themeHtml+=`<button onclick="applyDesignTheme('${t.key}')"
-      style="padding:10px;background:var(--surface2);border:1px solid var(--border);
-             border-radius:8px;font-size:.82rem;cursor:pointer;color:var(--text);
-             transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)'"
-             onmouseout="this.style.borderColor='var(--border)'">${t.name}</button>`;
-  });
-  themeHtml+='</div>';
-  themeHtml+=`<div style="margin-top:12px;font-size:.72rem;color:var(--muted);">Temayı seçtikten sonra <b style="color:var(--accent)">Kaydet</b> et.</div>`;
-
-  // ══════════════════════════════════════
-  // RENDER
-  // ══════════════════════════════════════
-  const TAB_LABELS=['🖌️ Renkler','🔤 Yazı','📐 Boyutlar','🌑 Gölge','📱 İkon','✨ Efekt','🖼️ Medya','📝 İçerik','⚙️ CSS/JS','🏷️ Uygulama','🎭 Temalar'];
-  const TAB_CONTENT=[colHtml,fontHtml,layoutHtml,shadowHtml,iconHtml,animHtml,logoHtml,contentHtml,cssHtml,appInfoHtml,themeHtml];
-
-  let html='<div style="max-width:100%;">';
-  html+='<div style="font-size:1.1rem;font-weight:900;margin-bottom:4px;">🎨 Görsel Tasarım Stüdyosu</div>';
-  html+='<div style="font-size:.72rem;color:var(--muted);margin-bottom:14px;">Tüm değişiklikler Firebase\'e kaydedilir. Üyeler yenileyince görür. Slider <b>veya</b> rakam girerek düzenle (0.5–200).</div>';
-  html+=`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
-    <button onclick="_previewDesignAll()" style="flex:1;min-width:100px;padding:9px;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-weight:700;font-size:.82rem;cursor:pointer;">👁️ Canlı Önizle</button>
-    <button onclick="_resetDesignPreview()" style="padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--muted);font-size:.82rem;cursor:pointer;">↺</button>
-    <button onclick="openSimulator()" style="flex:1;min-width:100px;padding:9px;background:linear-gradient(135deg,#6d28d9,#2563eb);border:none;border-radius:8px;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;">📱 Simülatör</button>
+  // ═══ 6. GENEL STİL ═══
+  const curBgStyle = d.bgStyle || 'solid';
+  let styleHtml = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  styleHtml += `<div>
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Köşe Yuvarlaklığı: <span id="dc_radius_val">${curRadius}px</span></div>
+    <input type="range" id="dc_radius" min="0" max="24" value="${curRadius}" style="width:100%;"
+      oninput="document.getElementById('dc_radius_val').textContent=this.value+'px'">
   </div>`;
-  html+=`<div id="designSubTabs" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:16px;">`;
-  TAB_LABELS.forEach((t,i)=>{
-    html+=`<button onclick="showDesignTab(${i})" id="dst_${i}"
-      style="padding:5px 10px;border-radius:100px;font-size:.7rem;font-weight:700;
-             border:1px solid var(--border);cursor:pointer;transition:all .15s;white-space:nowrap;
-             background:${i===0?'var(--accent)':'var(--surface2)'};
-             color:${i===0?'#fff':'var(--muted)'}">${t}</button>`;
-  });
-  html+='</div>';
-  TAB_CONTENT.forEach((content,i)=>{
-    html+=`<div id="dstc_${i}" style="display:${i===0?'block':'none'}">${content}</div>`;
-  });
-  html+=`<div style="display:flex;gap:8px;margin-top:20px;position:sticky;bottom:0;background:var(--bg);padding:12px 0;border-top:1px solid var(--border);">
-    <button onclick="saveAdminDesign()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.88rem;cursor:pointer;">💾 Kaydet & Tüm Üyelere Uygula</button>
-    <button onclick="resetAdminDesign()" style="padding:13px 16px;background:var(--surface2);color:var(--red);border:1px solid var(--red);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">🗑️</button>
+  styleHtml += `<div>
+    <div style="font-size:.7rem;color:var(--muted);margin-bottom:6px;">Arka Plan Stili</div>
+    <select id="dc_bgstyle" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--text);font-size:.82rem;">
+      <option value="solid" ${curBgStyle==='solid'?'selected':''}>Düz Renk</option>
+      <option value="gradient" ${curBgStyle==='gradient'?'selected':''}>Yumuşak Gradyan</option>
+      <option value="deep" ${curBgStyle==='deep'?'selected':''}>Derin Karanlık</option>
+    </select>
   </div>`;
-  html+='</div>';
-  body.innerHTML=html;
-}
+  styleHtml += '</div>';
+  html += card('⚙️ Genel Stil', styleHtml);
 
-function _liveApply(id,val,unit){
-  const CSS_MAP = {
-    borderRadius:'--radius',msgRadius:'--msg-radius',cardRadius:'--card-radius',
-    inputRadius:'--input-radius',btnRadius:'--btn-radius',
-    sidebarWidth:'--sidebar-w',railWidth:'--rail-w',
-    headerHeight:'--header-h',tabBarHeight:'--tab-bar-h',
-    avatarSize:'--avatar-size',inputHeight:'--input-h',
-    cardShadow:'--card-shadow-blur',headerBlur:'--header-blur',
-    sidebarBlur:'--sidebar-blur',
-  };
-  const root = document.documentElement;
-  if(CSS_MAP[id]) root.style.setProperty(CSS_MAP[id], val+unit);
+  // ═══ Kaydet / Sıfırla ═══
+  html += `<div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
+    <button onclick="adminDesignPreview()" style="padding:13px 16px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">👁 Önizle</button>
+    <button onclick="saveAdminDesign()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.9rem;cursor:pointer;">💾 Tüm Üyelere Uygula & Kaydet</button>
+    <button onclick="resetAdminDesign()" style="padding:13px 16px;background:var(--surface2);color:var(--red);border:1px solid var(--red);border-radius:10px;font-weight:700;font-size:.82rem;cursor:pointer;">↺ Sıfırla</button>
+  </div>`;
+  html += '</div>';
+  body.innerHTML = html;
 }
-function _liveApplyToggle(id,val){
-  if(id==='compactMode') document.body.classList.toggle('compact-mode',val);
-  if(id==='glassEffect') document.body.classList.toggle('glass-effect',val);
-  // update toggle thumb position
-  const thumb = document.getElementById('drth_'+id);
-  if(thumb) thumb.style.left = val ? '20px' : '2px';
-}
-function _liveApplyFont(val){
-  document.body.style.fontFamily = val;
-}
-
-
-function showDesignTab(i){
-  document.querySelectorAll('[id^="dstc_"]').forEach((el,j)=>{ el.style.display = j===i?'block':'none'; });
-  document.querySelectorAll('[id^="dst_"]').forEach((el,j)=>{
-    el.style.background = j===i?'var(--accent)':'var(--surface2)';
-    el.style.color = j===i?'#fff':'var(--muted)';
-  });
-}
-
-function adminTabToggle(id){
-  const el = document.getElementById('dctab_'+id);
-  if(!el) return;
-  const hidden = el.style.opacity === '0.4';
-  el.style.opacity = hidden ? '1' : '0.4';
-  const btn = el.querySelector('button');
-  if(btn) btn.textContent = hidden ? '🙈' : '👁️';
-}
-
-function _previewColor(key, val){
-  const cssVarMap = {
-    bg:'--bg', bg2:'--bg2', surface:'--surface', surface2:'--surface2',
-    border:'--border', text:'--text', textHi:'--text-hi', muted:'--muted',
-    accent:'--accent', purple:'--purple', green:'--green', red:'--red',
-    yellow:'--yellow', ownBg:'--own-bg', incomingBg:'--incoming-bg',
-    sidebarBg:'--sidebar-bg', navBg:'--nav-bg', tabBarBg:'--tabbar-bg',
-  };
-  const cssVar = cssVarMap[key];
-  if(cssVar) document.documentElement.style.setProperty(cssVar, val);
-}
-
-function _previewDesignAll(){
-  const g = id => document.getElementById(id);
-  const root = document.documentElement;
-  ['bg','bg2','surface','surface2','border','text','textHi','muted','accent','purple',
-   'green','red','yellow','ownBg','incomingBg','sidebarBg','navBg','tabBarBg'].forEach(k=>{
-    const el = g('dc_'+k); if(el) _previewColor(k, el.value);
-  });
-  const fontEl = g('dr_fontFamily'); if(fontEl) document.body.style.fontFamily = fontEl.value;
-  const cssEl = g('dr_customCSS');
-  if(cssEl) injectDesignCSS('nc-custom-preview', cssEl.value);
-  showToast('👁️ Önizleme aktif — kaydetmek için Kaydet butonuna bas');
-}
-
-function _resetDesignPreview(){
-  location.reload();
-}
-
-function applyDesignTheme(key){
-  const themes = {
-    nature:{bg:'#0d1a0f',bg2:'#122016',surface:'#1a2e1e',surface2:'#213826',border:'#2d5a28',text:'#d4e8d0',textHi:'#a8e6a0',muted:'#5a8a56',accent:'#4a8f40',purple:'#0e1f10',green:'#4a8f40'},
-    midnight:{bg:'#090d18',bg2:'#0f1520',surface:'#161c2d',surface2:'#1c2438',border:'#2a3350',text:'#c8d0e8',textHi:'#ffffff',muted:'#6b7899',accent:'#4f7fff',purple:'#080d18'},
-    neon:{bg:'#090010',bg2:'#100020',surface:'#180030',surface2:'#200040',border:'#4400aa',text:'#e0d0ff',textHi:'#ffffff',muted:'#8855cc',accent:'#aa00ff',purple:'#050008',green:'#00ff88'},
-    light:{bg:'#f0f2f5',bg2:'#e8eaed',surface:'#ffffff',surface2:'#f4f5f8',border:'#d0d3db',text:'#1a1d25',textHi:'#000000',muted:'#6b7280',accent:'#3b82f6',purple:'#e8eaed'},
-    pastel:{bg:'#1a0f2e',bg2:'#251540',surface:'#301c50',surface2:'#3c2460',border:'#5a3880',text:'#f0e6ff',textHi:'#ffffff',muted:'#9b77cc',accent:'#c084fc',purple:'#180e28'},
-    ember:{bg:'#1a0a00',bg2:'#241000',surface:'#321500',surface2:'#401c00',border:'#6b3300',text:'#ffd0a0',textHi:'#ffffff',muted:'#996633',accent:'#ff6600',purple:'#160800'},
-  };
-  const t = themes[key];
-  if(!t) return;
-  Object.entries(t).forEach(([k,v])=>{
-    const colorEl = document.getElementById('dc_'+k);
-    const textEl  = document.getElementById('dc_'+k+'_t');
-    if(colorEl) colorEl.value = v;
-    if(textEl)  textEl.value  = v;
-    _previewColor(k, v);
-  });
-  showToast('🎭 Tema uygulandı! Kaydet butonuna basarak kalıcı yap.');
-}
-
 
 // Tab sürükle-bırak
 let _dragTabId = null;
@@ -1093,432 +740,141 @@ function adminDesignPreview(){
 
 async function saveAdminDesign(){
   const g = id => document.getElementById(id);
-  const gv = id => { const el=g(id); return el ? el.value : undefined; };
-  const gn = id => { const el=g(id); return el ? parseFloat(el.value) : undefined; };
-  const gb = id => { const el=g(id); return el ? el.checked : undefined; };
-
+  const colorKeys = ['bg','bg2','surface','surface2','border','text','textHi','muted','accent','green','red','ownBg','incomingBg'];
   const obj = { updatedAt: Date.now(), updatedBy: _cu };
 
-  // ── Renkler ──
-  const COLOR_IDS = ['bg','bg2','surface','surface2','border','text','textHi','muted','accent',
-    'green','red','yellow','purple','sidebarBg','sidebarItem','navBg','tabBarBg',
-    'ownBg','incomingBg','ownText','incomingText','inputBg','inputBorder'];
-  COLOR_IDS.forEach(k => { const el=g('dc_'+k); if(el) obj['color_'+k]=el.value; });
+  // Renkler
+  colorKeys.forEach(k => { const el=g('dc_'+k); if(el) obj['color_'+k]=el.value; });
 
-  // ── Font ──
-  const fontEl = g('dr_fontFamily');
+  // Font
+  const fontEl = g('dc_font');
   if(fontEl) obj.fontFamily = fontEl.value;
 
-  // ── Tüm range slider'lar ──
-  const RANGES = [
-    // Yazı
-    'fontSize','msgFontSize','sidebarFontSize','headerFontSize','headerSubtitleSize',
-    'inputFontSize','forumFontSize','sidebarItemFontSize','timestampSize','usernameFontSize',
-    'letterSpacing','lineHeight','sectionHeaderSize','navLabelSize','tabLabelSize',
-    'badgeFontSize','modalTitleSize','toastFontSize',
-    // Köşe
-    'borderRadius','cardRadius','msgRadius','inputRadius','btnRadius','avatarRadius',
-    'badgeRadius','modalRadius','dropdownRadius','tagRadius',
-    // Panel boyutları
-    'sidebarWidth','railWidth','headerHeight','tabBarHeight','inputHeight',
-    'avatarSize','msgAvatarSize','sidebarAvatarSize',
-    // Mobil
-    'mobileHeaderH','mobileHeaderPadH','mobileHeaderPadV','mobileAvatarSize','mobileTitleSize','mobileIconSize',
-    'mobileMsgPadH','mobileMsgPadV','mobileMsgGap','mobileBubbleMaxW','mobileInputH',
-    'mobileInputPadH','mobileInputPadV','mobileSendBtnSize',
-    'mobileSidebarW','mobileSidebarPad','mobileRoomItemH','mobileRoomItemPad','mobileSecHdrH','mobileDMItemH',
-    'tabBarHeight','tabIconSize','tabBarPad','tabItemWidth','tabIconGap','tabActiveBarH','tabBadgeSize',
-    // Boşluklar
-    'msgPaddingH','msgPaddingV','sidebarItemPad','sectionGap','msgGap','railPad',
-    'cardPad','btnPadH','btnPadV','inputPadH','inputPadV',
-    // Gölge & blur
-    'cardShadow','headerShadow','sidebarShadow','inputShadow','bubbleShadow','btnShadow',
-    'modalShadow','navShadow','tabBarShadow','avatarShadow',
-    'headerBlur','sidebarBlur','modalBlur','overlayOpacity','glassOpacity','dimmedOpacity',
-    // Kenarlık
-    'borderWidth','msgBorderWidth','inputBorderWidth','cardBorderWidth','btnBorderWidth','tabBarBorderWidth',
-    // İkon & rail
-    'navIconSize','railBtnRadius','railBtnSize','railBtnMar','railLogoSize',
-    'msgIconSize','statusDotSize','reactionSize','reactionBtnH','attachIconSize','emojiPickerSize',
-  ];
-  RANGES.forEach(k => { const v=gn('dr_'+k); if(v!==undefined && !isNaN(v)) obj[k]=v; });
+  // Font sizes
+  const textFields = ['msgFontSize','sidebarFontSize','headerFontSize','inputFontSize','forumFontSize'];
+  textFields.forEach(k => { const el=g('dc_'+k); if(el) obj[k]=parseInt(el.value); });
 
-  // ── Toggle'lar ──
-  const TOGGLES = [
-    'animMessages','animSidebar','animButtons','animTyping','animPageTransition','animScrollSmooth',
-    'glassEffect','gradientBg','compactMode','roundedEverything','darkMode',
-    'showAvatars','showTimestamps','showReactions','showUserStatus',
-    'showMemberCount','showOnlineCount','showCarbonWidget','showMusicWidget','showNatureBot',
-    'showForumTab','showWatchTab','showMessagePreview','showTypingIndicator','showReadReceipts',
-  ];
-  TOGGLES.forEach(k => { const el=g('dr_'+k); if(el) obj[k]=el.checked; });
+  // Icon sizes
+  const iconFields = ['tabIconSize','tabLabelSize','navIconSize'];
+  iconFields.forEach(k => { const el=g('dc_'+k); if(el) obj[k]=parseInt(el.value); });
 
-  // ── Logo & Medya ──
-  const IMG_KEYS = ['appLogo','favicon','defaultAvatar','loginBg','emptyRoomBg',
-                    'sidebarBanner','homeBg','botAvatar','customEmoji1','customEmoji2'];
-  const customImages = {};
-  IMG_KEYS.forEach(k => { const v=gv('dci_'+k); if(v&&v.trim()) customImages[k]=v.trim(); });
-  obj.customImages = customImages;
+  // Radius & bgStyle
+  const radiusEl = g('dc_radius');
+  const bgEl = g('dc_bgstyle');
+  if(radiusEl) obj.borderRadius = parseInt(radiusEl.value);
+  if(bgEl)     obj.bgStyle      = bgEl.value;
 
-  // ── İçerik & Metin ──
-  const CONTENT_KEYS = [
-    'serverName','serverSubtitle','welcomeTitle','welcomeSubtitle','welcomeBtn1','welcomeBtn2',
-    'secNaturebot','secChannels','secGroups','secDMs',
-    'loginTitle','loginSubtitle','loginBtnText','registerBtnText',
-    'tabHome','tabMsgs','tabForum','tabFriends','tabWatch',
-    'announceChannel','footerText','pushPromptText',
-  ];
-  const content = {};
-  CONTENT_KEYS.forEach(k => { const v=gv('dct_'+k); if(v!==undefined) content[k]=v; });
-  obj.content = content;
-
-  // ── CSS / JS ──
-  const cssEl=g('dr_customCSS'), jsEl=g('dr_customJS');
-  if(cssEl) obj.customCSS = cssEl.value;
-  if(jsEl)  obj.customJS  = jsEl.value;
-
-  // ── Uygulama Bilgisi ──
-  ['appName','appSlogan','siteUrl','contactEmail','tosUrl','privacyUrl','serverRules'].forEach(k => {
-    const v=gv('dr_'+k); if(v!==undefined) obj[k]=v;
-  });
-
-  // ── Tab sırası ──
-  const tabList = g('dc_tab_list');
+  // Tab order & visibility
+  const tabList = document.getElementById('dc_tab_list');
   if(tabList){
     obj.tabOrder = [...tabList.children].map(el=>el.dataset.tabId);
-    obj.hiddenTabs = [...tabList.children].filter(el=>parseFloat(el.style.opacity)<1).map(el=>el.dataset.tabId);
+    obj.hiddenTabs = [...tabList.children].filter(el=>el.style.opacity==='0.45').map(el=>el.dataset.tabId);
   }
 
-  // Kaydetme stratejisi: adminDbRef → adminRestSet → hata
-  let saved = false;
-  // 1. Önce SDK admin DB ref dene
+  // Custom images
+  const imgKeys = ['appLogo','loginBg','emptyRoomImg','botAvatar','customEmoji1','customEmoji2'];
+  const customImages = {};
+  imgKeys.forEach(k => { const el=g('dci_'+k); if(el && el.value.trim()) customImages[k]=el.value.trim(); });
+  obj.customImages = customImages;
+
   try {
-    await adminDbRef('settings/design').set(obj);
-    saved = true;
-  } catch(e1) {
-    console.warn('[saveAdminDesign] SDK failed:', e1.message||e1);
-  }
-  // 2. SDK başarısız → admin REST API dene
-  if(!saved) {
-    try {
-      await adminRestSet('settings/design', obj);
-      saved = true;
-    } catch(e2) {
-      console.warn('[saveAdminDesign] REST failed:', e2.message||e2);
-    }
-  }
-  if(saved){
-    applyGlobalDesign(obj);
+    await adminRestSet('settings/design', obj);
     showToast('✅ Tasarım kaydedildi! Üyeler yenileyince görecek.');
-  } else {
-    showToast('❌ Kaydetme başarısız. Firebase Rules settings/design yazma iznini kontrol et.');
+    applyGlobalDesign(obj);
+  } catch(e) {
+    showToast('❌ Kaydetme hatası: '+e.message);
   }
 }
 
+async function resetAdminDesign(){
+  if(!confirm('Tasarımı varsayılana sıfırlamak istediğinizden emin misiniz?')) return;
+  try {
+    await adminRestSet('settings/design', null);
+    showToast('↺ Tasarım sıfırlandı.');
+    setTimeout(()=>location.reload(), 800);
+  } catch(e) { showToast('Hata: '+e.message); }
+}
 
 function applyGlobalDesign(d){
   if(!d) return;
   const root = document.documentElement;
-
-  /* ── Renkler → CSS değişkenleri ── */
-  const COLOR_MAP = {
+  const colorMap = {
     color_bg:'--bg', color_bg2:'--bg2', color_surface:'--surface',
     color_surface2:'--surface2', color_border:'--border', color_text:'--text',
     color_textHi:'--text-hi', color_muted:'--muted', color_accent:'--accent',
-    color_green:'--green', color_red:'--red', color_yellow:'--yellow',
-    color_blue:'--blue', color_purple:'--purple',
-    color_sidebarBg:'--sidebar-bg', color_sidebarItem:'--sidebar-item',
-    color_sidebarHover:'--sidebar-hover', color_navBg:'--nav-bg',
-    color_tabBarBg:'--tabbar-bg', color_tabActive:'--tab-active',
-    color_tabInactive:'--tab-inactive',
-    color_ownBg:'--own-bg', color_incomingBg:'--incoming-bg',
-    color_ownText:'--own-text', color_incomingText:'--incoming-text',
-    color_inputBg:'--input-bg', color_inputBorder:'--input-border',
-    color_inputText:'--input-text', color_inputPlaceholder:'--input-placeholder',
-    color_loginBg:'--login-bg', color_loginCard:'--login-card',
-    color_loginBorder:'--login-border', color_loginText:'--login-text',
+    color_green:'--green', color_red:'--red', color_ownBg:'--own-bg',
+    color_incomingBg:'--incoming-bg'
   };
-  Object.entries(COLOR_MAP).forEach(([dk,cv])=>{ if(d[dk]) root.style.setProperty(cv,d[dk]); });
-
-  /* ── Font ── */
+  Object.entries(colorMap).forEach(([dKey,cssVar]) => { if(d[dKey]) root.style.setProperty(cssVar, d[dKey]); });
   if(d.fontFamily) document.body.style.fontFamily = d.fontFamily;
+  if(d.borderRadius !== undefined) root.style.setProperty('--radius', d.borderRadius+'px');
 
-  /* ── Range → CSS değişkenleri ── */
-  const RANGE_CSS_VARS = {
-    borderRadius:     ['--radius','px'],
-    cardRadius:       ['--card-radius','px'],
-    msgRadius:        ['--msg-radius','px'],
-    inputRadius:      ['--input-radius','px'],
-    btnRadius:        ['--btn-radius','px'],
-    avatarRadius:     ['--avatar-radius','px'],
-    badgeRadius:      ['--badge-radius','px'],
-    modalRadius:      ['--modal-radius','px'],
-    dropdownRadius:   ['--dropdown-radius','px'],
-    tagRadius:        ['--tag-radius','px'],
-    sidebarWidth:     ['--sidebar-w','px'],
-    railWidth:        ['--rail-w','px'],
-    headerHeight:     ['--header-h','px'],
-    tabBarHeight:     ['--tabbar-h','px'],
-    avatarSize:       ['--avatar-size','px'],
-    msgAvatarSize:    ['--msg-avatar-size','px'],
-    inputHeight:      ['--input-h','px'],
-    cardShadow:       ['--card-shadow-blur','px'],
-    headerBlur:       ['--header-blur','px'],
-    sidebarBlur:      ['--sidebar-blur','px'],
-    modalBlur:        ['--modal-blur','px'],
-    overlayOpacity:   ['--overlay-opacity','%'],
-    glassOpacity:     ['--glass-opacity','%'],
-    dimmedOpacity:    ['--dimmed-opacity','%'],
-    msgPaddingH:      ['--msg-pad-h','px'],
-    msgPaddingV:      ['--msg-pad-v','px'],
-    sectionGap:       ['--section-gap','px'],
-    msgGap:           ['--msg-gap','px'],
-    borderWidth:      ['--border-w','px'],
-    tabBarBorderWidth:['--tabbar-border-w','px'],
-    lineHeight:       ['--line-h','px'],
-    /* Mobil */
-    mobileHeaderH:    ['--mob-header-h','px'],
-    mobileSidebarW:   ['--mob-sidebar-w','px'],
-    mobileInputH:     ['--mob-input-h','px'],
-    mobileBubbleMaxW: ['--mob-bubble-maxw','%'],
-    mobileSendBtnSize:['--mob-send-size','px'],
-    mobileRoomItemH:  ['--mob-room-item-h','px'],
-    mobileDMItemH:    ['--mob-dm-item-h','px'],
-  };
-  Object.entries(RANGE_CSS_VARS).forEach(([k,[cv,u]])=>{
-    if(d[k]!==undefined) root.style.setProperty(cv, d[k]+u);
-  });
+  // Text sizes
+  if(d.msgFontSize)     addDesignStyle('--d-msg-size',    d.msgFontSize+'px',     '.msg-text,.msg-body,.m-text');
+  if(d.sidebarFontSize) addDesignStyle('--d-side-size',   d.sidebarFontSize+'px', '.r-label');
+  if(d.headerFontSize)  addDesignStyle('--d-hdr-size',    d.headerFontSize+'px',  '.ws-name');
+  if(d.inputFontSize)   addDesignStyle('--d-inp-size',    d.inputFontSize+'px',   '#msgInput,textarea');
 
-  /* ══════════════════════════════════════
-     Direkt CSS enjeksiyonu — tüm kontroller
-     ══════════════════════════════════════ */
-  const v = (k,def=null) => d[k]!==undefined ? d[k] : def;
-  const px = k => d[k]!==undefined ? d[k]+'px' : null;
-  const pct = k => d[k]!==undefined ? d[k]+'%' : null;
-
-  /* ── Yazı boyutları ── */
-  const txtCSS = [];
-  if(v('fontSize'))             txtCSS.push(`body,*{font-size:${v('fontSize')}px}`);
-  if(v('msgFontSize'))          txtCSS.push(`.msg-text,.msg-body,.m-text,.msg-content{font-size:${v('msgFontSize')}px!important}`);
-  if(v('usernameFontSize'))     txtCSS.push(`.msg-author,.msg-name,.username,.uname{font-size:${v('usernameFontSize')}px!important}`);
-  if(v('timestampSize'))        txtCSS.push(`.msg-time,.timestamp,.time-lbl{font-size:${v('timestampSize')}px!important}`);
-  if(v('letterSpacing')!=null)  txtCSS.push(`body{letter-spacing:${v('letterSpacing')}px!important}`);
-  if(v('lineHeight'))           txtCSS.push(`.msg-text,.msg-body{line-height:${v('lineHeight')}px!important}`);
-  if(v('sidebarFontSize'))      txtCSS.push(`.r-label,.ch-label,.room-label{font-size:${v('sidebarFontSize')}px!important}`);
-  if(v('sidebarItemFontSize'))  txtCSS.push(`.r-item span,.ch-title,.room-name{font-size:${v('sidebarItemFontSize')}px!important}`);
-  if(v('sectionHeaderSize'))    txtCSS.push(`.sec-hdr,.dsk-sec-hdr,.section-hdr{font-size:${v('sectionHeaderSize')}px!important}`);
-  if(v('headerFontSize'))       txtCSS.push(`.ws-name,.header-title{font-size:${v('headerFontSize')}px!important}`);
-  if(v('headerSubtitleSize'))   txtCSS.push(`.ws-sub,.header-sub{font-size:${v('headerSubtitleSize')}px!important}`);
-  if(v('inputFontSize'))        txtCSS.push(`#msgInput,.msg-input,textarea.chat-input{font-size:${v('inputFontSize')}px!important}`);
-  if(v('forumFontSize'))        txtCSS.push(`.forum-post-body,.forum-content,.fp-body{font-size:${v('forumFontSize')}px!important}`);
-  if(v('tabLabelSize'))         txtCSS.push(`.tab-lb,.tab-label{font-size:${v('tabLabelSize')}px!important}`);
-  if(v('navLabelSize'))         txtCSS.push(`.rail-lbl,.nav-label{font-size:${v('navLabelSize')}px!important}`);
-  if(v('badgeFontSize'))        txtCSS.push(`.badge,.notif-badge,.unread-count{font-size:${v('badgeFontSize')}px!important}`);
-  if(v('modalTitleSize'))       txtCSS.push(`.modal-title,.modal h2,.panel-title{font-size:${v('modalTitleSize')}px!important}`);
-  if(v('toastFontSize'))        txtCSS.push(`#toast,.toast{font-size:${v('toastFontSize')}px!important}`);
-  if(txtCSS.length) injectDesignCSS('nc-text-sizes', txtCSS.join('\n'));
-
-  /* ── İkon boyutları ── */
-  const icoCSS = [];
-  if(v('tabIconSize'))   icoCSS.push(`.tab-ic svg,.tab-icon svg{width:${v('tabIconSize')}px!important;height:${v('tabIconSize')}px!important}`);
-  if(v('navIconSize'))   icoCSS.push(`.rail-btn-ic svg,.nav-icon svg{width:${v('navIconSize')}px!important;height:${v('navIconSize')}px!important}`);
-  if(v('msgIconSize'))   icoCSS.push(`.msg-action-ic svg,.msg-icon svg{width:${v('msgIconSize')}px!important;height:${v('msgIconSize')}px!important}`);
-  if(v('attachIconSize'))icoCSS.push(`.attach-btn svg,.media-btn svg{width:${v('attachIconSize')}px!important;height:${v('attachIconSize')}px!important}`);
-  if(v('statusDotSize')) icoCSS.push(`.sdot,.status-dot{width:${v('statusDotSize')}px!important;height:${v('statusDotSize')}px!important}`);
-  if(v('reactionSize'))  icoCSS.push(`.reaction-ic,.emoji-react{font-size:${v('reactionSize')}px!important}`);
-  if(v('reactionBtnH'))  icoCSS.push(`.reaction-btn,.react-item{height:${v('reactionBtnH')}px!important;line-height:${v('reactionBtnH')}px!important}`);
-  if(v('tabBadgeSize'))  icoCSS.push(`.tab-badge,.tab-notif{width:${v('tabBadgeSize')}px!important;height:${v('tabBadgeSize')}px!important;font-size:${Math.max(7,v('tabBadgeSize')-6)}px!important}`);
-  if(icoCSS.length) injectDesignCSS('nc-icon-sizes', icoCSS.join('\n'));
-
-  /* ── Layout genel ── */
-  const layCSS = [];
-  if(v('sidebarWidth'))   layCSS.push(`#sidebar,.sidebar,.ws-sidebar{width:${v('sidebarWidth')}px!important;min-width:${v('sidebarWidth')}px!important}`);
-  if(v('railWidth'))      layCSS.push(`#rail,.rail,.ws-rail{width:${v('railWidth')}px!important;min-width:${v('railWidth')}px!important}`);
-  if(v('headerHeight'))   layCSS.push(`.ws-header,.chat-header,.c-header{height:${v('headerHeight')}px!important;min-height:${v('headerHeight')}px!important}`);
-  if(v('tabBarHeight'))   layCSS.push(`.tab-bar,.bottom-nav{height:${v('tabBarHeight')}px!important;min-height:${v('tabBarHeight')}px!important}`);
-  if(v('inputHeight'))    layCSS.push(`#msgInput,.msg-input{min-height:${v('inputHeight')}px!important}`);
-  if(v('avatarSize'))     layCSS.push(`.ws-av,.av,.av-wrap{width:${v('avatarSize')}px!important;height:${v('avatarSize')}px!important}`);
-  if(v('msgAvatarSize'))  layCSS.push(`.msg-av,.msg-avatar{width:${v('msgAvatarSize')}px!important;height:${v('msgAvatarSize')}px!important}`);
-  if(v('sidebarAvatarSize')) layCSS.push(`.r-item .av,.sidebar-av{width:${v('sidebarAvatarSize')}px!important;height:${v('sidebarAvatarSize')}px!important}`);
-  if(v('sidebarItemPad')) layCSS.push(`.r-item,.ch-item,.room-item{padding-top:${v('sidebarItemPad')}px!important;padding-bottom:${v('sidebarItemPad')}px!important}`);
-  if(v('msgGap')!=null)   layCSS.push(`.msg-wrap,.msg-row,.message-row{margin-bottom:${v('msgGap')}px!important}`);
-  if(v('sectionGap')!=null) layCSS.push(`.sec-hdr,.dsk-sec-hdr{margin-top:${v('sectionGap')}px!important}`);
-  if(v('msgPaddingH'))    layCSS.push(`.msg-bubble,.msg-in,.msg-own{padding-left:${v('msgPaddingH')}px!important;padding-right:${v('msgPaddingH')}px!important}`);
-  if(v('msgPaddingV'))    layCSS.push(`.msg-bubble,.msg-in,.msg-own{padding-top:${v('msgPaddingV')}px!important;padding-bottom:${v('msgPaddingV')}px!important}`);
-  if(v('cardPad'))        layCSS.push(`.card,.r-card,.panel-card{padding:${v('cardPad')}px!important}`);
-  if(v('btnPadH'))        layCSS.push(`button.btn,.btn-primary,.action-btn{padding-left:${v('btnPadH')}px!important;padding-right:${v('btnPadH')}px!important}`);
-  if(v('btnPadV'))        layCSS.push(`button.btn,.btn-primary,.action-btn{padding-top:${v('btnPadV')}px!important;padding-bottom:${v('btnPadV')}px!important}`);
-  if(v('inputPadH'))      layCSS.push(`#msgInput,.msg-input,.chat-input{padding-left:${v('inputPadH')}px!important;padding-right:${v('inputPadH')}px!important}`);
-  if(v('inputPadV'))      layCSS.push(`#msgInput,.msg-input,.chat-input{padding-top:${v('inputPadV')}px!important;padding-bottom:${v('inputPadV')}px!important}`);
-  if(v('railBtnRadius'))  layCSS.push(`.rail-btn,.nav-btn{border-radius:${v('railBtnRadius')}px!important}`);
-  if(v('railBtnSize'))    layCSS.push(`.rail-btn,.nav-btn{width:${v('railBtnSize')}px!important;height:${v('railBtnSize')}px!important}`);
-  if(v('railBtnMar'))     layCSS.push(`.rail-btn,.nav-btn{margin-bottom:${v('railBtnMar')}px!important}`);
-  if(v('railPad'))        layCSS.push(`#rail,.rail,.ws-rail{padding:${v('railPad')}px!important}`);
-  if(v('railLogoSize'))   layCSS.push(`.rail-logo,.nav-logo{width:${v('railLogoSize')}px!important;height:${v('railLogoSize')}px!important}`);
-  if(v('tabBarPad'))      layCSS.push(`.tab-bar,.bottom-nav{padding:${v('tabBarPad')}px!important}`);
-  if(v('tabItemWidth'))   layCSS.push(`.tab-bar .tab-item,.tab-btn{min-width:${v('tabItemWidth')}px!important}`);
-  if(v('tabIconGap'))     layCSS.push(`.tab-btn,.tab-item{gap:${v('tabIconGap')}px!important}`);
-  if(v('tabActiveBarH'))  layCSS.push(`.tab-btn.active::after,.tab-item.active::after{height:${v('tabActiveBarH')}px!important}`);
-  if(v('emojiPickerSize'))layCSS.push(`.emoji-picker,.emoji-mart{width:${v('emojiPickerSize')}px!important}`);
-  if(v('borderWidth'))    layCSS.push(`*{--border-width:${v('borderWidth')}px}`);
-  if(layCSS.length) injectDesignCSS('nc-layout-sizes', layCSS.join('\n'));
-
-  /* ── 📱 MOBİL CSS (media query içinde) ── */
-  const mobCSS = [];
-  const M = '@media(max-width:768px)';
-  if(v('mobileHeaderH'))     mobCSS.push(`${M}{.ws-header,.c-header{height:${v('mobileHeaderH')}px!important;min-height:${v('mobileHeaderH')}px!important}}`);
-  if(v('mobileHeaderPadH'))  mobCSS.push(`${M}{.ws-header,.c-header{padding-left:${v('mobileHeaderPadH')}px!important;padding-right:${v('mobileHeaderPadH')}px!important}}`);
-  if(v('mobileHeaderPadV'))  mobCSS.push(`${M}{.ws-header,.c-header{padding-top:${v('mobileHeaderPadV')}px!important;padding-bottom:${v('mobileHeaderPadV')}px!important}}`);
-  if(v('mobileAvatarSize'))  mobCSS.push(`${M}{.ws-av,.av{width:${v('mobileAvatarSize')}px!important;height:${v('mobileAvatarSize')}px!important}}`);
-  if(v('mobileTitleSize'))   mobCSS.push(`${M}{.ws-name,.header-title{font-size:${v('mobileTitleSize')}px!important}}`);
-  if(v('mobileIconSize'))    mobCSS.push(`${M}{.ws-header svg,.header-icon svg{width:${v('mobileIconSize')}px!important;height:${v('mobileIconSize')}px!important}}`);
-  if(v('mobileMsgPadH'))     mobCSS.push(`${M}{.msg-bubble,.msg-own,.msg-in{padding-left:${v('mobileMsgPadH')}px!important;padding-right:${v('mobileMsgPadH')}px!important}}`);
-  if(v('mobileMsgPadV'))     mobCSS.push(`${M}{.msg-bubble,.msg-own,.msg-in{padding-top:${v('mobileMsgPadV')}px!important;padding-bottom:${v('mobileMsgPadV')}px!important}}`);
-  if(v('mobileMsgGap'))      mobCSS.push(`${M}{.msg-wrap,.msg-row{margin-bottom:${v('mobileMsgGap')}px!important}}`);
-  if(v('mobileBubbleMaxW'))  mobCSS.push(`${M}{.msg-bubble,.msg-own,.msg-in{max-width:${v('mobileBubbleMaxW')}%!important}}`);
-  if(v('mobileInputH'))      mobCSS.push(`${M}{#msgInput,.msg-input{min-height:${v('mobileInputH')}px!important}}`);
-  if(v('mobileInputPadH'))   mobCSS.push(`${M}{#msgInput,.msg-input{padding-left:${v('mobileInputPadH')}px!important;padding-right:${v('mobileInputPadH')}px!important}}`);
-  if(v('mobileInputPadV'))   mobCSS.push(`${M}{#msgInput,.msg-input{padding-top:${v('mobileInputPadV')}px!important;padding-bottom:${v('mobileInputPadV')}px!important}}`);
-  if(v('mobileSendBtnSize')) mobCSS.push(`${M}{.send-btn,.msg-send{width:${v('mobileSendBtnSize')}px!important;height:${v('mobileSendBtnSize')}px!important}}`);
-  if(v('mobileSidebarW'))    mobCSS.push(`${M}{#sidebar,.sidebar{width:${v('mobileSidebarW')}px!important;max-width:${v('mobileSidebarW')}px!important}}`);
-  if(v('mobileSidebarPad'))  mobCSS.push(`${M}{#sidebar,.sidebar{padding:${v('mobileSidebarPad')}px!important}}`);
-  if(v('mobileRoomItemH'))   mobCSS.push(`${M}{.r-item,.ch-item,.room-item{height:${v('mobileRoomItemH')}px!important;min-height:${v('mobileRoomItemH')}px!important}}`);
-  if(v('mobileRoomItemPad')) mobCSS.push(`${M}{.r-item,.ch-item{padding:${v('mobileRoomItemPad')}px!important}}`);
-  if(v('mobileSecHdrH'))     mobCSS.push(`${M}{.sec-hdr,.dsk-sec-hdr{height:${v('mobileSecHdrH')}px!important;line-height:${v('mobileSecHdrH')}px!important}}`);
-  if(v('mobileDMItemH'))     mobCSS.push(`${M}{.dm-item,.friend-item,.contact-item{height:${v('mobileDMItemH')}px!important;min-height:${v('mobileDMItemH')}px!important}}`);
-  if(mobCSS.length) injectDesignCSS('nc-mobile-sizes', mobCSS.join('\n'));
-
-  /* ── Gölge & blur ── */
-  const shdCSS = [];
-  if(v('cardShadow')!=null)    shdCSS.push(`.card,.r-card,.msg-card{box-shadow:0 4px ${v('cardShadow')}px rgba(0,0,0,.4)!important}`);
-  if(v('headerShadow')!=null)  shdCSS.push(`.ws-header,.c-header{box-shadow:0 2px ${v('headerShadow')}px rgba(0,0,0,.5)!important}`);
-  if(v('sidebarShadow')!=null) shdCSS.push(`#sidebar,.sidebar{box-shadow:${v('sidebarShadow')}px 0 ${v('sidebarShadow')*2}px rgba(0,0,0,.4)!important}`);
-  if(v('bubbleShadow')!=null)  shdCSS.push(`.msg-own,.msg-in,.msg-bubble{box-shadow:0 2px ${v('bubbleShadow')}px rgba(0,0,0,.3)!important}`);
-  if(v('modalShadow')!=null)   shdCSS.push(`.modal,.bs-modal,.panel-modal{box-shadow:0 8px ${v('modalShadow')}px rgba(0,0,0,.6)!important}`);
-  if(v('tabBarShadow')!=null)  shdCSS.push(`.tab-bar,.bottom-nav{box-shadow:0 -2px ${v('tabBarShadow')}px rgba(0,0,0,.4)!important}`);
-  if(v('navShadow')!=null)     shdCSS.push(`#rail,.rail{box-shadow:${v('navShadow')}px 0 ${v('navShadow')*2}px rgba(0,0,0,.3)!important}`);
-  if(v('btnShadow')!=null)     shdCSS.push(`button.btn,.btn-primary{box-shadow:0 2px ${v('btnShadow')}px rgba(0,0,0,.3)!important}`);
-  if(v('inputShadow')!=null)   shdCSS.push(`#msgInput,.msg-input{box-shadow:0 1px ${v('inputShadow')}px rgba(0,0,0,.3)!important}`);
-  if(v('headerBlur')!=null)    shdCSS.push(`.ws-header,.c-header{backdrop-filter:blur(${v('headerBlur')}px)!important;-webkit-backdrop-filter:blur(${v('headerBlur')}px)!important}`);
-  if(v('sidebarBlur')!=null)   shdCSS.push(`#sidebar,.sidebar{backdrop-filter:blur(${v('sidebarBlur')}px)!important}`);
-  if(v('modalBlur')!=null)     shdCSS.push(`.modal-overlay,.bs-overlay{backdrop-filter:blur(${v('modalBlur')}px)!important}`);
-  if(shdCSS.length) injectDesignCSS('nc-shadows', shdCSS.join('\n'));
-
-  /* ── Kenarlık kalınlığı ── */
-  const brdCSS = [];
-  if(v('borderWidth'))       brdCSS.push(`.card,.r-card,.panel-card,.r-item{border-width:${v('borderWidth')}px!important}`);
-  if(v('msgBorderWidth'))    brdCSS.push(`.msg-own,.msg-in,.msg-bubble{border-width:${v('msgBorderWidth')}px!important;border-style:solid}`);
-  if(v('inputBorderWidth'))  brdCSS.push(`#msgInput,.msg-input,textarea.chat-input{border-width:${v('inputBorderWidth')}px!important;border-style:solid}`);
-  if(v('cardBorderWidth'))   brdCSS.push(`.card,.r-card{border-width:${v('cardBorderWidth')}px!important;border-style:solid}`);
-  if(v('btnBorderWidth'))    brdCSS.push(`button.btn,.btn-primary{border-width:${v('btnBorderWidth')}px!important;border-style:solid}`);
-  if(v('tabBarBorderWidth')) brdCSS.push(`.tab-bar,.bottom-nav{border-top-width:${v('tabBarBorderWidth')}px!important;border-top-style:solid}`);
-  if(brdCSS.length) injectDesignCSS('nc-borders', brdCSS.join('\n'));
-
-  /* ── Toggle sınıfları ── */
-  const toggles = {
-    compactMode:'compact-mode', glassEffect:'glass-effect',
-    roundedEverything:'rounded-all', gradientBg:'gradient-bg',
-    darkMode:'force-dark', animMessages:'anim-messages',
-    animButtons:'anim-buttons', animPageTransition:'anim-page',
-    animScrollSmooth:'smooth-scroll',
-  };
-  Object.entries(toggles).forEach(([k,cls])=>{
-    if(d[k]!==undefined) document.body.classList.toggle(cls, !!d[k]);
-  });
-
-  /* ── Gizle/göster ── */
-  const hideMap = {
-    showAvatars:       '.ws-av,.av-wrap,.msg-av,.msg-avatar',
-    showTimestamps:    '.msg-time,.timestamp,.time-lbl',
-    showReactions:     '.reaction-row,.msg-react,.react-bar',
-    showUserStatus:    '.sdot,.status-dot,.user-status',
-    showCarbonWidget:  '#carbonWidget,.carbon-widget',
-    showMusicWidget:   '.ambiance-btn,[onclick*="Ambiance"],.music-btn',
-    showNatureBot:     '#natureBotPet,#botKennel,.naturebot-wrap',
-    showTypingIndicator:'.typing-indicator,.typing-wrap',
-    showReadReceipts:  '.read-receipt,.seen-indicator',
-  };
-  const hideCSS = [];
-  Object.entries(hideMap).forEach(([k,sel])=>{
-    if(d[k]===false) hideCSS.push(`${sel}{display:none!important}`);
-  });
-  if(d.showForumTab===false)  hideCSS.push(`#tabForum,[onclick*="'forum'"]{display:none!important}`);
-  if(d.showWatchTab===false)  hideCSS.push(`[onclick*="'watch'"]{display:none!important}`);
-  if(d.showMemberCount===false) hideCSS.push(`.member-count,.room-count{display:none!important}`);
-  if(d.showOnlineCount===false) hideCSS.push(`.online-count,.online-indicator{display:none!important}`);
-  if(d.showMessagePreview===false) hideCSS.push(`.msg-preview,.last-msg-preview{display:none!important}`);
-  if(hideCSS.length) injectDesignCSS('nc-hide-elements', hideCSS.join('\n'));
-
-  /* ── Özel medya ── */
-  if(d.customImages){
-    const ci = d.customImages;
-    if(ci.appLogo){
-      document.querySelectorAll('#myAvatar,#deskRailUser,.app-logo,.rail-logo').forEach(el=>{
-        el.innerHTML = (ci.appLogo.startsWith('http')||ci.appLogo.startsWith('data'))
-          ? `<img src="${ci.appLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`
-          : ci.appLogo;
-      });
-    }
-    if(ci.botAvatar){
-      document.querySelectorAll('#natureBotPet .bot-head,.naturebot-avatar,.bot-face').forEach(el=>{
-        el.innerHTML = (ci.botAvatar.startsWith('http')||ci.botAvatar.startsWith('data'))
-          ? `<img src="${ci.botAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-          : ci.botAvatar;
-      });
-    }
-    if(ci.loginBg){
-      const ls=document.getElementById('loginScreen');
-      if(ls){ ls.style.backgroundImage=`url('${ci.loginBg}')`;ls.style.backgroundSize='cover'; }
-    }
-    if(ci.mobileHeaderBg){
-      injectDesignCSS('nc-mob-header-bg',`@media(max-width:768px){.ws-header,.c-header{background-image:url('${ci.mobileHeaderBg}')!important;background-size:cover!important;}}`);
-    }
+  // Icon sizes
+  if(d.tabIconSize){
+    const tabCss = `.tab-ic svg { width:${d.tabIconSize}px!important; height:${d.tabIconSize}px!important; }`;
+    injectDesignCSS('nc-tab-icon-size', tabCss);
+  }
+  if(d.tabLabelSize){
+    injectDesignCSS('nc-tab-lb-size', `.tab-lb { font-size:${d.tabLabelSize}px!important; }`);
+  }
+  if(d.navIconSize){
+    injectDesignCSS('nc-nav-icon-size', `.rail-btn-ic svg { width:${d.navIconSize}px!important; height:${d.navIconSize}px!important; }`);
   }
 
-  /* ── İçerik metinleri ── */
-  const ct = d.content||{};
-  window._nc_labels = ct;
-  if(ct.serverName){
-    document.querySelectorAll('#wsHeaderName,.ws-name:not(.ch-title)').forEach(el=>el.textContent=ct.serverName);
-    document.title = ct.serverName;
-  }
-  if(ct.welcomeTitle)    document.querySelectorAll('.big-title,[data-ct="welcomeTitle"]').forEach(el=>el.textContent=ct.welcomeTitle);
-  if(ct.welcomeSubtitle) document.querySelectorAll('.big-sub,[data-ct="welcomeSubtitle"]').forEach(el=>el.textContent=ct.welcomeSubtitle);
-
-  /* ── Tab sırası & görünürlük ── */
+  // Tab order & visibility
   if(d.tabOrder && d.tabOrder.length){
-    document.querySelectorAll('.tab-bar,.bottom-nav').forEach(bar=>{
-      const tabs=[...bar.children];
-      d.tabOrder.forEach((id,idx)=>{
-        const el=tabs.find(t=>{
-          const oc=t.getAttribute('onclick')||'',tid=t.id||'';
-          if(id==='home')    return tid==='tabHome'||oc.includes("'home'");
-          if(id==='msgs')    return oc.includes('openDMModal');
-          if(id==='forum')   return tid==='tabForum'||oc.includes("'forum'");
-          if(id==='friends') return oc.includes('openFriendsModal')||oc.includes("'friends'");
-          if(id==='watch')   return oc.includes("'watch'");
+    const tabIdMap = { home:'tabHome', forum:'tabForum' };
+    document.querySelectorAll('.tab-bar').forEach(bar => {
+      const tabs = [...bar.children];
+      d.tabOrder.forEach((id, idx) => {
+        const el = tabs.find(t => {
+          const onclick = t.getAttribute('onclick')||'';
+          const tabId = t.id || '';
+          if(id==='home')    return tabId==='tabHome'    || onclick.includes("'home'");
+          if(id==='msgs')    return onclick.includes('openDMModal');
+          if(id==='forum')   return tabId==='tabForum'   || onclick.includes("'forum'");
+          if(id==='friends') return onclick.includes('openFriendsModal') || onclick.includes("'friends'");
+          if(id==='watch')   return onclick.includes("'watch'");
           return false;
         });
-        if(el) el.style.order=idx;
+        if(el) el.style.order = idx;
       });
-      if(d.hiddenTabs) d.hiddenTabs.forEach(id=>{
-        const el=tabs.find(t=>{
-          const oc=t.getAttribute('onclick')||'',tid=t.id||'';
-          if(id==='home')    return tid==='tabHome'||oc.includes("'home'");
-          if(id==='msgs')    return oc.includes('openDMModal');
-          if(id==='forum')   return tid==='tabForum'||oc.includes("'forum'");
-          if(id==='friends') return oc.includes('openFriendsModal');
-          if(id==='watch')   return oc.includes("'watch'");
+      if(d.hiddenTabs) d.hiddenTabs.forEach(id => {
+        const el = tabs.find(t => {
+          const onclick = t.getAttribute('onclick')||'';
+          if(id==='home')    return t.id==='tabHome'    || onclick.includes("'home'");
+          if(id==='msgs')    return onclick.includes('openDMModal');
+          if(id==='forum')   return t.id==='tabForum'   || onclick.includes("'forum'");
+          if(id==='friends') return onclick.includes('openFriendsModal');
+          if(id==='watch')   return onclick.includes("'watch'");
           return false;
         });
-        if(el) el.style.display='none';
+        if(el) el.style.display = 'none';
       });
     });
   }
 
-  /* ── Özel CSS & JS ── */
-  if(d.customCSS) injectDesignCSS('nc-custom-css', d.customCSS);
-  if(d.customJS){ try{ (new Function(d.customJS))(); }catch(e){ console.warn('customJS:',e); } }
+  // Custom images
+  if(d.customImages){
+    const ci = d.customImages;
+    if(ci.appLogo){
+      document.querySelectorAll('#myAvatar,#deskRailUser').forEach(el=>{
+        if(ci.appLogo.startsWith('http')){ el.innerHTML=`<img src="${ci.appLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`; }
+        else { el.textContent=ci.appLogo; }
+      });
+    }
+    if(ci.botAvatar){
+      document.querySelectorAll('.naturebot-avatar,[id*="botAvatar"]').forEach(el=>{
+        el.innerHTML = ci.botAvatar.startsWith('http') ? `<img src="${ci.botAvatar}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : ci.botAvatar;
+      });
+    }
+  }
 }
 
 function addDesignStyle(varName, value, selector){
@@ -1530,151 +886,6 @@ function injectDesignCSS(id, css){
   if(!el){ el=document.createElement('style'); el.id=id; document.head.appendChild(el); }
   el.textContent = css;
 }
-
-
-
-/* ═══════════════════════════════════════════════════
-   📱 MOBİL / TABLET / MASAÜSTÜ SİMÜLATÖRÜ
-   ═══════════════════════════════════════════════════ */
-
-function openSimulator(){
-  const existing = document.getElementById('ncSimOverlay');
-  if(existing){ existing.remove(); return; }
-
-  const DEVICES = [
-    { id:'iphone15',   name:'iPhone 15 Pro',     w:393,  h:852,  mobile:true  },
-    { id:'iphone_se',  name:'iPhone SE (3.nesil)',w:375,  h:667,  mobile:true  },
-    { id:'iphone_max', name:'iPhone 15 Pro Max',  w:430,  h:932,  mobile:true  },
-    { id:'ipad',       name:'iPad Air 11"',        w:820,  h:1180, mobile:true  },
-    { id:'android_s',  name:'Samsung S24',         w:360,  h:780,  mobile:true  },
-    { id:'android_m',  name:'Pixel 8 Pro',         w:412,  h:915,  mobile:true  },
-    { id:'desktop_sm', name:'Laptop 1366×768',     w:1366, h:768,  mobile:false },
-    { id:'desktop_lg', name:'Desktop 1920×1080',   w:1920, h:1080, mobile:false },
-  ];
-
-  let activeDev = DEVICES[0];
-  let isLandscape = false;
-  let zoomVal = 0.58;
-
-  function gW(){ return isLandscape ? activeDev.h : activeDev.w; }
-  function gH(){ return isLandscape ? activeDev.w : activeDev.h; }
-
-  function updateFrame(){
-    const iframe = document.getElementById('simIframe');
-    const bezel  = document.getElementById('simBezel');
-    const info   = document.getElementById('simSizeInfo');
-    const notch  = document.getElementById('simNotch');
-    const homebar= document.getElementById('simHomebar');
-    if(iframe){ iframe.style.width = gW()+'px'; iframe.style.height = gH()+'px'; }
-    if(bezel)  bezel.style.transform = 'scale('+zoomVal+')';
-    if(info)   info.textContent = gW()+'×'+gH();
-    if(notch)  notch.style.display = activeDev.mobile ? 'flex' : 'none';
-    if(homebar)homebar.style.display = activeDev.mobile ? 'flex' : 'none';
-    // Bezel border-radius desktop'ta düz
-    const shell = document.getElementById('simBezel');
-    if(shell) shell.style.borderRadius = activeDev.mobile ? '40px' : '8px';
-  }
-
-  const overlay = document.createElement('div');
-  overlay.id = 'ncSimOverlay';
-  overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;background:rgba(5,5,15,.95);display:flex;flex-direction:column;';
-
-  const devOptions = DEVICES.map(d =>
-    '<option value="'+d.id+'" '+(d.id===activeDev.id?'selected':'')+'>'+
-    (d.mobile?'📱':'🖥️')+' '+d.name+' ('+d.w+'×'+d.h+')</option>'
-  ).join('');
-
-  const btnStyle = 'padding:6px 12px;border-radius:7px;font-size:.78rem;font-weight:700;cursor:pointer;border:1px solid #3a3a5e;background:#1a1a2e;color:#c4b5fd;';
-
-  overlay.innerHTML =
-    // ── Toolbar ──
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 16px;background:#080812;border-bottom:1px solid #1e1e3a;flex-shrink:0;flex-wrap:wrap;">'+
-      '<button onclick="document.getElementById(\'ncSimOverlay\').remove()" style="padding:6px 12px;background:#dc2626;border:none;border-radius:7px;color:#fff;font-weight:900;cursor:pointer;font-size:.82rem;">✕</button>'+
-      '<span style="color:#fff;font-weight:900;font-size:.88rem;">📱 Simülatör</span>'+
-      '<select id="simDevSel" style="'+btnStyle+'max-width:220px;padding:6px 8px;" onchange="window._simChange(this.value)">'+devOptions+'</select>'+
-      '<button id="simOrientBtn" style="'+btnStyle+'" onclick="window._simOrient()">🔄 Dikey</button>'+
-      '<div style="display:flex;align-items:center;gap:5px;">'+
-        '<span style="color:#6b7280;font-size:.7rem;">Zoom</span>'+
-        '<input type="range" id="simZoomR" min="15" max="95" value="58" style="width:80px;accent-color:#7c3aed;" oninput="window._simZoom(this.value)">'+
-        '<span id="simZoomLbl" style="color:#c4b5fd;font-size:.72rem;min-width:32px;">58%</span>'+
-      '</div>'+
-      '<span id="simSizeInfo" style="margin-left:auto;color:#6b7280;font-size:.72rem;font-family:monospace;">'+gW()+'×'+gH()+'</span>'+
-      '<button style="'+btnStyle+'" onclick="window._simReload()">↺ Yenile</button>'+
-      // Ön hazır zoom butonları
-      '<div style="display:flex;gap:4px;">'+
-        '<button style="'+btnStyle+'font-size:.68rem;padding:4px 7px;" onclick="window._simZoom(35)">35%</button>'+
-        '<button style="'+btnStyle+'font-size:.68rem;padding:4px 7px;" onclick="window._simZoom(58)">58%</button>'+
-        '<button style="'+btnStyle+'font-size:.68rem;padding:4px 7px;" onclick="window._simZoom(80)">80%</button>'+
-      '</div>'+
-    '</div>'+
-    // ── Stage ──
-    '<div id="simStage" style="flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:30px;">'+
-      '<div id="simBezel" style="'+
-        'border-radius:40px;'+
-        'background:linear-gradient(145deg,#252535,#141420);'+
-        'padding:16px 14px;'+
-        'box-shadow:0 0 0 2px #3a3a5e,0 0 0 4px #1a1a2e,0 24px 80px rgba(0,0,0,.9),inset 0 0 20px rgba(255,255,255,.02);'+
-        'transform-origin:center center;'+
-        'transform:scale('+zoomVal+');'+
-        'transition:transform .2s;'+
-      '">'+
-        // Notch
-        '<div id="simNotch" style="width:100%;display:flex;justify-content:center;margin-bottom:5px;">'+
-          '<div style="width:100px;height:7px;background:#0a0a14;border-radius:4px;"></div>'+
-        '</div>'+
-        // Screen
-        '<div style="border-radius:22px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);">'+
-          '<iframe id="simIframe" style="display:block;border:none;background:#1a1e25;" width="'+gW()+'" height="'+gH()+'" src="'+location.href.split('#')[0]+'"></iframe>'+
-        '</div>'+
-        // Home bar
-        '<div id="simHomebar" style="width:100%;display:flex;justify-content:center;margin-top:6px;">'+
-          '<div style="width:110px;height:4px;background:rgba(255,255,255,.18);border-radius:2px;"></div>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-
-  document.body.appendChild(overlay);
-
-  // Iframe yüklenince oturumu aktar
-  document.getElementById('simIframe').addEventListener('load', function(){
-    try{
-      const iw = this.contentWindow;
-      if(!iw || !window._cu) return;
-      // localStorage üzerinden session
-      iw.localStorage && Object.entries(localStorage).forEach(([k,v])=>{
-        if(k.startsWith('sohbet_')) try{ iw.localStorage.setItem(k,v); }catch{}
-      });
-    }catch(e){}
-  });
-
-  // Global helpers
-  window._simChange = function(devId){
-    activeDev = DEVICES.find(d=>d.id===devId)||DEVICES[0];
-    isLandscape = false;
-    const orientBtn = document.getElementById('simOrientBtn');
-    if(orientBtn) orientBtn.textContent = '🔄 Dikey';
-    updateFrame();
-  };
-  window._simOrient = function(){
-    isLandscape = !isLandscape;
-    const btn = document.getElementById('simOrientBtn');
-    if(btn) btn.textContent = isLandscape ? '🔄 Yatay' : '🔄 Dikey';
-    updateFrame();
-  };
-  window._simZoom = function(val){
-    zoomVal = val/100;
-    const lbl = document.getElementById('simZoomLbl');
-    const r   = document.getElementById('simZoomR');
-    if(lbl) lbl.textContent = Math.round(val)+'%';
-    if(r) r.value = val;
-    updateFrame();
-  };
-  window._simReload = function(){
-    const iframe = document.getElementById('simIframe');
-    if(iframe) iframe.src = iframe.src;
-  };
-}
-
 
 // Sayfa yüklenince global tasarımı Firebase'den çekip uygula
 (function initGlobalDesign(){
@@ -1723,24 +934,6 @@ window._renderCreateUser = async function(body) {
       </div>
     </div>`;
 };
-
-async function resetAdminDesign(){
-  if(!confirm('Tasarımı varsayılana sıfırlamak istediğinizden emin misiniz?\nTüm özel ayarlar silinecek.')) return;
-  try {
-    await dbRef('settings/design').set(null);
-    showToast('↺ Tasarım sıfırlandı, yenileniyor...');
-    setTimeout(()=>location.reload(), 900);
-  } catch(e) {
-    try {
-      await adminRestSet('settings/design', null);
-      showToast('↺ Tasarım sıfırlandı.');
-      setTimeout(()=>location.reload(), 900);
-    } catch(e2) {
-      showToast('❌ Sıfırlama hatası: '+(e2.message||e.message));
-    }
-  }
-}
-
 
 async function adminCreateUserSubmit() {
   const username = (document.getElementById('cu_username')?.value||'').trim();
@@ -1892,7 +1085,20 @@ async function loadAdminSettings(){
     html += '<button onclick="adminClearAllMsgs()" style="width:100%;padding:11px;border:1px solid rgba(224,30,90,.3);border-radius:9px;background:rgba(224,30,90,.12);color:#ff5a8a;font-weight:900;font-size:.88rem;cursor:pointer;">🗑️ Tüm Mesajları Sil (DM Dahil)</button>';
     html += '<button onclick="adminClearForumPosts()" style="width:100%;padding:11px;border:1px solid rgba(224,30,90,.3);border-radius:9px;background:rgba(224,30,90,.12);color:#ff5a8a;font-weight:900;font-size:.88rem;cursor:pointer;">🗑️ Tüm Forum Paylaşımlarını Sil</button>';
     html += '</div></div>';
-    // AI Asistan kaldırıldı
+    // ── AI Asistan Key bölümü ──
+    const aiKey = esc(s.openrouterKey||'');
+    const aiKeyMasked = aiKey ? '✅ Key kayıtlı (' + aiKey.slice(0,8) + '...)' : '❌ Key girilmemiş';
+    html += '<div class="admin-section" style="margin-top:12px">';
+    html += '<div class="admin-sec-title">🤖 AI Mesaj Asistanı</div>';
+    html += '<div class="admin-card" style="padding:14px;display:flex;flex-direction:column;gap:10px;">';
+    html += '<div style="font-size:.75rem;color:var(--muted);">OpenRouter API key giriniz — tüm kullanıcılar kendi key girmeden AI asistanı kullanabilir.</div>';
+    html += '<div style="font-size:.78rem;font-weight:700;color:' + (aiKey ? 'var(--green)' : '#e05555') + ';">' + aiKeyMasked + '</div>';
+    html += '<div style="display:flex;gap:8px;">';
+    html += '<input class="admin-inp" type="password" id="setAiKey" value="' + aiKey + '" placeholder="sk-or-..." style="margin-bottom:0;flex:1;">';
+    html += '<button class="a-btn blue" onclick="saveAiKeyAdmin()">Kaydet</button>';
+    html += '</div>';
+    html += '<div style="font-size:.7rem;color:var(--muted);">Ücretsiz key: <a href="https://openrouter.ai/keys" target="_blank" style="color:var(--purple);">openrouter.ai/keys</a></div>';
+    html += '</div></div>';
 
     // Davet kodu bölümü
     html += '<div class="admin-section" style="margin-top:12px">';
@@ -1935,7 +1141,15 @@ async function toggleRegistration(){
   try{ await adminRestSet('settings/registration',newVal); showToast(isOpening?'✅ Kayıt açıldı!':'🔒 Kayıt durduruldu!'); loadAdminSettings(); }
   catch(e){ showToast('❌ Hata: '+(e&&e.message||'Bilinmiyor')); btn.disabled=false; }
 }
-
+async function saveAiKeyAdmin(){
+  const val = (document.getElementById('setAiKey')?.value||'').trim();
+  if(!val){ showToast('❌ Key boş olamaz'); return; }
+  try{
+    await adminRestSet('settings/openrouterKey', val);
+    showToast('✅ AI Key kaydedildi! Tüm kullanıcılar artık kullanabilir.');
+    loadAdminSettings();
+  }catch(e){ showToast('❌ Hata: '+(e?.message||'')); }
+}
 
 async function saveAdminSetting(key, inputId, successMsg){
   const val = document.getElementById(inputId).value.trim();
