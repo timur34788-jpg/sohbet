@@ -1046,47 +1046,154 @@ async function adminCreateUserSubmit() {
 
 /* ── Admin: Davet Linkleri ── */
 
+/* ══════════════════════════════════════════════
+   🔗 DAVET LİNKLERİ — Token Tabanlı Sistem
+══════════════════════════════════════════════ */
+
 window._renderInviteLinks = async function(body) {
   body.innerHTML = '<div class="ld"><span></span><span></span><span></span></div>';
-  const settings = await adminRestGet('settings').catch(()=>null)||{};
-  const inviteCode = settings.inviteCode || '';
+  const [invites, settings] = await Promise.all([
+    adminRestGet('invites').catch(()=>null)||{},
+    adminRestGet('settings').catch(()=>null)||{}
+  ]);
   const regOpen = (settings.registration||'open') === 'open';
-  const baseUrl = window.location.origin + window.location.pathname;
+  const baseUrl = window.location.origin + window.location.pathname + '#inv_';
 
-  body.innerHTML = `
-    <div class="admin-section">
-      <div class="admin-sec-title">🔗 Davet Linkleri</div>
-      <div style="display:flex;flex-direction:column;gap:16px;max-width:520px;">
-        
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
-          <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">📋 Kayıt Durumu</div>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <div style="width:10px;height:10px;border-radius:50%;background:${regOpen?'var(--green)':'var(--red)'}"></div>
-            <span style="font-size:.88rem;font-weight:700;color:var(--text-hi);">${regOpen?'Kayıt Açık':'Kayıt Kapalı'}</span>
-          </div>
-        </div>
+  const now = Date.now();
+  const invList = Object.entries(invites||{}).map(([token, inv])=>({token,...inv}))
+    .sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
 
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
-          <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">🔑 Davet Kodu</div>
-          <div style="display:flex;gap:8px;align-items:center;">
-            <input class="admin-inp" id="inv_code" value="${inviteCode}" placeholder="Davet kodu (boş = kod gerekmez)" style="flex:1;">
-            <button onclick="adminSaveInviteCode()" style="padding:9px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.8rem;cursor:pointer;white-space:nowrap;">Kaydet</button>
-          </div>
-          <div style="font-size:.7rem;color:var(--muted);margin-top:6px;">Boş bırakılırsa davet kodu sorulmaz.</div>
-        </div>
+  // Status hesapla
+  function invStatus(inv) {
+    if(inv.expiresAt && now > inv.expiresAt) return {label:'Süresi Doldu', color:'var(--red)', icon:'🔴'};
+    if(inv.maxUses && (inv.usedCount||0) >= inv.maxUses) return {label:'Doldu', color:'#e67e22', icon:'🟠'};
+    return {label:'Aktif', color:'var(--green)', icon:'🟢'};
+  }
 
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;">
-          <div style="font-size:.78rem;color:var(--muted);margin-bottom:8px;">🌐 Davet Linki</div>
-          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:.8rem;color:var(--text);word-break:break-all;font-family:monospace;" id="inv_link_display">
-            ${inviteCode ? baseUrl+'?invite='+inviteCode : baseUrl}
-          </div>
-          <button onclick="adminCopyInviteLink()" style="margin-top:8px;padding:8px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:.78rem;font-weight:700;cursor:pointer;">📋 Kopyala</button>
-        </div>
-
-        <div id="inv_result" style="font-size:.82rem;color:var(--muted);"></div>
+  let h = '<div class="admin-section">';
+  h += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+    <div class="admin-sec-title" style="margin:0">🔗 Davet Linkleri</div>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <div style="font-size:.78rem;padding:5px 10px;border-radius:8px;background:${regOpen?'rgba(46,204,113,.15)':'rgba(224,85,85,.15)'};color:${regOpen?'var(--green)':'var(--red)'};">
+        ${regOpen?'🟢 Kayıt Açık':'🔴 Kayıt Kapalı'}
       </div>
-    </div>`;
+      <button onclick="adminShowCreateInvite()" style="padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:.8rem;cursor:pointer;">➕ Yeni Link</button>
+    </div>
+  </div>`;
+
+  // Yeni link oluşturma formu (gizli)
+  h += `<div id="invCreateForm" style="display:none;background:var(--surface);border:1px solid var(--accent);border-radius:14px;padding:16px;margin-bottom:14px;">
+    <div style="font-size:.88rem;font-weight:700;color:var(--text-hi);margin-bottom:12px;">➕ Yeni Davet Linki Oluştur</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+      <div>
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">Max Kullanım Sayısı</div>
+        <input id="inv_maxUses" class="admin-inp" type="number" value="10" min="1" max="9999" style="margin-bottom:0;">
+      </div>
+      <div>
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">Geçerlilik (gün)</div>
+        <input id="inv_days" class="admin-inp" type="number" value="60" min="1" max="3650" style="margin-bottom:0;">
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">Açıklama (isteğe bağlı)</div>
+      <input id="inv_note" class="admin-inp" placeholder="Örn: Instagram paylaşımı için" style="margin-bottom:0;">
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="adminCreateInviteLink()" style="flex:1;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">✅ Oluştur</button>
+      <button onclick="document.getElementById('invCreateForm').style.display='none'" style="padding:10px 14px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:8px;cursor:pointer;">İptal</button>
+    </div>
+  </div>`;
+
+  if(!invList.length) {
+    h += '<div class="admin-card" style="padding:20px;text-align:center;color:var(--muted);font-size:.85rem;">Henüz davet linki yok. Yeni Link butonuna bas.</div>';
+  } else {
+    h += '<div style="display:flex;flex-direction:column;gap:10px;">';
+    invList.forEach(inv => {
+      const st = invStatus(inv);
+      const used = inv.usedCount||0;
+      const max = inv.maxUses||'∞';
+      const exp = inv.expiresAt ? new Date(inv.expiresAt).toLocaleDateString('tr-TR') : 'Süresiz';
+      const created = inv.createdAt ? new Date(inv.createdAt).toLocaleDateString('tr-TR') : '?';
+      const link = baseUrl + inv.token;
+      const uses = Object.values(inv.uses||{});
+
+      h += `<div class="admin-card" style="padding:14px;">
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;">
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+              <span style="font-size:.78rem;font-weight:900;color:${st.color};background:${st.color}22;padding:3px 8px;border-radius:6px;">${st.icon} ${st.label}</span>
+              <span style="font-size:.72rem;color:var(--muted);">👥 ${used}/${max} kullanım · 📅 ${exp} · 🗓 ${created}</span>
+            </div>
+            ${inv.note?`<div style="font-size:.75rem;color:var(--muted);margin-bottom:6px;">📝 ${esc(inv.note)}</div>`:''}
+            <div style="background:var(--surface2);border-radius:7px;padding:7px 10px;font-family:monospace;font-size:.72rem;color:var(--text);word-break:break-all;">${link}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:5px;flex-shrink:0;">
+            <button onclick="navigator.clipboard.writeText('${link}').then(()=>showToast('📋 Kopyalandı!'))" style="padding:7px 12px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;">📋 Kopyala</button>
+            <button onclick="adminShowInviteUses('${inv.token}')" style="padding:7px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:7px;font-size:.75rem;cursor:pointer;">👥 Kayıtlar (${used})</button>
+            <button onclick="if(confirm('Bu davet linki silinsin mi?'))adminRestDelete('invites/${inv.token}').then(()=>{showToast('Silindi.');adminTab('invite');})" style="padding:7px 12px;background:rgba(224,85,85,.15);color:var(--red);border:1px solid rgba(224,85,85,.3);border-radius:7px;font-size:.75rem;cursor:pointer;">🗑️ Sil</button>
+          </div>
+        </div>
+        <div id="invUses_${inv.token}" style="display:none;"></div>
+      </div>`;
+    });
+    h += '</div>';
+  }
+  h += '</div>';
+  body.innerHTML = h;
 };
+
+function adminShowCreateInvite() {
+  const f = document.getElementById('invCreateForm');
+  if(f) f.style.display = f.style.display==='none' ? 'block' : 'none';
+}
+
+async function adminCreateInviteLink() {
+  const maxUses = parseInt(document.getElementById('inv_maxUses')?.value)||10;
+  const days = parseInt(document.getElementById('inv_days')?.value)||60;
+  const note = (document.getElementById('inv_note')?.value||'').trim();
+  const token = Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  const expiresAt = Date.now() + days * 24 * 60 * 60 * 1000;
+  try {
+    await adminRestSet('invites/' + token, {
+      token, maxUses, expiresAt, note: note||null,
+      createdAt: Date.now(), createdBy: _cu, usedCount: 0, uses: {}
+    });
+    showToast('✅ Davet linki oluşturuldu!');
+    adminTab('invite');
+  } catch(e) { showToast('❌ Hata: ' + (e.message||e)); }
+}
+
+async function adminShowInviteUses(token) {
+  const el = document.getElementById('invUses_' + token);
+  if(!el) return;
+  if(el.style.display !== 'none') { el.style.display='none'; return; }
+  el.innerHTML = '<div class="ld"><span></span><span></span><span></span></div>';
+  el.style.display = 'block';
+  try {
+    const inv = await adminRestGet('invites/' + token).catch(()=>null)||{};
+    const uses = Object.values(inv.uses||{}).sort((a,b)=>b.joinedAt-a.joinedAt);
+    if(!uses.length) { el.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:8px;">Henüz kayıt yok.</div>'; return; }
+    let h = `<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px;">
+      <div style="font-size:.72rem;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em;">Kayıt Olanlar</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">`;
+    uses.forEach(u => {
+      h += `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:var(--surface2);border-radius:8px;">
+        <div style="width:32px;height:32px;border-radius:50%;background:${strColor(u.username||'?')};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;color:#fff;flex-shrink:0;">${initials(u.username||'?')}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);">${esc(u.username||'?')}
+            ${u.userId?`<span style="font-family:monospace;font-size:.65rem;color:var(--accent);margin-left:4px;">🆔 ${esc(u.userId)}</span>`:''}
+          </div>
+          <div style="font-size:.7rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            📧 ${esc(u.email||'?')} · 🌍 ${esc(u.origin||'?')} · 🌐 ${esc(u.ip||'?')}
+          </div>
+          <div style="font-size:.68rem;color:var(--muted);">📅 ${u.joinedAt?new Date(u.joinedAt).toLocaleString('tr-TR'):'?'}</div>
+        </div>
+      </div>`;
+    });
+    h += '</div></div>';
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML = '<div style="color:var(--red);font-size:.78rem;padding:8px;">Yüklenemedi.</div>'; }
+}
 
 async function adminSaveInviteCode() {
   const code = (document.getElementById('inv_code')?.value||'').trim();
@@ -1815,3 +1922,162 @@ function clearActivityLogs(){
   _db.ref('activityLog').remove().then(()=>{ showToast('Loglar temizlendi.'); loadAdminActivityFull(); });
 }
 
+
+/* ══════════════════════════════════════════════
+   🤖 ADMIN: NatureBot Moderatör Ayarları
+══════════════════════════════════════════════ */
+
+async function loadAdminNatureBot() {
+  const body = document.getElementById('adminBody');
+  body.innerHTML = '<div class="ld"><span></span><span></span><span></span></div>';
+
+  const [botSettings, mutes, modLogs] = await Promise.all([
+    adminRestGet('botSettings').catch(()=>null)||{},
+    adminRestGet('mutes').catch(()=>null)||{},
+    adminRestGet('modLogs').catch(()=>null)||{}
+  ]);
+
+  const ms = botSettings.modSettings || {};
+  const bw = (botSettings.badWords||[]).join('\n');
+  const now = Date.now();
+
+  // Toggle helper
+  const tog = (key, label, def=false) => {
+    const val = ms[key] !== undefined ? ms[key] : def;
+    return `<label style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:10px;cursor:pointer;">
+      <span style="font-size:.85rem;color:var(--text-hi);">${label}</span>
+      <input type="checkbox" id="bms_${key}" ${val?'checked':''} style="width:18px;height:18px;cursor:pointer;">
+    </label>`;
+  };
+
+  const numInp = (key, label, def, min=0, max=9999) => {
+    const val = ms[key] !== undefined ? ms[key] : def;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--surface2);border-radius:10px;">
+      <span style="font-size:.85rem;color:var(--text-hi);">${label}</span>
+      <input type="number" id="bms_${key}" value="${val}" min="${min}" max="${max}" style="width:80px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 8px;color:var(--text);font-size:.82rem;text-align:center;">
+    </div>`;
+  };
+
+  // Aktif muteler
+  const activeMutes = Object.entries(mutes).filter(([,d])=>d&&d.expiresAt&&now<d.expiresAt);
+
+  // Son mod logları
+  const logArr = Object.values(modLogs).sort((a,b)=>b.ts-a.ts).slice(0,30);
+  const actionColor = {ban:'var(--red)',kick:'#e67e22',mute:'var(--accent)',warn:'#f0c040'};
+
+  let h = '<div class="admin-section">';
+  h += '<div class="admin-sec-title">🤖 NatureBot Moderatör Paneli</div>';
+
+  // ── Küfür Ayarları
+  h += `<div class="admin-card" style="padding:14px;margin-bottom:10px;">
+    <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);margin-bottom:10px;">🚫 Küfür / Yasaklı Kelime</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${tog('deleteBadWord','Küfürlü mesajı otomatik sil', true)}
+      ${tog('autoWarnBadWord','Küfür yazana uyarı gönder', true)}
+      ${tog('autoKickBadWord','Küfür yazanı 30dk uzaklaştır', false)}
+      ${tog('autoBanBadWord','Küfür yazanı otomatik banla', false)}
+    </div>
+  </div>`;
+
+  // ── Spam Ayarları
+  h += `<div class="admin-card" style="padding:14px;margin-bottom:10px;">
+    <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);margin-bottom:10px;">📨 Spam Koruması</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${tog('autoMuteSpam','Spam yapanı otomatik sustur', true)}
+      ${numInp('spamThreshold','Eşik (kaç mesaj)', 5, 2, 20)}
+      ${numInp('spamWindow','Zaman penceresi (ms)', 6000, 1000, 30000)}
+      ${numInp('spamMuteDuration','Susturma süresi (dk)', 60, 1, 1440)}
+    </div>
+  </div>`;
+
+  // ── Karşılama
+  h += `<div class="admin-card" style="padding:14px;margin-bottom:10px;">
+    <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);margin-bottom:10px;">👋 Yeni Üye Karşılama</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${tog('welcomeEnabled','Yeni üyeleri karşıla', true)}
+      <div>
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">{user} = kullanıcı adı</div>
+        <input class="admin-inp" id="bms_welcomeMsg" value="${esc(ms.welcomeMsg||'👋 {user} aramıza katıldı! Hoş geldin 🌿')}" style="margin-bottom:0;">
+      </div>
+    </div>
+  </div>`;
+
+  // ── Yasaklı Kelimeler Listesi
+  h += `<div class="admin-card" style="padding:14px;margin-bottom:10px;">
+    <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);margin-bottom:8px;">📋 Yasaklı Kelimeler</div>
+    <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px;">Her satıra bir kelime yaz. Büyük/küçük harf fark etmez.</div>
+    <textarea id="bms_badWords" style="width:100%;min-height:120px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:.78rem;resize:vertical;box-sizing:border-box;">${bw}</textarea>
+  </div>`;
+
+  // ── Kaydet
+  h += `<button onclick="saveAdminBotSettings()" style="width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-weight:900;font-size:.9rem;cursor:pointer;margin-bottom:14px;">💾 Bot Ayarlarını Kaydet</button>`;
+
+  // ── Aktif Muteler
+  h += `<div class="admin-card" style="padding:14px;margin-bottom:10px;">
+    <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);margin-bottom:10px;">🔇 Aktif Susturmalar (${activeMutes.length})</div>`;
+  if(!activeMutes.length) {
+    h += '<div style="color:var(--muted);font-size:.78rem;">Aktif susturma yok.</div>';
+  } else {
+    activeMutes.forEach(([user, data]) => {
+      const remaining = Math.ceil((data.expiresAt - now)/60000);
+      h += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);">${esc(user)}</div>
+          <div style="font-size:.7rem;color:var(--red);">⏱ ${remaining} dk kaldı</div>
+        </div>
+        <button onclick="adminRestDelete('mutes/${esc(user)}').then(()=>{showToast('✅ Susturma kaldırıldı.');loadAdminNatureBot();})" class="a-btn green" style="font-size:.72rem;">🔊 Kaldır</button>
+      </div>`;
+    });
+  }
+  h += '</div>';
+
+  // ── Mod Logları
+  h += `<div class="admin-card" style="padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);">📋 Mod Logları (Son 30)</div>
+      <button onclick="if(confirm('Tüm mod logları silinsin mi?'))adminRestDelete('modLogs').then(()=>{showToast('Loglar temizlendi.');loadAdminNatureBot();})" class="a-btn red" style="font-size:.72rem;padding:5px 10px;">🗑️ Temizle</button>
+    </div>`;
+  if(!logArr.length) {
+    h += '<div style="color:var(--muted);font-size:.78rem;">Log kaydı yok.</div>';
+  } else {
+    const aIcon = {ban:'🚫',kick:'🦶',mute:'🔇',warn:'⚠️'};
+    logArr.forEach(log => {
+      h += `<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:1.1rem;flex-shrink:0;">${aIcon[log.action]||'📌'}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;color:var(--text-hi);">
+            <span style="color:${actionColor[log.action]||'var(--text)'};font-weight:700;">${(log.action||'').toUpperCase()}</span>
+            → <span style="font-weight:700;">${esc(log.target||'?')}</span>
+            ${log.detail?`<span style="color:var(--muted);"> · ${esc(log.detail)}</span>`:''}
+          </div>
+          <div style="font-size:.7rem;color:var(--muted);">${log.ts?new Date(log.ts).toLocaleString('tr-TR'):'?'} · #${esc(log.room||'?')}</div>
+        </div>
+      </div>`;
+    });
+  }
+  h += '</div></div>';
+
+  body.innerHTML = h;
+}
+
+async function saveAdminBotSettings() {
+  const g = id => document.getElementById(id);
+  const toggleKeys = ['deleteBadWord','autoWarnBadWord','autoKickBadWord','autoBanBadWord','autoMuteSpam','welcomeEnabled'];
+  const numKeys = ['spamThreshold','spamWindow','spamMuteDuration'];
+
+  const modSettings = {};
+  toggleKeys.forEach(k => { const el=g('bms_'+k); if(el) modSettings[k]=el.checked; });
+  numKeys.forEach(k => { const el=g('bms_'+k); if(el) modSettings[k]=parseInt(el.value)||0; });
+  const wm = g('bms_welcomeMsg'); if(wm) modSettings.welcomeMsg = wm.value;
+
+  const bwText = g('bms_badWords')?.value||'';
+  const badWords = bwText.split('\n').map(s=>s.trim()).filter(Boolean);
+
+  try {
+    await adminRestSet('botSettings/modSettings', modSettings);
+    await adminRestSet('botSettings/badWords', badWords);
+    showToast('✅ Bot ayarları kaydedildi!');
+    // Çalışan bota yeni ayarları bildir
+    if(window._natureBotMod?.reload) window._natureBotMod.reload();
+  } catch(e) { showToast('❌ Hata: ' + (e.message||e)); }
+}

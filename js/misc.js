@@ -1150,7 +1150,7 @@ function adminTab(tab){
   if(IS_DESKTOP()){ deskAdminTab(tab); return; }
   _adminTab=tab;
   document.querySelectorAll('.atab').forEach((el,i)=>{
-    el.classList.toggle('act',['users','rooms','msgs','forum','announce','games','health','security','ipbans','settings','naturebot','design'][i]===tab);
+    el.classList.toggle('act',['users','rooms','msgs','forum','announce','games','health','security','ipbans','settings','design','naturebot','create_user','invite'][i]===tab);
   });
   // Online sayısını güncelle
   const badge = document.getElementById('adminOnlineBadge');
@@ -1170,6 +1170,9 @@ function adminTab(tab){
   else if(tab==='ipbans') loadAdminIPBans();
   else if(tab==='settings') loadAdminSettings();
   else if(tab==='design') loadAdminDesign();
+  else if(tab==='naturebot') loadAdminNatureBot();
+  else if(tab==='create_user') { if(typeof window._renderCreateUser==='function') window._renderCreateUser(body); }
+  else if(tab==='invite') { if(typeof window._renderInviteLinks==='function') window._renderInviteLinks(body); }
 }
 
 
