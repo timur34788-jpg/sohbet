@@ -4824,3 +4824,13 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   height: 32px !important;
   flex-shrink: 0 !important;
 }
+
+/* ══ Tüm ekranlar - status bar padding ══ */
+#forumScreen .ws-header,
+#msgsScreen .ws-header,
+#friendsScreen .ws-header,
+#gamesScreen .ws-header,
+#watchScreen .ws-header,
+#profileScreen .ws-header {
+  padding-top: max(env(safe-area-inset-top, 44px), 44px) !important;
+}
