@@ -373,6 +373,10 @@ function openRoom(roomId){
     }
   });
   showScreen('chatScreen');
+  // Tab bar'ı kesin gizle
+  window._inChat = true;
+  var _tb = document.querySelector('.tab-bar');
+  if(_tb) _tb.style.display = 'none';
   // clearedAt bilgisini ONCE al, SONRA listener başlat (race condition fix)
   const ref=dbRef('msgs/'+roomId);
   dbRef('rooms/'+roomId+'/clearedAt').once('value').then(cs=>{
