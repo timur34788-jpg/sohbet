@@ -4856,18 +4856,18 @@ async function startCall(type) {
 }
 
 function inviteToCall(callId, type) {
-  if(!_cRoom || !_cu) return;
-  dbRef('calls/'+callId+'/inv').once('value').then(()=>{
-    // Oda üyelerine bildirim gönder
-    dbRef('rooms/'+_cRoom+'/members').once('value').then(snap=>{
-      const members = snap.val() || {};
-      Object.keys(members).forEach(user => {
-        if(user !== _cu) {
-          dbRef('callInvites/'+user).push({
-            callId, type, from:_cu, room:_cRoom, ts:Date.now()
-          });
-        }
-      });
+  const room = _cRoom || _deskRoom;
+  if(!room || !_cu) return;
+  dbRef('rooms/'+room+'/members').once('value').then(snap=>{
+    const raw = snap.val();
+    // members array veya object olabilir
+    const members = Array.isArray(raw) ? raw : Object.keys(raw||{});
+    members.forEach(user => {
+      if(user !== _cu) {
+        dbRef('callInvites/'+user).push({
+          callId, type, from:_cu, room, ts:Date.now()
+        });
+      }
     });
   });
 }
@@ -4898,13 +4898,30 @@ function showCallScreen(type) {
   const el = document.getElementById('callScreen');
   if(!el) return;
   el.style.display = 'flex';
-  // Katılımcı adını göster
+
+  // Katılımcı adını göster — DM'de karşı tarafın adı, grupta oda adı
   const nameEl = document.getElementById('callScreenName');
-  if(nameEl) nameEl.textContent = _cRoom || 'Arama';
+  if(nameEl) {
+    const room = _cRoom || _deskRoom;
+    if(room) {
+      dbRef('rooms/'+room).once('value').then(snap => {
+        const r = snap.val();
+        if(!r) return;
+        if(r.type === 'dm') {
+          const other = (r.members||[]).find(m => m !== _cu) || room;
+          nameEl.textContent = other;
+        } else {
+          nameEl.textContent = r.name || room;
+        }
+      });
+    } else {
+      nameEl.textContent = 'Arama';
+    }
+  }
+
   const typeEl = document.getElementById('callScreenType');
   if(typeEl) typeEl.textContent = type === 'video' ? '📹 Görüntülü' : type === 'screen' ? '🖥️ Ekran Paylaşımı' : '📞 Sesli Arama';
   startCallTimer();
-  // Local video
   if(type === 'video' && _localStream) {
     const vid = document.getElementById('localVideo');
     if(vid) { vid.srcObject = _localStream; vid.play().catch(()=>{}); }
