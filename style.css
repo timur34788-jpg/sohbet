@@ -788,9 +788,9 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .mb-ts{font-size:.68rem;color:var(--muted);}
 
 /* Balon şekilleri — yumuşak, bükülme yok */
-.mb-text{font-size:.9rem;color:var(--text-hi);line-height:1.5;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;background:var(--incoming-bg,#263045);border-radius:4px 14px 14px 14px;padding:8px 13px;display:block;width:fit-content;max-width:78%;min-width:48px;}
+.mb-text{font-size:.9rem;color:var(--text-hi);line-height:1.5;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;display:block;max-width:78%;min-width:48px;border-radius:4px 14px 14px 14px;padding:8px 13px;}
 .mb-text a{color:var(--accent);text-decoration:none;}
-.ob{background:var(--own-bg);color:#fff;border-radius:14px 4px 14px 14px;padding:8px 13px;font-size:.9rem;line-height:1.5;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;display:block;width:fit-content;max-width:78%;min-width:48px;align-self:flex-end;}
+.ob{font-size:.9rem;color:#fff;line-height:1.5;word-break:break-word;overflow-wrap:anywhere;white-space:pre-wrap;display:block;max-width:78%;min-width:48px;border-radius:14px 4px 14px 14px;padding:8px 13px;}
 .ob a{color:#7ec8e3;}
 
 .msg-sys{text-align:center;font-size:.73rem;color:var(--muted);padding:4px 14px;}
