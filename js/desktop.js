@@ -320,10 +320,10 @@ function deskOpenRoom(roomId) {
       ic.textContent = initials(other); ic.style.background = strColor(other);
       document.getElementById('deskChatHdrName').textContent = other;
       document.getElementById('deskChatHdrSub').textContent = _online[other] ? '🟢 Çevrimiçi' : 'Çevrimdışı';
-      document.getElementById('deskCallAudio').style.display = 'flex';
-      document.getElementById('deskCallVideo').style.display = 'flex';
-      document.getElementById('deskCallScreen').style.display = (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) ? 'flex' : 'none';
-      document.getElementById('deskToggleMembers').style.display = 'none';
+      const _dca = document.getElementById('deskCallAudio'); if(_dca) _dca.style.display = 'flex';
+      const _dcv = document.getElementById('deskCallVideo'); if(_dcv) _dcv.style.display = 'flex';
+      const _dcs = document.getElementById('deskCallScreen'); if(_dcs) _dcs.style.display = (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) ? 'flex' : 'none';
+      const _dtm = document.getElementById('deskToggleMembers'); if(_dtm) _dtm.style.display = 'none';
     } else {
       ic.textContent = room.type === 'group' ? '👥' : '#';
       ic.style.background = room.type === 'group' ? 'linear-gradient(135deg,#9b72ff,#c4a7ff)' : 'var(--surface2)';

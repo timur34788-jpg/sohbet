@@ -86,7 +86,7 @@ function showPushPermissionPrompt(){
 async function acceptPushPrompt(){
   dismissPushPrompt();
   const token = await requestPushPermission();
-  if(token && typeof showToast === 'function') showToast('Bildirimler acildi! Apple Watch'ta da alirsin.');
+  if(token && typeof showToast === 'function') showToast("Bildirimler acildi! Apple Watch'ta da alirsin.");
 }
 
 function dismissPushPrompt(){
