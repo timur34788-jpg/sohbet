@@ -4803,3 +4803,24 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   -webkit-backdrop-filter: none !important;
   box-shadow: none !important;
 }
+
+/* ══ ws-header ikonlar orantılı ══ */
+.ws-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 12px !important;
+  flex-shrink: 0 !important;
+}
+.ws-av {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  cursor: pointer !important;
+}
+#mobileRobotSlot {
+  width: 32px !important;
+  height: 32px !important;
+  flex-shrink: 0 !important;
+}

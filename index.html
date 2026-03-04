@@ -104,7 +104,7 @@
         <!-- Zil + Profil -->
         <div style="display:flex;align-items:center;gap:4px;">
           <div onclick="openCarbonModal()" title="Karbon" style="display:flex;align-items:center;gap:3px;background:rgba(46,204,113,.13);border:1px solid rgba(46,204,113,.3);border-radius:100px;padding:2px 8px;cursor:pointer;flex-shrink:0;margin-right:2px;"><span style="font-size:.72rem;">🌿</span><span id="deskCarbonCount" style="font-size:.63rem;font-weight:900;color:#2ecc71;">CO₂</span></div>
-          <div onclick="openAmbiancePanel()" title="Doğa Sesleri" style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:7px;cursor:pointer;font-size:.9rem;flex-shrink:0;" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background=''">🎵</div>
+
           <div id="deskBellBtn" onclick="openNotifCenter(this)" title="Bildirimler" style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;position:relative;color:rgba(255,255,255,.7);transition:background .15s;flex-shrink:0;" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background='transparent'">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
             <div id="deskNotifDot" style="display:none;position:absolute;top:3px;right:3px;width:6px;height:6px;background:#e05555;border-radius:50%;border:1.5px solid #222529;"></div>
@@ -481,7 +481,7 @@
       <div class="ws-av" id="myAvatar" onclick="openProfile()"><div class="sdot"></div></div>
       <!-- Robot yuvası: bell → profil → robot sırası -->
       <div id="mobileRobotSlot" style="width:40px;height:44px;flex-shrink:0;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;"></div>
-      <div onclick="openAmbiancePanel()" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:1rem;flex-shrink:0;" onmouseover="this.style.background='rgba(255,255,255,.1)'" onmouseout="this.style.background=''">🎵</div>
+
     </div>
   </div>
 
@@ -1517,22 +1517,7 @@
 </div>
 
 <!-- Doğa Sesleri Panel HTML -->
-<div id="ambiancePanelOverlay" onclick="if(event.target===this)closeAmbiancePanel()">
-  <div id="ambiancePanel">
-    <div class="ap-header">
-      <div class="ap-title">🎵 Doğa Sesleri</div>
-      <button class="cm-close" onclick="closeAmbiancePanel()">✕</button>
-    </div>
-    <div class="ap-tracks" id="apTrackList"></div>
-    <div class="ap-vol-wrap">
-      <div class="ap-vol-label">🔊 Ses Seviyesi</div>
-      <div class="ap-vol-row">
-        <input type="range" class="ap-vol-slider" id="apVolSlider" min="0" max="100" value="70" oninput="setAmbianceVolume(this.value)">
-        <div class="ap-vol-num" id="apVolNum">70%</div>
-      </div>
-    </div>
-    <button class="ap-stop-btn" onclick="stopAmbiance()">⏹ Sesi Durdur</button>
-  </div>
+</div>
 </div>
   <!-- JS Modülleri -->
   <script src="js/config.js"></script>
