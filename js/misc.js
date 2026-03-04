@@ -236,8 +236,9 @@ function showScreen(id){
   if(cs && !_callId) cs.style.display='none';
   // Chat ekranında tab bar gizle (WhatsApp gibi)
   window._inChat = (id==='chatScreen');
+  document.body.classList.toggle('in-chat', window._inChat);
   var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display = window._inChat ? 'none' : 'flex';
+  if(tb) tb.style.display = window._inChat ? 'none' : (window.innerWidth>=768 ? 'none' : 'flex');
   // Chat'te NatureBot gizle
   if(window._natureBotInstance && window._natureBotInstance.el){
     window._natureBotInstance.el.style.display = (id==='chatScreen') ? 'none' : '';
@@ -248,12 +249,37 @@ function showScreen(id){
   const el=document.getElementById(id);
   if(el){ el.style.display='flex'; el.classList.add('active'); }
   if(id==='chatScreen') setTimeout(scrollBottom,100);
-  // If returning to a main tab screen, restore active tab
+  // Tab active state sync
   if(Object.values(_mainScreenIds).includes(id)){
-    _activeMainTab=Object.keys(_mainScreenIds).find(k=>_mainScreenIds[k]===id)||'home';
+    const tab=Object.keys(_mainScreenIds).find(k=>_mainScreenIds[k]===id)||'home';
+    _activeMainTab=tab;
+    const tabMap={home:'tabHome',forum:'tabForum',msgs:'tabMsgs',friends:'tabFriends',profile:'tabProfile',games:'tabGames',watch:'tabWatch'};
+    document.querySelectorAll('.tab-bar .tab').forEach(function(t){t.classList.remove('act');});
+    const atId=tabMap[tab];
+    if(atId){var at=document.getElementById(atId);if(at)at.classList.add('act');}
   }
 }
-function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();window._inChat=false;document.body.classList.remove('in-chat');var _tb=document.querySelector('.tab-bar');if(_tb){_tb.style.visibility='';_tb.style.display=window.innerWidth>=768?'none':'flex';}document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
+function goBack(){
+  if(_stopMsg){_stopMsg();_stopMsg=null;}
+  clearTypingFlag();
+  stopTypingListener();
+  _cRoom=null;
+  closeEmoji();
+  closeChatMenu();
+  window._inChat=false;
+  document.body.classList.remove('in-chat');
+  var _tb=document.querySelector('.tab-bar');
+  if(_tb){_tb.style.visibility='';_tb.style.display=window.innerWidth>=768?'none':'flex';}
+  document.getElementById('callAudioBtn').style.display='none';
+  var _cvb=document.getElementById('callVideoBtn');
+  if(_cvb)_cvb.style.display='none';
+  var _csb=document.getElementById('callScreenBtn');
+  if(_csb)_csb.style.display='none';
+  // Son aktif sekmeye dön (home değil)
+  var returnTab = (typeof _lastMobileTab !== 'undefined' && _lastMobileTab) ? _lastMobileTab : 'home';
+  switchMainTab(returnTab);
+  if(returnTab === 'home') loadRooms();
+}
 
 /* ── Tab ic-wrap arka planını temizle ── */
 document.addEventListener('DOMContentLoaded', function(){
@@ -4748,6 +4774,10 @@ function fmtDuration(sec) {
 }
 
 async function startVoiceRecord() {
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('❌ Ses kaydı bu tarayıcıda desteklenmiyor');
+    return;
+  }
   try {
     _recStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     _recChunks = [];
@@ -4825,6 +4855,11 @@ _localStream = null; _peers = {}; _callMin = false;
 async function startCall(type) {
   if(!_cu || !_cRoom) { showToast('Önce bir odaya gir'); return; }
   if(_callId) { showToast('Zaten aktif bir arama var'); return; }
+  // iOS/HTTP'de mediaDevices yok
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('❌ Tarayıcınız ses/video aramayı desteklemiyor. HTTPS gereklidir.');
+    return;
+  }
   _callType = type;
   _callId = _cRoom + '_' + Date.now();
   _groupCallId = _callId;
@@ -4860,8 +4895,13 @@ async function startCall(type) {
     // Oda üyelerine davet bildirimi
     inviteToCall(_callId, type);
   } catch(e) {
-    showToast('❌ Medya erişimi hatası: ' + (e.message||''));
+    const msg = e.name === 'NotAllowedError' ? '❌ Mikrofon/kamera izni reddedildi' :
+                e.name === 'NotFoundError'   ? '❌ Mikrofon/kamera bulunamadı' :
+                '❌ Medya erişimi hatası: ' + (e.message||'');
+    showToast(msg);
     _callId = null;
+    _groupCallId = null;
+    _callType = null;
   }
 }
 
@@ -4884,6 +4924,10 @@ function inviteToCall(callId, type) {
 
 async function acceptCall(callId, type) {
   stopRingSound && stopRingSound();
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('❌ Tarayıcınız aramayı desteklemiyor (HTTPS gerekli)');
+    return;
+  }
   _callId = callId;
   _groupCallId = callId;
   _callType = type;
@@ -4895,7 +4939,13 @@ async function acceptCall(callId, type) {
     showCallScreen(type);
     _listenParticipants && _listenParticipants();
   } catch(e) {
-    showToast('❌ Mikrofon/kamera erişimi reddedildi');
+    const msg = e.name === 'NotAllowedError' ? '❌ Mikrofon izni reddedildi' :
+                e.name === 'NotFoundError'   ? '❌ Mikrofon bulunamadı' :
+                '❌ Arama başlatılamadı: ' + (e.message||'');
+    showToast(msg);
+    _callId = null;
+    _groupCallId = null;
+    _callType = null;
   }
 }
 
@@ -4951,8 +5001,11 @@ function startCallTimer() {
   clearInterval(_callTimer);
   _callTimer = setInterval(() => {
     _callSec++;
-    const el = document.getElementById('callScreenTimer');
-    if(el) el.textContent = fmtDuration(_callSec);
+    const elapsed = fmtDuration(_callSec);
+    const el = document.getElementById('callTimerDisplay');
+    if(el) { el.textContent = elapsed; el.style.display = 'block'; }
+    const minStatus = document.getElementById('callMinBar_status');
+    if(minStatus) minStatus.textContent = elapsed;
   }, 1000);
 }
 
@@ -4985,6 +5038,10 @@ function endCall() {
   // Ekranı gizle
   const el = document.getElementById('callScreen');
   if(el) el.style.display = 'none';
+  const bar = document.getElementById('callMinimizedBar');
+  if(bar) bar.style.display = 'none';
+  const pill = document.getElementById('callPill');
+  if(pill) pill.remove();
   // Video alanlarını sıfırla
   const remoteVideo = document.getElementById('remoteVideo');
   if(remoteVideo) { remoteVideo.srcObject = null; }
@@ -5001,25 +5058,33 @@ function minimizeCallScreen() {
   _callMin = true;
   const el = document.getElementById('callScreen');
   if(el) { el.style.display='none'; }
-  // Küçük "aramaya dön" pill göster
-  var pill = document.getElementById('callPill');
-  if(!pill){
-    pill = document.createElement('div');
-    pill.id = 'callPill';
-    pill.style.cssText = 'position:fixed;bottom:90px;right:12px;background:var(--green);color:#fff;border-radius:20px;padding:6px 14px;font-size:.8rem;font-weight:700;z-index:6000;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.4);';
-    pill.innerHTML = '📞 Aramaya Dön';
-    pill.onclick = maximizeCallScreen;
-    document.body.appendChild(pill);
+  // callMinimizedBar göster
+  const bar = document.getElementById('callMinimizedBar');
+  if(bar) {
+    const room = _cRoom || _deskRoom;
+    const nameEl = document.getElementById('callMinBar_name');
+    if(nameEl && room) {
+      dbRef('rooms/'+room).once('value').then(snap => {
+        const r = snap.val();
+        if(!r) return;
+        nameEl.textContent = r.type === 'dm'
+          ? (r.members||[]).find(m => m !== _cu) || room
+          : (r.name || room);
+      });
+    }
+    bar.style.display = 'flex';
   }
-  pill.style.display = 'flex';
 }
 function maximizeCallScreen() {
   _callMin = false;
   const el = document.getElementById('callScreen');
-  if(el) { el.style.display='flex'; el.style.opacity='1'; el.style.transform=''; }
-  var pill = document.getElementById('callPill');
-  if(pill) pill.style.display='none';
+  if(el) { el.style.display='flex'; }
+  const bar = document.getElementById('callMinimizedBar');
+  if(bar) bar.style.display = 'none';
+  const pill = document.getElementById('callPill');
+  if(pill) pill.style.display = 'none';
 }
+
 
 function toggleMute() {
   if(!_localStream) return;
@@ -5066,18 +5131,32 @@ function listenIncomingCalls() {
     const inv = snap.val();
     if(!inv) return;
     snap.ref.remove();
-    // Toast ile kabul/reddet
-    const toast = document.createElement('div');
-    toast.style.cssText = 'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 18px;z-index:9999;display:flex;flex-direction:column;gap:8px;min-width:240px;box-shadow:0 8px 24px rgba(0,0,0,.6);';
-    toast.innerHTML = `
-      <div style="font-size:.9rem;font-weight:700;">📞 ${inv.from} arıyor</div>
-      <div style="font-size:.75rem;color:var(--muted);">${inv.type==='video'?'Görüntülü':'Sesli'} arama</div>
-      <div style="display:flex;gap:8px;">
-        <button onclick="stopRingSound&&stopRingSound();acceptCall('${inv.callId}','${inv.type}');this.closest('div').parentNode.remove();" style="flex:1;padding:8px;background:#2ecc71;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">✅ Kabul</button>
-        <button onclick="rejectCall('${inv.callId}');this.closest('div').parentNode.remove();" style="flex:1;padding:8px;background:#e05555;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">❌ Reddet</button>
-      </div>`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 30000);
+
+    // incomingCallScreen banner'ı doldur ve göster
+    const banner = document.getElementById('incomingCallScreen');
+    if(banner) {
+      const av = document.getElementById('incomingCallAv');
+      const nm = document.getElementById('incomingCallName');
+      const tp = document.getElementById('incomingCallType');
+      if(av) { av.textContent = initials(inv.from); av.style.background = strColor(inv.from); }
+      if(nm) nm.textContent = inv.from;
+      if(tp) tp.textContent = inv.type === 'video' ? '📹 Görüntülü Arama' : '📞 Sesli Arama';
+      // Butonlara doğru callId bağla
+      const rejectBtn = banner.querySelector('.inc-reject');
+      const acceptBtn = banner.querySelector('.inc-accept');
+      if(rejectBtn) rejectBtn.onclick = function() {
+        rejectCall(inv.callId);
+        banner.style.display = 'none';
+      };
+      if(acceptBtn) acceptBtn.onclick = function() {
+        stopRingSound && stopRingSound();
+        acceptCall(inv.callId, inv.type);
+        banner.style.display = 'none';
+      };
+      banner.style.display = 'flex';
+      setTimeout(() => { if(banner.style.display !== 'none') banner.style.display = 'none'; }, 30000);
+    }
+
     playRingSound && playRingSound();
   });
 }
@@ -5112,3 +5191,133 @@ function closeUIKit() {
   const el = document.getElementById('uiKitModal');
   if(el) el.style.display = 'none';
 }
+
+/* ══════════════════════════════════════
+   🔧 MOBİL EKSİK FONKSİYON YAMALARI
+   ══════════════════════════════════════ */
+
+// logout alias (doLogout'un kısayolu)
+function logout() { if(typeof doLogout === 'function') doLogout(); }
+
+// Türk alıntı sistemi
+function closeTurkQuote() {
+  var el = document.getElementById('turkQuoteOverlay');
+  if(el) el.style.display = 'none';
+  if(window._turkQuoteTimer) { clearTimeout(window._turkQuoteTimer); window._turkQuoteTimer = null; }
+}
+
+// Özel tema
+function applyCustomTheme() {
+  var accent  = document.getElementById('ct-accent')  ? document.getElementById('ct-accent').value  : null;
+  var bg      = document.getElementById('ct-bg')      ? document.getElementById('ct-bg').value      : null;
+  var surface = document.getElementById('ct-surface') ? document.getElementById('ct-surface').value : null;
+  var own     = document.getElementById('ct-own')     ? document.getElementById('ct-own').value     : null;
+  var root = document.documentElement;
+  if(accent)  { root.style.setProperty('--accent', accent); root.style.setProperty('--blue', accent); }
+  if(bg)      { root.style.setProperty('--bg', bg); root.style.setProperty('--bg2', bg); }
+  if(surface) { root.style.setProperty('--surface', surface); root.style.setProperty('--surface2', surface); }
+  if(own)     { root.style.setProperty('--own-bg', own); }
+  try { localStorage.setItem('nature_custom_theme', JSON.stringify({accent,bg,surface,own})); } catch(e){}
+  showToast('🎨 Tema uygulandı');
+}
+
+function resetCustomTheme() {
+  var root = document.documentElement;
+  ['--accent','--blue','--bg','--bg2','--surface','--surface2','--own-bg'].forEach(function(v){ root.style.removeProperty(v); });
+  try { localStorage.removeItem('nature_custom_theme'); } catch(e){}
+  showToast('🎨 Tema sıfırlandı');
+}
+
+// Uygulama başlangıcında kayıtlı tema uygula
+(function _restoreCustomTheme(){
+  try {
+    var saved = localStorage.getItem('nature_custom_theme');
+    if(!saved) return;
+    var t = JSON.parse(saved);
+    var root = document.documentElement;
+    if(t.accent)  { root.style.setProperty('--accent', t.accent); root.style.setProperty('--blue', t.accent); }
+    if(t.bg)      { root.style.setProperty('--bg', t.bg); root.style.setProperty('--bg2', t.bg); }
+    if(t.surface) { root.style.setProperty('--surface', t.surface); root.style.setProperty('--surface2', t.surface); }
+    if(t.own)     { root.style.setProperty('--own-bg', t.own); }
+  } catch(e){}
+})();
+
+// Ekran paylaşımı toggle
+async function toggleScreenShare() {
+  if(!_isSharingScreen) {
+    try {
+      var screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+      _screenStream = screenStream;
+      _isSharingScreen = true;
+      // Mevcut peer bağlantılarına video track ekle
+      var videoTrack = screenStream.getVideoTracks()[0];
+      Object.values(_peers || {}).forEach(function(pc) {
+        var sender = pc.getSenders ? pc.getSenders().find(function(s){ return s.track && s.track.kind === 'video'; }) : null;
+        if(sender) sender.replaceTrack(videoTrack).catch(function(){});
+      });
+      var badge = document.getElementById('callScreenBadge');
+      if(badge) badge.style.display = 'block';
+      var btn = document.getElementById('callShareScreenBtn');
+      if(btn) btn.classList.add('active');
+      screenStream.getVideoTracks()[0].addEventListener('ended', function(){ toggleScreenShare(); });
+      showToast('🖥️ Ekran paylaşımı başladı');
+    } catch(e) {
+      if(e.name !== 'NotAllowedError') showToast('❌ Ekran paylaşımı başlatılamadı');
+    }
+  } else {
+    if(_screenStream) { _screenStream.getTracks().forEach(function(t){ t.stop(); }); _screenStream = null; }
+    _isSharingScreen = false;
+    // Kameraya geri dön
+    if(_localStream) {
+      var camTrack = _localStream.getVideoTracks()[0];
+      Object.values(_peers || {}).forEach(function(pc) {
+        var sender = pc.getSenders ? pc.getSenders().find(function(s){ return s.track && s.track.kind === 'video'; }) : null;
+        if(sender && camTrack) sender.replaceTrack(camTrack).catch(function(){});
+      });
+    }
+    var badge = document.getElementById('callScreenBadge');
+    if(badge) badge.style.display = 'none';
+    var btn = document.getElementById('callShareScreenBtn');
+    if(btn) btn.classList.remove('active');
+    showToast('🖥️ Ekran paylaşımı durduruldu');
+  }
+}
+
+// Hoparlör toggle (iOS için)
+function toggleSpeaker() {
+  _isSpeakerMuted = !_isSpeakerMuted;
+  // Tüm remote ses elementlerini mute/unmute
+  document.querySelectorAll('[id^="_rAudio_"]').forEach(function(a) {
+    a.muted = _isSpeakerMuted;
+  });
+  var btn = document.getElementById('callSpeakerBtn');
+  if(btn) btn.classList.toggle('active', _isSpeakerMuted);
+  showToast(_isSpeakerMuted ? '🔇 Hoparlör kapalı' : '🔊 Hoparlör açık');
+}
+
+// toggleMute için SVG güncellemesi (emoji yerine)
+var _origToggleMute = toggleMute;
+toggleMute = function() {
+  if(!_localStream) return;
+  var audioTrack = _localStream.getAudioTracks()[0];
+  if(!audioTrack) return;
+  audioTrack.enabled = !audioTrack.enabled;
+  _isMuted = !audioTrack.enabled;
+  var btn = document.getElementById('callMuteBtn');
+  if(btn) btn.classList.toggle('active', _isMuted);
+  showToast(_isMuted ? '🔇 Mikrofon kapalı' : '🎙️ Mikrofon açık');
+};
+
+// toggleCamera için düzeltme
+var _origToggleCamera = toggleCamera;
+toggleCamera = function() {
+  if(!_localStream) return;
+  var videoTrack = _localStream.getVideoTracks()[0];
+  if(!videoTrack) return;
+  videoTrack.enabled = !videoTrack.enabled;
+  _isCameraOn = videoTrack.enabled;
+  var btn = document.getElementById('callCamBtn');
+  if(btn) btn.classList.toggle('active', !_isCameraOn);
+  showToast(_isCameraOn ? '📹 Kamera açık' : '📵 Kamera kapalı');
+};
+
