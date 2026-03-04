@@ -1,216 +1,347 @@
-/* Nature.co — mentions.js */
-
+/* ── @mention sistemi ── */
 (function () {
+  'use strict';
 
-  const SPECIAL_MENTIONS = [
-    { id: '@here',     label: '@here',     desc: 'Çevrimiçi olanları etiketle', icon: '🟢' },
-    { id: '@all',      label: '@all',      desc: 'Odadaki herkesi etiketle',    icon: '📢' },
-    { id: '@everyone', label: '@everyone', desc: 'Tüm üyelere bildirim gönder', icon: '🔔' },
-  ];
+  /* ── State ── */
+  let _mentionRoom = null;   // şu an açık oda
+  let _mentionMembers = [];  // oda üyeleri
+  let _mentionBox = null;    // dropdown el
+  let _selIdx = -1;          // seçili index
+  let _activeInp = null;     // aktif input
 
-  let _box = null, _active = false, _start = -1, _items = [], _idx = 0, _inp = null;
-
-  // CSS
-  const s = document.createElement('style');
-  s.textContent = `
-    #mentionBox { display:none; position:absolute; bottom:calc(100% + 6px); left:0; right:0;
-      background:var(--bg2); border:1px solid var(--border); border-radius:14px;
-      overflow:hidden; max-height:220px; overflow-y:auto; z-index:9999;
-      box-shadow:0 8px 32px rgba(0,0,0,.5); }
-    #mentionBox.show { display:block; }
-    .mi { display:flex; align-items:center; gap:10px; padding:9px 14px; cursor:pointer;
-      transition:background .1s; border-bottom:1px solid var(--border); }
-    .mi:last-child { border-bottom:none; }
-    .mi:hover, .mi.sel { background:var(--surface); }
-    .mi-av { width:28px; height:28px; border-radius:7px; display:flex; align-items:center;
-      justify-content:center; font-size:.7rem; font-weight:900; color:#fff; flex-shrink:0; }
-    .mi-av.sp { background:var(--surface2); font-size:1rem; }
-    .mi-name { font-size:.85rem; font-weight:800; color:var(--text-hi); flex:1; }
-    .mi-desc { font-size:.72rem; color:var(--muted); }
-    .mi-dot { width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
-    .msg-mention { color:#7ec8e3; background:rgba(126,200,227,.12); border-radius:4px; padding:1px 4px; font-weight:700; }
-    .msg-mention.me { color:#ffd166; background:rgba(255,209,102,.15); }
-    .msg-mention.sp { color:#a8e6a3; background:rgba(168,230,163,.12); }
-  `;
-  document.head.appendChild(s);
-
-  function mc(str) {
-    if (typeof strColor === 'function') return strColor(str);
-    let h = 0; for (let i = 0; i < str.length; i++) h = str.charCodeAt(i) + ((h<<5)-h);
-    return 'hsl('+(Math.abs(h)%360)+',60%,45%)';
+  /* ── Kullanıcı adını localStorage'dan oku ── */
+  function getCurrentUser() {
+    const srv = localStorage.getItem('sohbet_last_server');
+    if (!srv) return null;
+    return localStorage.getItem('sohbet_user_' + srv);
   }
 
-  // Firebase hazır olana kadar bekle, sonra üyeleri çek
-  function waitForDb(cb, tries) {
-    tries = tries || 0;
-    if (window._db) { cb(); return; }
-    if (tries > 40) return; // 20 saniye max
-    setTimeout(function() { waitForDb(cb, tries + 1); }, 500);
+  /* ── Online durumu DOM'dan oku ── */
+  function getOnlineUsers() {
+    const online = new Set();
+    // Masaüstü panel
+    document.querySelectorAll('.dsk-row[data-u]').forEach(el => {
+      const dot = el.querySelector('[style*="green"], .online-dot, .status-dot');
+      if (dot) online.add(el.dataset.u);
+    });
+    // Mobil panel - online dot'u olan satırlar
+    document.querySelectorAll('[data-u]').forEach(el => {
+      if (el.querySelector('.online-dot, [style*="#2ecc71"], [style*="green"]')) {
+        online.add(el.dataset.u);
+      }
+    });
+    return online;
   }
 
-  async function getMembers() {
-    const roomId = window._deskRoom || window._cRoom;
-    if (!roomId || !window._db) return [];
-    const cached = (window._roomMembersCache || {})[roomId];
-    if (cached && cached.length) return cached;
+  /* ── Firebase'den oda üyelerini çek ── */
+  function fetchMembers(roomId) {
+    if (!roomId || typeof dbRef === 'undefined') return;
     try {
-      const snap = await window._db.ref('rooms/' + roomId).once('value');
-      const room = snap.val() || {};
-      const members = room.members || [];
-      if (!window._roomMembersCache) window._roomMembersCache = {};
-      window._roomMembersCache[roomId] = members;
-      return members;
-    } catch(e) { return []; }
+      dbRef('rooms/' + roomId).once('value').then(snap => {
+        const room = snap.val();
+        if (!room) return;
+        if (room.members && Array.isArray(room.members)) {
+          _mentionMembers = room.members;
+        } else if (room.type === 'channel' || room.type === 'kanal') {
+          // Kanal: tüm kullanıcıları çek
+          dbRef('users').once('value').then(us => {
+            _mentionMembers = us.val() ? Object.keys(us.val()) : [];
+          });
+        } else {
+          _mentionMembers = [];
+        }
+      }).catch(() => {});
+    } catch (e) {}
   }
 
-  async function show(query) {
-    const q = (query||'').toLowerCase();
-    const members = await getMembers();
-    const online = window._online || {};
-    const cu = window._cu || '';
-
-    const users = members
-      .filter(u => u !== cu && (!q || u.toLowerCase().includes(q)))
-      .sort((a,b) => { const ao=!!online[a], bo=!!online[b]; return ao!==bo ? (ao?-1:1) : a.localeCompare(b); })
-      .slice(0,8)
-      .map(u => ({ label:'@'+u, isOnline:!!online[u], color:mc(u), ini:u.slice(0,2).toUpperCase() }));
-
-    const specials = SPECIAL_MENTIONS.filter(s => !q || s.label.toLowerCase().includes(q));
-
-    _items = [...specials.map(s=>({...s,isSp:true})), ...users];
-    _idx = 0;
-
-    if (!_items.length) { hide(); return; }
-    render();
-    _box.classList.add('show');
-    _active = true;
+  /* ── Oda açılınca üyeleri güncelle ── */
+  function onRoomOpen(roomId) {
+    _mentionRoom = roomId;
+    _mentionMembers = [];
+    fetchMembers(roomId);
   }
 
-  function render() {
-    if (!_box) return;
-    _box.innerHTML = _items.map(function(item, i) {
-      if (item.isSp) {
-        return '<div class="mi'+(i===_idx?' sel':'')+'" onmousedown="event.preventDefault()" onclick="window.__mention('+i+')">'
-          +'<div class="mi-av sp">'+item.icon+'</div>'
-          +'<div class="mi-name">'+item.label+'</div>'
-          +'<div class="mi-desc">'+item.desc+'</div></div>';
-      }
-      return '<div class="mi'+(i===_idx?' sel':'')+'" onmousedown="event.preventDefault()" onclick="window.__mention('+i+')">'
-        +'<div class="mi-av" style="background:'+item.color+'">'+item.ini+'</div>'
-        +'<div class="mi-name">'+item.label+'</div>'
-        +(item.isOnline?'<div class="mi-dot"></div>':'')+
-        '</div>';
-    }).join('');
-  }
-
-  function hide() {
-    if (_box) _box.classList.remove('show');
-    _active = false; _start = -1; _items = [];
-  }
-
-  function ensureBox() {
-    if (_box) return;
-    _box = document.createElement('div');
-    _box.id = 'mentionBox';
-    const wrap = document.getElementById('slashSuggestWrap');
-    if (wrap) { wrap.appendChild(_box); return; }
-    const inpWrap = document.querySelector('.inp-wrap');
-    if (inpWrap) { inpWrap.style.position='relative'; inpWrap.appendChild(_box); return; }
-    document.body.appendChild(_box);
-  }
-
-  window.__mention = function(idx) {
-    if (!_inp) return;
-    const item = _items[idx]; if (!item) return;
-    const before = _inp.value.slice(0, _start);
-    const after  = _inp.value.slice(_inp.selectionStart);
-    _inp.value = before + item.label + ' ' + after;
-    const pos = _start + item.label.length + 1;
-    _inp.setSelectionRange(pos, pos);
-    _inp.focus();
-    hide();
-    if (typeof autoResize === 'function') autoResize(_inp);
-  };
-
-  function onInput(inp) {
-    _inp = inp;
-    const val = inp.value, cur = inp.selectionStart;
-    let start = -1;
-    for (let i = cur-1; i >= 0; i--) {
-      if (val[i] === '@') { start = i; break; }
-      if (val[i] === ' ' || val[i] === '\n') break;
+  /* ── openRoom ve deskOpenRoom'u wrap et ── */
+  function hookRoomOpeners() {
+    // openRoom (mobil)
+    const origOpen = window.openRoom;
+    if (typeof origOpen === 'function') {
+      window.openRoom = function (...args) {
+        const result = origOpen.apply(this, args);
+        onRoomOpen(args[0]);
+        return result;
+      };
     }
-    if (start === -1) { hide(); return; }
-    const q = val.slice(start+1, cur);
-    if (q.includes(' ')) { hide(); return; }
-    _start = start;
-    show(q);
+    // deskOpenRoom (masaüstü)
+    const origDesk = window.deskOpenRoom;
+    if (typeof origDesk === 'function') {
+      window.deskOpenRoom = function (...args) {
+        const result = origDesk.apply(this, args);
+        onRoomOpen(args[0]);
+        return result;
+      };
+    }
   }
 
-  function onKey(e) {
-    if (!_active || !_items.length) return false;
-    if (e.key === 'ArrowDown') { e.preventDefault(); _idx=(_idx+1)%_items.length; render(); return true; }
-    if (e.key === 'ArrowUp')   { e.preventDefault(); _idx=(_idx-1+_items.length)%_items.length; render(); return true; }
-    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); window.__mention(_idx); return true; }
-    if (e.key === 'Escape') { hide(); return true; }
-    return false;
+  /* ── Dropdown oluştur ── */
+  function createBox() {
+    if (document.getElementById('mentionBox')) return;
+    const box = document.createElement('div');
+    box.id = 'mentionBox';
+    box.style.cssText = `
+      position: fixed;
+      background: var(--surface2, #2a2a3a);
+      border: 1px solid var(--border, rgba(255,255,255,0.1));
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      z-index: 99999;
+      min-width: 200px;
+      max-width: 280px;
+      max-height: 260px;
+      overflow-y: auto;
+      display: none;
+      padding: 6px 0;
+    `;
+    document.body.appendChild(box);
+    _mentionBox = box;
+
+    // Dışarı tıklayınca kapat
+    document.addEventListener('mousedown', e => {
+      if (_mentionBox && !_mentionBox.contains(e.target)) hideBox();
+    });
   }
 
-  window.triggerMentionFromBtn = function() {
-    const inp = (typeof IS_DESKTOP==='function' && IS_DESKTOP())
-      ? document.getElementById('deskInp')
-      : document.getElementById('msgInp');
-    if (!inp) return;
-    inp.focus();
+  function hideBox() {
+    if (_mentionBox) _mentionBox.style.display = 'none';
+    _selIdx = -1;
+  }
+
+  /* ── Dropdown'u pozisyonla ── */
+  function positionBox(inp) {
+    if (!_mentionBox) return;
+    const rect = inp.getBoundingClientRect();
+    const boxH = Math.min(260, _mentionBox.scrollHeight || 200);
+    let top = rect.top - boxH - 8;
+    if (top < 8) top = rect.bottom + 8;
+    let left = rect.left;
+    if (left + 280 > window.innerWidth) left = window.innerWidth - 288;
+    _mentionBox.style.top = top + 'px';
+    _mentionBox.style.left = left + 'px';
+  }
+
+  /* ── Seçenekleri filtrele ve göster ── */
+  function showSuggestions(inp, query) {
+    if (!_mentionBox) return;
+    const cu = getCurrentUser() || '';
+    const online = getOnlineUsers();
+    const q = query.toLowerCase();
+
+    // Özel seçenekler
+    const specials = [
+      { key: 'here', label: '@here', desc: 'Çevrimiçi olanları etiketle', color: '#2ecc71', special: true },
+      { key: 'all', label: '@all', desc: 'Herkesi etiketle', color: '#e74c3c', special: true },
+    ].filter(s => s.key.includes(q) || q === '');
+
+    // Üye listesi — mevcut user hariç
+    const others = _mentionMembers
+      .filter(u => u !== cu && u.toLowerCase().includes(q))
+      .sort((a, b) => {
+        const ao = online.has(a) ? 0 : 1;
+        const bo = online.has(b) ? 0 : 1;
+        return ao - bo || a.localeCompare(b);
+      });
+
+    const items = [...specials, ...others.map(u => ({
+      key: u,
+      label: '@' + u,
+      desc: online.has(u) ? '🟢 Çevrimiçi' : '⚫ Çevrimdışı',
+      color: null,
+      special: false
+    }))];
+
+    if (!items.length) { hideBox(); return; }
+
+    _mentionBox.innerHTML = items.map((item, i) => `
+      <div class="mention-item" data-idx="${i}" data-val="${item.label}"
+        style="display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;
+               border-radius:6px;margin:1px 4px;transition:background .15s;
+               ${i === _selIdx ? 'background:var(--primary,#6c63ff30);' : ''}">
+        <span style="font-weight:700;color:${item.color || 'var(--text-hi,#fff)'};font-size:.9rem;">${item.label}</span>
+        <span style="font-size:.75rem;color:var(--muted,#888);margin-left:auto;">${item.desc || ''}</span>
+      </div>
+    `).join('');
+
+    // Hover efekti
+    _mentionBox.querySelectorAll('.mention-item').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        _selIdx = +el.dataset.idx;
+        highlightItem();
+      });
+      el.addEventListener('mousedown', e => {
+        e.preventDefault();
+        insertMention(inp, el.dataset.val);
+      });
+    });
+
+    _mentionBox.style.display = 'block';
+    positionBox(inp);
+    highlightItem();
+  }
+
+  function highlightItem() {
+    if (!_mentionBox) return;
+    _mentionBox.querySelectorAll('.mention-item').forEach((el, i) => {
+      el.style.background = i === _selIdx ? 'var(--primary,rgba(108,99,255,0.2))' : '';
+    });
+  }
+
+  /* ── Mention ekle ── */
+  function insertMention(inp, mention) {
+    const val = inp.value;
     const pos = inp.selectionStart;
-    inp.value = inp.value.slice(0,pos) + '@' + inp.value.slice(pos);
-    inp.setSelectionRange(pos+1, pos+1);
-    onInput(inp);
-  };
-
-  window.highlightMentions = function(text) {
-    const cu = window._cu || '';
-    return text.replace(/@(here|all|everyone|[\w\u00C0-\u024F]+)/g, function(m, n) {
-      return '<span class="msg-mention '+(n===cu?'me':['here','all','everyone'].includes(n)?'sp':'')+'">' + m + '</span>';
-    });
-  };
-
-  window._roomMembersCache = window._roomMembersCache || {};
-  window.cacheRoomMembers = function(roomId, members) {
-    window._roomMembersCache[roomId] = members || [];
-  };
-
-  function hookInp(inp) {
-    if (!inp || inp._mHooked) return;
-    inp._mHooked = true;
-    inp.addEventListener('input', function() { onInput(inp); });
-    inp.addEventListener('keydown', function(e) { onKey(e); });
-    inp.addEventListener('blur', function() { setTimeout(hide, 150); });
+    const before = val.slice(0, pos);
+    const atIdx = before.lastIndexOf('@');
+    const after = val.slice(pos);
+    inp.value = before.slice(0, atIdx) + mention + ' ' + after;
+    const newPos = atIdx + mention.length + 1;
+    inp.setSelectionRange(newPos, newPos);
+    inp.focus();
+    hideBox();
+    inp.dispatchEvent(new Event('input'));
   }
 
-  function init() {
-    ensureBox();
-    hookInp(document.getElementById('msgInp'));
-    hookInp(document.getElementById('deskInp'));
+  /* ── Input handler ── */
+  function handleInput(e) {
+    const inp = e.target;
+    _activeInp = inp;
+    const val = inp.value;
+    const pos = inp.selectionStart;
+    const before = val.slice(0, pos);
+    const atIdx = before.lastIndexOf('@');
 
-    // onMsgKey wrap — Firebase hazır olunca
-    waitForDb(function() {
-      const origMsg = window.onMsgKey;
-      window.onMsgKey = function(e) { if (onKey(e)) return; if (origMsg) origMsg(e); };
-      const origDesk = window.onDeskMsgKey;
-      window.onDeskMsgKey = function(e) { if (onKey(e)) return; if (origDesk) origDesk(e); };
-    });
+    if (atIdx === -1) { hideBox(); return; }
 
-    // @ butonunu güncelle
-    document.querySelectorAll('.ii').forEach(function(btn) {
-      if (btn.textContent.trim() === '@') {
-        btn.onclick = window.triggerMentionFromBtn;
-        btn.title = 'Birini etiketle';
+    // @ den sonra boşluk var mı?
+    const afterAt = before.slice(atIdx + 1);
+    if (afterAt.includes(' ')) { hideBox(); return; }
+
+    // @ öncesinde boşluk veya başlangıç olmalı
+    if (atIdx > 0 && !/\s/.test(before[atIdx - 1])) { hideBox(); return; }
+
+    showSuggestions(inp, afterAt);
+  }
+
+  /* ── Klavye navigasyonu ── */
+  function handleKeydown(e) {
+    if (!_mentionBox || _mentionBox.style.display === 'none') return;
+    const items = _mentionBox.querySelectorAll('.mention-item');
+    if (!items.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      _selIdx = Math.min(_selIdx + 1, items.length - 1);
+      highlightItem();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      _selIdx = Math.max(_selIdx - 1, 0);
+      highlightItem();
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      if (_selIdx >= 0 && items[_selIdx]) {
+        e.preventDefault();
+        insertMention(e.target, items[_selIdx].dataset.val);
       }
+    } else if (e.key === 'Escape') {
+      hideBox();
+    }
+  }
+
+  /* ── Mesaj renderında mention'ları renklendir ── */
+  function styleMentions(el) {
+    if (!el) return;
+    const cu = getCurrentUser();
+    el.querySelectorAll('.ob, .mb-text').forEach(msg => {
+      if (msg.dataset.mentionStyled) return;
+      msg.dataset.mentionStyled = '1';
+      msg.innerHTML = msg.innerHTML.replace(
+        /(@(?:here|all|everyone|[A-Za-zÇçĞğİıÖöŞşÜü0-9_-]+))/g,
+        (m) => {
+          const tag = m.slice(1).toLowerCase();
+          if (tag === 'here' || tag === 'all' || tag === 'everyone') {
+            return `<span style="background:rgba(46,204,113,.18);color:#2ecc71;border-radius:4px;padding:1px 5px;font-weight:700;">${m}</span>`;
+          }
+          if (cu && tag === cu.toLowerCase()) {
+            return `<span style="background:rgba(255,214,0,.15);color:#ffd600;border-radius:4px;padding:1px 5px;font-weight:700;">${m}</span>`;
+          }
+          return `<span style="background:rgba(108,99,255,.15);color:var(--primary,#a78bfa);border-radius:4px;padding:1px 5px;font-weight:700;">${m}</span>`;
+        }
+      );
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else setTimeout(init, 800);
+  /* ── Input'lara listener ekle ── */
+  function attachListeners() {
+    const ids = ['msgInp', 'deskInp'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el || el._mentionAttached) return;
+      el._mentionAttached = true;
+      el.addEventListener('input', handleInput);
+      el.addEventListener('keydown', handleKeydown);
+    });
+  }
 
+  /* ── MutationObserver: mesaj render olunca mention'ları renklendir ── */
+  function observeMsgs() {
+    const targets = ['chatMsgs', 'deskMsgs'];
+    targets.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el || el._mentionObserved) return;
+      el._mentionObserved = true;
+      styleMentions(el);
+      new MutationObserver(() => styleMentions(el)).observe(el, { childList: true, subtree: true });
+    });
+  }
+
+  /* ── @ butonuna tıklanınca ── */
+  function onAtBtnClick() {
+    const inp = document.getElementById('deskInp') || document.getElementById('msgInp');
+    if (!inp) return;
+    const val = inp.value;
+    const pos = inp.selectionStart;
+    inp.value = val.slice(0, pos) + '@' + val.slice(pos);
+    inp.setSelectionRange(pos + 1, pos + 1);
+    inp.focus();
+    inp.dispatchEvent(new Event('input'));
+  }
+
+  /* ── Başlatıcı ── */
+  function init() {
+    createBox();
+    hookRoomOpeners();
+    attachListeners();
+    observeMsgs();
+
+    // @ butonu varsa bağla
+    const atBtn = document.getElementById('atMentionBtn');
+    if (atBtn && !atBtn._mentionAttached) {
+      atBtn._mentionAttached = true;
+      atBtn.addEventListener('click', onAtBtnClick);
+    }
+
+    // Polling: dinamik eklenen inputları yakala, mention'ları renklendir
+    setInterval(() => {
+      attachListeners();
+      observeMsgs();
+    }, 1500);
+  }
+
+  /* ── Sayfa hazır olunca başlat ── */
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // Public API
+  window.__mention = { fetchMembers, onRoomOpen };
 })();
