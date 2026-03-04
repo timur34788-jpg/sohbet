@@ -4893,7 +4893,7 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
 }
 
 /* ══ ChatScreen layout fix ══ */
-#chatScreen {
+#chatScreen.active {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
