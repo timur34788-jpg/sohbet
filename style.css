@@ -606,7 +606,8 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 })();
 
 /* ── Pull-to-Refresh ── */
-#ptr-indicator {
+#ptr-indicator { display: none !important; }
+#ptr-indicator-DISABLED {
   position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
   width: 32px; height: 32px; border-radius: 50%;
   background: var(--surface2); border: 1px solid var(--border);
@@ -4157,22 +4158,46 @@ window.nc_replaceIcons = runIconSystem;
 .ap-stop-btn:hover { background:rgba(224,85,85,.25); }
 
 /* ══════════════════════════════════════════════════════════
-   📱 MOBİL KOMPAKT — Simülatör (393×852) referans alınarak
+   📱 MOBİL KOMPAKT — iOS Safari & PWA uyumlu
    ══════════════════════════════════════════════════════════ */
+
+/* Pull-to-refresh engeli — body/html'yi kırmadan */
+html {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: auto;
+}
+body {
+  overscroll-behavior-y: none;
+}
+
+/* iOS Safari'de ekran tam dolsun */
+.screen {
+  height: 100% !important;
+  height: 100dvh !important;
+  height: -webkit-fill-available !important;
+}
+
 @media (max-width: 767px) {
 
-  /* ── Temel font — tüm rem değerlerini küçültür ── */
-  html { font-size: 12.5px !important; }
+  /* ── Temel font küçültme ── */
+  html { font-size: 13px !important; }
+
+  /* ── App yükseklik — iOS Safari address bar hesabı ── */
+  body {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
 
   /* ── Alt Tab Bar ── */
   .tab-bar {
-    padding-top:   3px !important;
-    padding-bottom: max(env(safe-area-inset-bottom,0px), 3px) !important;
-    height: auto !important;
+    padding-top: 4px !important;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 6px) !important;
+    flex-shrink: 0 !important;
   }
   .tab {
     padding: 5px 2px 4px !important;
     gap: 1px !important;
+    flex: 1 !important;
   }
   .tab-ic-wrap {
     width: 30px !important;
@@ -4180,157 +4205,130 @@ window.nc_replaceIcons = runIconSystem;
     border-radius: 8px !important;
     margin-bottom: 0 !important;
   }
-  .tab-ic { font-size: 1.1rem !important; }
-  .tab-ic svg { width: 18px !important; height: 18px !important; }
-  .tab-lb { font-size: .54rem !important; }
-  .tab.act::before { width: 20px !important; height: 2px !important; }
+  .tab-ic { font-size: 1.05rem !important; }
+  .tab-ic svg { width: 17px !important; height: 17px !important; }
+  .tab-lb { font-size: .52rem !important; }
+  .tab.act::before { width: 18px !important; height: 2px !important; }
 
-  /* ── Ekran başlıkları (Mesajlar, Forum...) ── */
-  .screen-title,
+  /* ── Header & Başlıklar ── */
+  .ws-header {
+    min-height: 48px !important;
+    padding: 8px 14px !important;
+    padding-top: calc(8px + env(safe-area-inset-top, 0px)) !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+  }
   .ws-name, #wsHeaderName {
-    font-size: .95rem !important;
-    font-weight: 800 !important;
+    font-size: .9rem !important;
+    font-weight: 900 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    min-width: 0 !important;
+    flex-shrink: 1 !important;
+    max-width: 100px !important;
+  }
+  /* Karbon widget sağda kalacak şekilde header düzenle */
+  .ws-header > div[style*="margin-left:auto"],
+  .ws-header > div[style*="margin-left: auto"] {
+    flex-shrink: 0 !important;
+    gap: 6px !important;
+  }
+  /* Header sağdaki buton ve avatar boyutları */
+  .ws-header .hdr-av, .ws-header [style*="width:32px"] {
+    width: 26px !important;
+    height: 26px !important;
+  }
+  .ws-header [style*="width:36px"], .ws-header [style*="width: 36px"] {
+    width: 28px !important;
+    height: 28px !important;
   }
   .c-header {
     min-height: 46px !important;
-    padding: 7px 14px !important;
-    padding-top: calc(7px + env(safe-area-inset-top,0px)) !important;
-    gap: 8px !important;
-  }
-  .c-header svg { width: 19px !important; height: 19px !important; }
-
-  /* ── Arama kutusu ── */
-  .search-bar, #searchBar, .rooms-search input {
-    font-size: .82rem !important;
-    height: 36px !important;
-    border-radius: 10px !important;
-    padding: 0 12px !important;
-  }
-
-  /* ── Bölüm başlıkları (KANALLAR, GRUPLAR...) ── */
-  .sec-hdr {
-    font-size: .6rem !important;
-    padding: 10px 14px 3px !important;
-    letter-spacing: .09em !important;
-  }
-
-  /* ── Oda / Kanal öğeleri ── */
-  .r-item, .ch-item {
-    padding: 7px 14px !important;
-    min-height: 38px !important;
-    border-radius: 8px !important;
-  }
-  .r-label, .ch-title, .ch-label {
-    font-size: .84rem !important;
-  }
-  .r-av, .ch-av, .room-ic {
-    width: 26px !important;
-    height: 26px !important;
-    border-radius: 5px !important;
-    font-size: .64rem !important;
+    padding: 7px 12px !important;
+    padding-top: calc(7px + env(safe-area-inset-top, 0px)) !important;
     flex-shrink: 0 !important;
   }
+  .ws-header svg, .hdr-btn svg, .c-header svg {
+    width: 17px !important; height: 17px !important;
+  }
 
-  /* ── DM / Arkadaş satırları ── */
+  /* ── Karbon widget küçült ── */
+  #carbonWidget {
+    font-size: .62rem !important;
+    padding: 2px 7px !important;
+    flex-shrink: 0 !important;
+    gap: 3px !important;
+  }
+  #carbonWidget svg { width: 11px !important; height: 11px !important; }
+  #carbonCount { font-size: .62rem !important; }
+
+  /* ── Arama kutusu ── */
+  .rooms-search, #msgsSearch {
+    padding: 6px 12px !important;
+    flex-shrink: 0 !important;
+  }
+  .rooms-search input, #msgsSearchInput, [placeholder="Kişi ara..."] {
+    font-size: .82rem !important;
+    padding: 8px 12px !important;
+    border-radius: 10px !important;
+  }
+
+  /* ── Section header (KANALLAR, GRUPLAR) ── */
+  .sec-hdr {
+    font-size: .58rem !important;
+    padding: 8px 14px 2px !important;
+    letter-spacing: .08em !important;
+  }
+
+  /* ── Oda listesi öğeleri ── */
+  .r-item {
+    padding: 6px 14px !important;
+    min-height: 34px !important;
+  }
+  .r-label { font-size: .82rem !important; }
+
+  /* ── DM / Friends liste öğeleri ── */
   .dm-row, .fr-row {
     padding: 8px 14px !important;
     gap: 10px !important;
-    border-radius: 8px !important;
-    margin: 1px 0 !important;
   }
   .dm-av, .fr-av {
     width: 36px !important;
     height: 36px !important;
-    border-radius: 8px !important;
+    border-radius: 9px !important;
     font-size: .74rem !important;
     flex-shrink: 0 !important;
   }
   .dm-name, .fr-name {
-    font-size: .86rem !important;
+    font-size: .85rem !important;
     font-weight: 700 !important;
   }
-  .dm-status, .fr-status {
-    font-size: .68rem !important;
-  }
+  .dm-status, .fr-status { font-size: .68rem !important; }
   .fr-btn {
-    padding: 6px 13px !important;
+    padding: 6px 12px !important;
     font-size: .72rem !important;
     border-radius: 8px !important;
-  }
-
-  /* ── Mesaj baloncukları ── */
-  .msg-wrap, .msg-row { margin-bottom: 3px !important; }
-  .msg-bubble, .msg-own, .msg-in {
-    padding: 7px 11px !important;
-    border-radius: 12px !important;
-    max-width: 75% !important;
-  }
-  .msg-text, .msg-body, .m-text {
-    font-size: .84rem !important;
-    line-height: 1.45 !important;
-  }
-  .av, .msg-av {
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: 5px !important;
-    font-size: .64rem !important;
-  }
-  .msg-author, .msg-name {
-    font-size: .72rem !important;
-  }
-  .msg-time, .timestamp {
-    font-size: .62rem !important;
-  }
-
-  /* ── Mesaj input alanı ── */
-  #msgInput, .msg-input, textarea.chat-input {
-    font-size: .84rem !important;
-    min-height: 38px !important;
-    padding: 8px 11px !important;
-    border-radius: 10px !important;
-  }
-  .send-btn, .msg-send {
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 9px !important;
     flex-shrink: 0 !important;
   }
-  .send-btn svg, .msg-send svg {
-    width: 16px !important;
-    height: 16px !important;
+
+  /* ── Scroll alanları tam dolsun ── */
+  .rooms-scroll, .dm-list-scroll, .fr-scroll {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior: contain !important;
   }
 
-  /* ── Ana sayfa ws-header (Nature.co logosu satırı) ── */
-  .ws-header {
-    min-height: 46px !important;
-    padding: 7px 14px !important;
-    padding-top: calc(7px + env(safe-area-inset-top,0px)) !important;
-    gap: 8px !important;
+  /* ── Mesaj input ── */
+  #msgInp, .msg-input {
+    font-size: .84rem !important;
   }
-  .ws-header svg, .hdr-btn svg {
-    width: 19px !important;
-    height: 19px !important;
-  }
-
-  /* ── Karbon widget ── */
-  #carbonWidget, .carbon-badge {
-    font-size: .66rem !important;
-    padding: 3px 8px !important;
-    border-radius: 20px !important;
-    gap: 3px !important;
-  }
-  #carbonWidget svg { width: 12px !important; height: 12px !important; }
-
-  /* ── NatureBot mini karakter ── */
-  #natureBotPet {
-    transform: scale(0.75) !important;
-    transform-origin: bottom right !important;
-  }
-
-  /* ── Genel padding ── */
-  .screen { padding-left: 0 !important; padding-right: 0 !important; }
-  .rooms-list, .dm-list, .fr-list {
-    padding: 4px 10px !important;
+  .inp-wrap {
+    flex-shrink: 0 !important;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px) !important;
   }
 }
 /* ══════════════════════════════════════════════════════════ */
