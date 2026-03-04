@@ -3,7 +3,7 @@
 
 /* ── Open/Close ── */
 
-function openFriendsModal(){ switchMainTab('friends'); }
+function openFriendsModal(){ switchMainTab('friends'); var t=document.getElementById('tabFriends');if(t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('act'));t.classList.add('act');} }
 function closeFriendsModal(){ switchMainTab('home'); }
 function openAddFriendTab(){ switchMainTab('friends'); switchFrTab(3); }
 

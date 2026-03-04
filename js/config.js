@@ -157,9 +157,13 @@ let _activeMainTab='home';
 
 function switchMainTab(tab){
   _activeMainTab=tab;
-  // Tab bar'ı göster (chat'ten çıkınca)
+  // Tab bar göster + aktif sekmeyi işaretle
   var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display='';
+  if(tb) tb.style.display='flex';
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('act');});
+  var tabIds={home:'tabHome',msgs:'tabMsgs',forum:'tabForum',friends:'tabFriends',games:'tabGames',watch:'tabWatch',profile:'tabProfile'};
+  var activeEl=document.getElementById(tabIds[tab]);
+  if(activeEl) activeEl.classList.add('act');
   // Track last mobile tab for orientation restore
   if(['home','forum','watch','msgs','friends'].includes(tab)) {
     if(typeof _lastMobileTab !== 'undefined') _lastMobileTab = tab;
