@@ -4825,12 +4825,26 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   flex-shrink: 0 !important;
 }
 
-/* ══ Tüm ekranlar - status bar padding ══ */
+/* ══ Tüm ekranlar - status bar padding (roomsScreen ile aynı: 73px) ══ */
 #forumScreen .ws-header,
 #msgsScreen .ws-header,
 #friendsScreen .ws-header,
 #gamesScreen .ws-header,
 #watchScreen .ws-header,
 #profileScreen .ws-header {
-  padding-top: max(env(safe-area-inset-top, 44px), 44px) !important;
+  padding-top: 73px !important;
+}
+
+/* ══ Ana sayfa header ikonlar - hizalama ══ */
+#mobileRobotSlot {
+  width: 30px !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+#mobileRobotSlot > * {
+  width: 30px !important;
+  height: 30px !important;
+  object-fit: contain !important;
 }
