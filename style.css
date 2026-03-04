@@ -4513,3 +4513,56 @@ body {
   border-radius: 50% !important;
   flex-shrink: 0;
 }
+
+/* ══ Chat ekranı düzeltmeleri ══ */
+
+/* 1. Balon çerçevesini kaldır */
+.mb-bubble-wrap {
+  border: none !important;
+  outline: none !important;
+}
+
+/* 2. İmleç sorunu — inp-box overflow görünür, imleç içeride */
+.inp-box {
+  overflow: visible !important;
+  position: relative;
+}
+#msgInput {
+  position: relative;
+  z-index: 1;
+  caret-color: var(--green) !important;
+}
+
+/* 3. chatMsgs — zıplama önle */
+#chatScreen {
+  overflow: hidden !important;
+}
+#chatMsgs {
+  overscroll-behavior: contain !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* ══ msgInp textarea düzeltmesi ══ */
+#msgInp {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  outline: none !important;
+  resize: none;
+  padding: 10px 12px 6px !important;
+  font-size: .92rem !important;
+  color: var(--text-hi);
+  font-family: inherit;
+  line-height: 1.4;
+  display: block;
+  caret-color: var(--green);
+  min-height: 38px;
+  max-height: 120px;
+  overflow-y: auto;
+}
+.inp-box {
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
