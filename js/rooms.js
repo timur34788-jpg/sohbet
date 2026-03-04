@@ -126,6 +126,8 @@ function chRow(r, showLeave, hiddenAdmin){
   const leaveBtn=(showLeave&&r.type==='group'&&isMember)?`<div class="r-leave-btn" onclick="event.stopPropagation();leaveGroup('${r.id}','${esc(r.name||r.id)}')" title="Gruptan ayrıl"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></div>`:'';
   // Admin özel badge
   const spyBadge=hiddenAdmin?`<div style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(245,166,35,.15);color:#f5a623;font-size:.6rem;font-weight:900;padding:2px 6px;border-radius:100px;letter-spacing:.04em;">👁 GİZLİ</div>`:'';
+  const lockedBadge=r.locked?`<span title="Kilitli" style="margin-left:4px;font-size:.75rem;opacity:.6;">🔒</span>`:'';
+  const mutedBadge=r.muted?`<span title="Susturulmuş" style="margin-left:2px;font-size:.75rem;opacity:.6;">🔇</span>`:'';
   const last = _lastMsg[r.id]||{};
   const prevText = last.text ? (last.text.length>40?last.text.slice(0,40)+'…':last.text) : (last.file?'📎 Dosya':'');
   const prevUser = last.user||'';
@@ -137,7 +139,7 @@ function chRow(r, showLeave, hiddenAdmin){
   </div>`;
   return `<div class="${cls}" style="position:relative;${hiddenAdmin?'opacity:.75;':''}" onclick="openRoom('${r.id}')">
     <div class="r-icon">${icon}</div>
-    <div class="r-label">${esc(r.name||r.id)}</div>
+    <div class="r-label">${esc(r.name||r.id)}${lockedBadge}${mutedBadge}</div>
     ${unread?`<div class="ubadge">${unread}</div>`:''}
     ${leaveBtn}
     ${spyBadge}
@@ -359,11 +361,14 @@ function openRoom(roomId){
         const inp=document.getElementById('chatInputRow');
         if(inp) inp.style.display='';
         document.getElementById('adminSpyBanner').style.display='none';
-        // Kilit kontrolü
+        // Kilit / susturma kontrolü
         const msgInp = document.getElementById('msgInp');
         const sendBtn = document.getElementById('sendBtn');
         if(room.locked && !_isAdmin){
           if(msgInp){ msgInp.disabled=true; msgInp.placeholder='🔒 Bu oda kilitli'; }
+          if(sendBtn) sendBtn.disabled=true;
+        } else if(room.muted && !_isAdmin){
+          if(msgInp){ msgInp.disabled=true; msgInp.placeholder='🔇 Bu grup susturulmuş'; }
           if(sendBtn) sendBtn.disabled=true;
         } else {
           if(msgInp){ msgInp.disabled=false; msgInp.placeholder='Mesaj yaz...'; }

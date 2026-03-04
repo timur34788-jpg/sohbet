@@ -366,12 +366,12 @@ items.push({sep:true});
     }
     
     if(isGroup && isMember){
-      items.push({icon:'👥', label:'Üyeleri Gör', action: ()=>showGroupMembers(room)});
+      items.push({icon:'👥', label:'Grubu Yönet', action: ()=>openGroupPanel(_cRoom)});
       items.push({sep:true});
       items.push({icon:'🚪', label:'Gruptan Ayrıl', action: ()=>leaveGroup(_cRoom, room.name||_cRoom), danger:true});
     }
     
-    if(_isAdmin){
+    if(_isAdmin && !isGroup){
       items.push({sep:true});
       items.push({icon:'⚙️', label:'Oda Ayarları (Admin)', action: ()=>{switchMainTab('home');openAdminPanel();adminTab('rooms');}});
     }
@@ -445,14 +445,264 @@ function openMsgSearch(){
 }
 
 function showGroupMembers(room){
-  const members = room.members||[];
-  const online = members.filter(u=>_online[u]);
-  const offline = members.filter(u=>!_online[u]);
-  let msg = '👥 '+room.name+' — '+members.length+' üye\n\n';
-  if(online.length) msg += '🟢 Çevrimiçi: '+online.join(', ')+'\n';
-  if(offline.length) msg += '⚫ Çevrimdışı: '+offline.join(', ');
-  alert(msg);
+  openGroupPanel(room.id || _cRoom);
 }
+
+/* ══════════════════════════════════════════
+   👥 GRUP YÖNETİM PANELİ
+   - Herkes: üyeleri gör, üye davet et, ayrıl
+   - Admin: kilitle, sustur, sil
+   ══════════════════════════════════════════ */
+function openGroupPanel(roomId) {
+  const old = document.getElementById('_groupPanel');
+  if(old) old.remove();
+
+  dbRef('rooms/'+roomId).once('value').then(snap => {
+    const room = snap.val();
+    if(!room) return;
+    const members = room.members || [];
+    const isCreator = room.createdBy === _cu;
+    const canManage = _isAdmin; // yalnızca admin yönetir
+
+    const modal = document.createElement('div');
+    modal.id = '_groupPanel';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:9900;display:flex;align-items:flex-end;justify-content:center;';
+
+    const onlines = members.filter(u => _online[u]);
+    const offlines = members.filter(u => !_online[u]);
+
+    const memberRows = [...onlines, ...offlines].map(u => {
+      const isMe = u === _cu;
+      const isOwner = u === room.createdBy;
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+          <div style="position:relative;flex-shrink:0;">
+            <div style="width:34px;height:34px;border-radius:9px;background:${strColor(u)};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;color:#fff;">${initials(u)}</div>
+            ${_online[u]?'<div style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:#2ecc71;border:1.5px solid var(--bg2);"></div>':''}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:.85rem;font-weight:700;color:var(--text-hi);">${esc(u)}${isMe?' <span style="font-size:.65rem;color:var(--muted)">(sen)</span>':''}</div>
+            ${isOwner?'<div style="font-size:.65rem;color:var(--accent);font-weight:700;">👑 Kurucu</div>':''}
+          </div>
+          ${canManage && !isMe ? `<button onclick="adminKickFromGroupPanel('${esc(roomId)}','${esc(u)}')" style="background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.3);border-radius:7px;color:#e05555;font-size:.65rem;font-weight:700;padding:4px 9px;cursor:pointer;">Çıkar</button>` : ''}
+        </div>`;
+    }).join('');
+
+    modal.innerHTML = `
+      <div onclick="event.stopPropagation()" style="background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+        <!-- Handle -->
+        <div style="width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:14px auto 0;flex-shrink:0;"></div>
+
+        <!-- Header -->
+        <div style="display:flex;align-items:center;gap:12px;padding:16px 18px 12px;flex-shrink:0;">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#9b72ff,#c4a7ff);display:flex;align-items:center;justify-content:center;font-size:1.3rem;">👥</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:1rem;font-weight:900;color:var(--text-hi);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(room.name||roomId)}</div>
+            <div style="font-size:.72rem;color:var(--muted);">${members.length} üye · ${onlines.length} çevrimiçi</div>
+          </div>
+          <div onclick="document.getElementById('_groupPanel').remove()" style="cursor:pointer;color:var(--muted);padding:4px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+        </div>
+
+        <!-- Durum badge'leri -->
+        ${room.locked ? '<div style="margin:0 18px 8px;background:rgba(224,85,85,.12);border:1px solid rgba(224,85,85,.25);border-radius:8px;padding:7px 12px;font-size:.75rem;color:#e05555;font-weight:700;">🔒 Bu grup kilitlidir</div>' : ''}
+
+        <!-- Admin Kontrolleri -->
+        ${canManage ? `
+        <div style="margin:0 18px 10px;display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0;">
+          <button onclick="_groupAction('lock','${esc(roomId)}',${room.locked?'false':'true'})" style="flex:1;min-width:90px;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 8px;border-radius:10px;border:1px solid ${room.locked?'rgba(46,204,113,.3)':'rgba(224,85,85,.3)'};background:${room.locked?'rgba(46,204,113,.1)':'rgba(224,85,85,.1)'};color:${room.locked?'#2ecc71':'#e05555'};font-size:.75rem;font-weight:700;cursor:pointer;">
+            ${room.locked ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Kilidi Aç' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg> Kilitle'}
+          </button>
+          <button onclick="_groupAction('mute','${esc(roomId)}',${room.muted?'false':'true'})" style="flex:1;min-width:90px;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 8px;border-radius:10px;border:1px solid ${room.muted?'rgba(46,204,113,.3)':'rgba(245,166,35,.3)'};background:${room.muted?'rgba(46,204,113,.1)':'rgba(245,166,35,.1)'};color:${room.muted?'#2ecc71':'#f5a623'};font-size:.75rem;font-weight:700;cursor:pointer;">
+            ${room.muted ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> Sesi Aç' : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg> Sustur'}
+          </button>
+          <button onclick="_groupAction('delete','${esc(roomId)}',null)" style="display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 14px;border-radius:10px;border:1px solid rgba(224,85,85,.3);background:rgba(224,85,85,.1);color:#e05555;font-size:.75rem;font-weight:700;cursor:pointer;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Sil
+          </button>
+        </div>` : ''}
+
+        <!-- Üye davet (herkes yapabilir - sadece üyeyse) -->
+        ${(isCreator || canManage) ? `
+        <div style="margin:0 18px 10px;flex-shrink:0;">
+          <button onclick="_openGroupInvite('${esc(roomId)}')" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border-radius:10px;border:1px solid rgba(91,155,213,.3);background:rgba(91,155,213,.08);color:var(--accent);font-size:.8rem;font-weight:700;cursor:pointer;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            Üye Davet Et
+          </button>
+        </div>` : ''}
+
+        <!-- Divider -->
+        <div style="padding:0 18px;flex-shrink:0;">
+          <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">${members.length} Üye</div>
+        </div>
+
+        <!-- Üye listesi -->
+        <div style="flex:1;overflow-y:auto;padding:0 18px 8px;">
+          ${memberRows}
+        </div>
+
+        <!-- Alt - ayrıl butonu -->
+        <div style="padding:12px 18px;padding-bottom:max(16px,env(safe-area-inset-bottom,16px));flex-shrink:0;border-top:1px solid rgba(255,255,255,.06);">
+          <button onclick="document.getElementById('_groupPanel').remove();leaveGroup('${esc(roomId)}','${esc(room.name||roomId)}')" style="width:100%;padding:11px;border-radius:10px;background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.25);color:#e05555;font-size:.85rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Gruptan Ayrıl
+          </button>
+        </div>
+      </div>`;
+
+    modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+  });
+}
+
+/* Grup aksiyon: kilit, sustur, sil */
+async function _groupAction(action, roomId, value) {
+  if(!_isAdmin) { showToast('❌ Bu işlem için admin yetkisi gerekli'); return; }
+
+  if(action === 'delete') {
+    const panel = document.getElementById('_groupPanel');
+    const roomName = panel ? panel.querySelector('[style*="font-size:1rem"]')?.textContent?.trim() : roomId;
+    if(!confirm(`"${roomName}" grubu kalıcı olarak silinsin mi?\nTüm mesajlar da silinecek.`)) return;
+    try {
+      await dbRef('rooms/'+roomId).remove();
+      await dbRef('msgs/'+roomId).remove().catch(()=>{});
+      panel && panel.remove();
+      showToast('🗑️ Grup silindi.');
+      if(_cRoom === roomId) goBack();
+      loadRooms();
+    } catch(e) { showToast('❌ Silme hatası.'); }
+    return;
+  }
+
+  if(action === 'lock') {
+    const locked = value === 'true' || value === true;
+    try {
+      await dbRef('rooms/'+roomId+'/locked').set(locked);
+      showToast(locked ? '🔒 Grup kilitlendi.' : '🔓 Kilit açıldı.');
+      document.getElementById('_groupPanel')?.remove();
+      openGroupPanel(roomId);
+    } catch(e) { showToast('❌ Hata.'); }
+    return;
+  }
+
+  if(action === 'mute') {
+    const muted = value === 'true' || value === true;
+    try {
+      await dbRef('rooms/'+roomId+'/muted').set(muted);
+      showToast(muted ? '🔇 Grup susturuldu.' : '🔊 Susturma kaldırıldı.');
+      document.getElementById('_groupPanel')?.remove();
+      openGroupPanel(roomId);
+    } catch(e) { showToast('❌ Hata.'); }
+    return;
+  }
+}
+
+/* Admin - panel üzerinden üye çıkarma */
+async function adminKickFromGroupPanel(roomId, username) {
+  if(!_isAdmin) { showToast('❌ Yetki yok'); return; }
+  if(!confirm(`"${username}" gruptan çıkarılsın mı?`)) return;
+  try {
+    const snap = await dbRef('rooms/'+roomId+'/members').once('value');
+    const members = (snap.val()||[]).filter(m => m !== username);
+    await dbRef('rooms/'+roomId+'/members').set(members);
+    showToast(`✅ ${username} gruptan çıkarıldı.`);
+    document.getElementById('_groupPanel')?.remove();
+    openGroupPanel(roomId);
+  } catch(e) { showToast('❌ Hata.'); }
+}
+
+/* Üye davet - kurucu veya admin */
+function _openGroupInvite(roomId) {
+  const old = document.getElementById('_groupInvitePanel');
+  if(old) old.remove();
+
+  dbRef('rooms/'+roomId+'/members').once('value').then(snap => {
+    const currentMembers = snap.val() || [];
+    const currentSet = new Set(Array.isArray(currentMembers) ? currentMembers : Object.values(currentMembers));
+
+    const modal = document.createElement('div');
+    modal.id = '_groupInvitePanel';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9950;display:flex;align-items:flex-end;justify-content:center;';
+
+    modal.innerHTML = `
+      <div onclick="event.stopPropagation()" style="background:var(--bg2);border-radius:20px 20px 0 0;width:100%;max-width:480px;max-height:75vh;display:flex;flex-direction:column;overflow:hidden;padding-bottom:max(16px,env(safe-area-inset-bottom,16px));">
+        <div style="width:40px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:14px auto 0;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 18px 10px;">
+          <div style="font-size:.95rem;font-weight:900;color:var(--text-hi);">👤 Üye Davet Et</div>
+          <div onclick="document.getElementById('_groupInvitePanel').remove()" style="cursor:pointer;color:var(--muted);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </div>
+        </div>
+        <input id="_giSearch" class="admin-inp" placeholder="Kullanıcı ara..." autocorrect="off" autocapitalize="none"
+          style="margin:0 18px 10px;width:calc(100% - 36px);box-sizing:border-box;"
+          oninput="_loadGIUsers(this.value,'${esc(roomId)}')">
+        <div id="_giList" style="flex:1;overflow-y:auto;padding:0 18px;"></div>
+      </div>`;
+
+    modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+    document.body.appendChild(modal);
+
+    // Kullanıcıları yükle
+    window._giCurrentMembers = currentSet;
+    window._giRoomId = roomId;
+    _loadGIUsers('', roomId);
+  });
+}
+
+function _loadGIUsers(q, roomId) {
+  const list = document.getElementById('_giList');
+  if(!list) return;
+  const currentSet = window._giCurrentMembers || new Set();
+  list.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:8px;">Yükleniyor...</div>';
+
+  dbRef('users').once('value').then(snap => {
+    const users = snap.val() || {};
+    const filtered = Object.keys(users).filter(u => {
+      if(users[u].banned) return false;
+      if(currentSet.has(u)) return false;
+      if(q && !u.toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
+
+    if(!filtered.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:.8rem;padding:8px;text-align:center;">Eklenecek kullanıcı bulunamadı</div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(u => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);">
+        <div style="position:relative;flex-shrink:0;">
+          <div style="width:34px;height:34px;border-radius:9px;background:${strColor(u)};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:900;color:#fff;">${initials(u)}</div>
+          ${_online[u]?'<div style="position:absolute;bottom:-1px;right:-1px;width:9px;height:9px;border-radius:50%;background:#2ecc71;border:1.5px solid var(--bg2);"></div>':''}
+        </div>
+        <div style="flex:1;font-size:.85rem;font-weight:700;color:var(--text-hi);">${esc(u)}</div>
+        <button onclick="_addToGroup('${esc(roomId)}','${esc(u)}',this)" style="background:rgba(91,155,213,.15);border:1px solid rgba(91,155,213,.3);border-radius:8px;color:var(--accent);font-size:.72rem;font-weight:700;padding:5px 12px;cursor:pointer;">Ekle</button>
+      </div>`).join('');
+  });
+}
+
+async function _addToGroup(roomId, username, btn) {
+  try {
+    const snap = await dbRef('rooms/'+roomId+'/members').once('value');
+    const members = snap.val() || [];
+    const arr = Array.isArray(members) ? members : Object.values(members);
+    if(arr.includes(username)) { showToast('Zaten üye.'); return; }
+    arr.push(username);
+    await dbRef('rooms/'+roomId+'/members').set(arr);
+    // Bildirim gönder
+    dbRef('callInvites/'+username).push({
+      type:'group_invite', room: roomId, from: _cu, ts: Date.now()
+    }).catch(()=>{});
+    if(btn) {
+      btn.textContent = '✅ Eklendi';
+      btn.disabled = true;
+      btn.style.opacity = '.6';
+    }
+    if(window._giCurrentMembers) window._giCurrentMembers.add(username);
+    showToast(`✅ ${username} gruba eklendi.`);
+  } catch(e) { showToast('❌ Hata.'); }
+}
+
 
 async function leaveGroup(roomId, roomName){
   if(!confirm('"'+roomName+'" grubundan ayrılmak istediğinize emin misiniz?'))return;
@@ -651,11 +901,12 @@ async function sendMsg(){
   }
   const inp=document.getElementById('msgInp');const t=inp.value.trim();
   if(!t||!_cRoom||!_cu)return;
-  // ── Oda kilit kontrolü ──
+  // ── Oda kilit/susturma kontrolü ──
   try{
     const _rSnap = await dbRef('rooms/'+_cRoom).once('value');
     const _rData = _rSnap.val()||{};
     if(_rData.locked && !_isAdmin){ showToast('🔒 Bu oda kilitli.'); return; }
+    if(_rData.muted && !_isAdmin){ showToast('🔇 Bu grup susturulmuş. Mesaj gönderilemez.'); return; }
   }catch(e){}
   // Slash bot komutu kontrolü
   if(t.startsWith('/') && typeof checkBotCommand==='function' && checkBotCommand(t)){

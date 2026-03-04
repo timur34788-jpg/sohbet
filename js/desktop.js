@@ -358,14 +358,19 @@ function deskOpenRoom(roomId) {
       document.getElementById('deskMemberPanel').classList.add('hidden');
     }
 
-    // Update placeholder for locked rooms
+    // Update placeholder for locked/muted rooms
     if (room.locked && !_isAdmin) {
       document.getElementById('deskInp').disabled = true;
       document.getElementById('deskSendBtn').disabled = true;
       document.getElementById('deskInp').placeholder = '🔒 Bu oda kilitli';
+    } else if (room.muted && !_isAdmin) {
+      document.getElementById('deskInp').disabled = true;
+      document.getElementById('deskSendBtn').disabled = true;
+      document.getElementById('deskInp').placeholder = '🔇 Bu grup susturulmuş';
     } else {
       document.getElementById('deskInp').disabled = false;
       document.getElementById('deskSendBtn').disabled = false;
+      document.getElementById('deskInp').placeholder = 'Mesaj yaz...';
     }
   });
 }
@@ -1206,7 +1211,8 @@ async function sendDeskMsg() {
 
   const roomSnap = await dbRef('rooms/' + _deskRoom).once('value');
   const roomData = roomSnap.val() || {};
-  if (roomData.locked && !_isAdmin) { showToast('Bu oda kilitli.'); return; }
+  if (roomData.locked && !_isAdmin) { showToast('🔒 Bu oda kilitli.'); return; }
+  if (roomData.muted && !_isAdmin) { showToast('🔇 Bu grup susturulmuş.'); return; }
   // Rate limiting (desktop)
   const _now2 = Date.now();
   const muteUntil2 = _userMutedUntil || 0;
