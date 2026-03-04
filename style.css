@@ -4390,12 +4390,6 @@ body {
   }
 }
 
-/* Chat ekranı açıkken tab bar gizle */
-#chatScreen.active ~ .tab-bar,
-body:has(#chatScreen.active) .tab-bar {
-  display: none !important;
-}
-
 /* ── Chat ekranı — mesaj kutusu alt kilitli ── */
 #chatScreen .inp-wrap {
   flex-shrink: 0 !important;
@@ -4414,4 +4408,9 @@ body:has(#chatScreen.active) .tab-bar {
 }
 #chatScreen.active {
   display: flex !important;
+}
+
+/* Chat ekranı açıkken tab bar gizle */
+body:has(#chatScreen.active) .tab-bar {
+  display: none !important;
 }
