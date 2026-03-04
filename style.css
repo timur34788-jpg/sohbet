@@ -684,8 +684,10 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .flip-counter-digit { height: 1.2em; line-height: 1.2em; font-weight: 700; }
 
 .room-preview-popup {
-  display: none; position: fixed; z-index: 99999;
-  top: auto; left: auto;
+  display: none; position: absolute; z-index: 99999;
+  top: 50%; left: 100%;
+  transform: translateY(-50%);
+  margin-left: 10px;
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 12px; padding: 10px 14px; min-width: 200px; max-width: 240px;
   box-shadow: 0 8px 32px rgba(0,0,0,.5); pointer-events: none;
@@ -719,7 +721,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .date-div::before,.date-div::after{content:'';flex:1;height:1px;background:var(--border);}
 .date-txt{font-size:.7rem;font-weight:700;color:var(--muted);white-space:nowrap;}
 
-.mb{display:flex;align-items:flex-start;gap:10px;padding:4px 40px 4px 40px;position:relative;overflow:visible;}
+.mb{display:flex;align-items:flex-start;gap:10px;padding:4px 40px 4px 40px;transition:background .1s;position:relative;overflow:visible;}
 
 
 .mb.first{padding-top:10px;}
@@ -4923,21 +4925,3 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   line-height: 1.2 !important;
   display: block !important;
 }
-
-/* ── WhatsApp tarzı mesaj hover ── */
-.mb-text {
-  transition: filter .15s, box-shadow .15s;
-}
-.ob {
-  transition: filter .15s, box-shadow .15s;
-}
-.mb:hover .mb-text {
-  filter: brightness(1.08);
-  box-shadow: 0 2px 12px rgba(0,0,0,.25);
-}
-.mb:hover .ob {
-  filter: brightness(1.08);
-  box-shadow: 0 2px 12px rgba(0,0,0,.25);
-}
-/* Menü açıkken tüm satır highlight olmasın */
-.mb { background: transparent !important; }
