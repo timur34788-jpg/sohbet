@@ -4756,3 +4756,21 @@ body.in-chat .tab-bar {
   pointer-events: none !important;
   opacity: 0 !important;
 }
+
+/* ══ Tab bar pozisyon final ══ */
+.tab-bar {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  padding-top: 8px !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  background: #080a10 !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+  z-index: 1000 !important;
+}
+
+/* Tab bar yüksekliği kadar içerik padding */
+.screen:not(#chatScreen) {
+  padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
+}
