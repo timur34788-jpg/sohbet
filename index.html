@@ -1139,32 +1139,86 @@
 
 </div>
 
-<!-- ══ GELEN ARAMA - Kompakt Banner ══ -->
-<div id="incomingCallScreen" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translateX(-50%);z-index:6000;width:calc(100% - 24px);max-width:420px;background:rgba(30,34,42,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.6);flex-direction:row;align-items:center;gap:12px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;">
+<!-- ══ GELEN ARAMA BANNER ══ -->
+<style>
+#incomingCallScreen {
+  animation: incomingSlideDown .35s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes incomingSlideDown {
+  from { opacity:0; transform:translateX(-50%) translateY(-20px) scale(.95); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+}
+#incomingCallScreen .inc-reject {
+  width:48px;height:48px;border-radius:16px;
+  background:rgba(224,85,85,.2);border:1px solid rgba(224,85,85,.35);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .15s,transform .1s;
+}
+#incomingCallScreen .inc-reject:active { transform:scale(.9); background:rgba(224,85,85,.4); }
+#incomingCallScreen .inc-accept {
+  width:48px;height:48px;border-radius:16px;
+  background:rgba(46,204,113,.2);border:1px solid rgba(46,204,113,.35);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  transition:background .15s,transform .1s;
+  animation: acceptPulse 1.8s ease-in-out infinite;
+}
+#incomingCallScreen .inc-accept:active { transform:scale(.9); }
+@keyframes acceptPulse {
+  0%,100%{ box-shadow:0 0 0 0 rgba(46,204,113,.3); }
+  50%    { box-shadow:0 0 0 8px rgba(46,204,113,0); }
+}
+</style>
+
+<div id="incomingCallScreen" style="display:none;position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);z-index:6000;width:calc(100% - 24px);max-width:420px;background:rgba(22,26,34,.97);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:14px 16px;box-shadow:0 12px 40px rgba(0,0,0,.7),0 0 0 1px rgba(91,155,213,.1);flex-direction:row;align-items:center;gap:12px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;">
+  <!-- Accent line top -->
+  <div style="position:absolute;top:0;left:20px;right:20px;height:2px;background:linear-gradient(90deg,transparent,rgba(91,155,213,.6),transparent);border-radius:0 0 2px 2px;"></div>
   <!-- Avatar -->
-  <div id="incomingCallAv" style="width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;color:#fff;flex-shrink:0;"></div>
+  <div id="incomingCallAv" style="width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:900;color:#fff;flex-shrink:0;background:linear-gradient(135deg,#2a3a52,#3a4d6a);box-shadow:0 4px 12px rgba(0,0,0,.3);"></div>
   <!-- Info -->
   <div style="flex:1;min-width:0;">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+      <div style="width:7px;height:7px;border-radius:50%;background:#2ecc71;animation:pulse 1.5s infinite;flex-shrink:0;"></div>
+      <div style="font-size:.68rem;color:rgba(46,204,113,.8);font-weight:700;letter-spacing:.05em;text-transform:uppercase;" id="incomingCallType">Sesli Arama</div>
+    </div>
     <div id="incomingCallName" style="font-size:.95rem;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-    <div id="incomingCallType" style="font-size:.75rem;color:rgba(255,255,255,.55);margin-top:1px;"></div>
   </div>
   <!-- Buttons -->
-  <div style="display:flex;gap:10px;flex-shrink:0;">
-    <div onclick="rejectCall()" data-nodrag title="Reddet" style="width:44px;height:44px;border-radius:50%;background:#e05555;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;box-shadow:0 2px 8px rgba(224,85,85,.4);">📵</div>
-    <div onclick="acceptCall()" data-nodrag title="Cevapla" style="width:44px;height:44px;border-radius:50%;background:#2ecc71;display:flex;align-items:center;justify-content:center;font-size:1.3rem;cursor:pointer;box-shadow:0 2px 8px rgba(46,204,113,.4);">📞</div>
+  <div style="display:flex;gap:8px;flex-shrink:0;">
+    <div class="inc-reject" onclick="rejectCall()" data-nodrag title="Reddet">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(224,85,85,.9)" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+    <div class="inc-accept" onclick="acceptCall()" data-nodrag title="Cevapla">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="rgba(46,204,113,.9)">
+        <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.58.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.29 21 3 13.71 3 4.5c0-.55.45-1 1-1H7.5c.55 0 1 .45 1 1 0 1.25.2 2.46.57 3.58.11.35.03.74-.24 1.02L6.6 10.8z"/>
+      </svg>
+    </div>
   </div>
 </div>
 
-<!-- ══ MİNİMİZE EDİLMİŞ ARAMA ÇUBUĞU ══ -->
-<div id="callMinimizedBar" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:5100;background:rgba(20,22,30,.96);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(46,204,113,.35);border-radius:100px;padding:8px 16px;box-shadow:0 4px 24px rgba(0,0,0,.6);flex-direction:row;align-items:center;gap:10px;cursor:grab;white-space:nowrap;touch-action:none;user-select:none;-webkit-user-select:none;">
-  <div style="width:9px;height:9px;border-radius:50%;background:#2ecc71;animation:pulse 1.5s infinite;flex-shrink:0;"></div>
-  <div id="callMinBar_name" style="font-size:.85rem;font-weight:700;color:#fff;"></div>
-  <div id="callMinBar_status" style="font-size:.75rem;color:rgba(255,255,255,.5);min-width:36px;"></div>
-  <div onclick="event.stopPropagation();maximizeCallScreen()" title="Büyüt" style="width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">
-    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><path d="M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6" stroke="rgba(255,255,255,.8)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<!-- ══ MİNİMİZE ARAMA ÇUBUĞU ══ -->
+<style>
+#callMinimizedBar { animation: minBarSlideUp .3s cubic-bezier(.34,1.56,.64,1); }
+@keyframes minBarSlideUp {
+  from { opacity:0; transform:translateX(-50%) translateY(16px); }
+  to   { opacity:1; transform:translateX(-50%) translateY(0); }
+}
+</style>
+<div id="callMinimizedBar" style="display:none;position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:5100;background:rgba(18,22,30,.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(91,155,213,.2);border-radius:16px;padding:10px 14px;box-shadow:0 4px 24px rgba(0,0,0,.6),0 0 0 1px rgba(91,155,213,.08);flex-direction:row;align-items:center;gap:10px;cursor:grab;white-space:nowrap;touch-action:none;user-select:none;-webkit-user-select:none;">
+  <!-- Live indicator -->
+  <div style="display:flex;align-items:center;gap:5px;flex-shrink:0;">
+    <div style="width:7px;height:7px;border-radius:50%;background:#2ecc71;animation:pulse 1.5s infinite;"></div>
   </div>
-  <div onclick="event.stopPropagation();endCall()" title="Aramayı Bitir" style="width:28px;height:28px;border-radius:50%;background:#e05555;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1L6.6 10.8z"/></svg>
+  <div id="callMinBar_name" style="font-size:.85rem;font-weight:800;color:#fff;max-width:120px;overflow:hidden;text-overflow:ellipsis;"></div>
+  <div id="callMinBar_status" style="font-size:.75rem;color:rgba(255,255,255,.45);font-variant-numeric:tabular-nums;min-width:32px;"></div>
+  <!-- Maximize -->
+  <div onclick="event.stopPropagation();maximizeCallScreen()" title="Büyüt" style="width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:background .15s;">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+  </div>
+  <!-- End call -->
+  <div onclick="event.stopPropagation();endCall()" title="Aramayı Bitir" style="width:28px;height:28px;border-radius:9px;background:rgba(224,85,85,.2);border:1px solid rgba(224,85,85,.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:background .15s;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="rgba(224,85,85,.9)">
+      <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.58.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.29 21 3 13.71 3 4.5c0-.55.45-1 1-1H7.5c.55 0 1 .45 1 1 0 1.25.2 2.46.57 3.58.11.35.03.74-.24 1.02L6.6 10.8z"/>
+    </svg>
   </div>
 </div>
 

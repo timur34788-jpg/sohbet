@@ -4925,3 +4925,19 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   line-height: 1.2 !important;
   display: block !important;
 }
+
+/* ══ Call Screen Mobile Responsive ══ */
+@media (max-width: 767px) {
+  .call-btn {
+    width: 52px !important;
+    height: 52px !important;
+    border-radius: 16px !important;
+  }
+  .call-btn-label { font-size: .55rem !important; }
+  .call-end-btn { width: 60px !important; height: 60px !important; }
+  #callAudioArea { padding: 16px !important; }
+  #callAvatar { width: 84px !important; height: 84px !important; border-radius: 24px !important; font-size: 1.9rem !important; }
+  #callName { font-size: 1.3rem !important; }
+  #callScreen > div:last-child { padding: 16px 16px calc(16px + env(safe-area-inset-bottom,0px)) !important; }
+  #callWaves { margin-bottom: 12px !important; }
+}
