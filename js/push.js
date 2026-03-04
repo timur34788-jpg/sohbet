@@ -39,6 +39,12 @@ async function getPushToken(){
     if(!app) return null;
     const messaging = firebase.messaging(app);
     const sw = await navigator.serviceWorker.ready;
+
+    // SW'ye aktif Firebase config'ini gönder (arka plan bildirimi için)
+    if(sw && sw.active && typeof FB_CONFIG !== 'undefined' && FB_CONFIG){
+      sw.active.postMessage({ type: 'FCM_INIT', config: FB_CONFIG });
+    }
+
     const token = await messaging.getToken({ vapidKey: getVapidKey(), serviceWorkerRegistration: sw });
     if(token){ _pushToken = token; await savePushToken(token); return token; }
     return null;
