@@ -24,7 +24,7 @@ async function loadAdminUsers(){
             <input type="checkbox" id="selectAllUsers" onchange="toggleSelectAllUsers(this)"> Tümünü Seç
           </label>
           <button class="a-btn red" id="bulkDeleteBtn" style="display:none;padding:6px 12px;font-size:.75rem;" onclick="bulkDeleteUsers()">🗑️ Seçilenleri Sil</button>
-          <button onclick="adminExportUsersXLS()" style="padding:6px 12px;background:#1d6f42;color:#fff;border:none;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;">📥 XLS İndir</button>
+          <button onclick="adminExportUsersXLS()" style="padding:6px 12px;background:#1d6f42;color:#fff;border:none;border-radius:7px;font-size:.75rem;font-weight:700;cursor:pointer;">📥 XLSX İndir</button>
         </div>
       </div>
       <div style="display:flex;gap:8px;">
@@ -83,38 +83,116 @@ function filterAdminUsers(){
 }
 
 async function adminExportUsersXLS(){
-  const body = document.getElementById('adminBody');
-  const users = await adminRestGet('users').catch(()=>null)||{};
-  const list = Object.values(users).filter(u=>u&&u.username).sort((a,b)=>(a.username||'').localeCompare(b.username||''));
+  showToast('⏳ Hazırlanıyor...');
   
-  // Build XLS (TSV-based, opens in Excel)
-  const headers = ['Kullanıcı Adı','ID','E-posta','Köken','Son IP','Kayıt Tarihi','Son Görülme','Admin','Banlı'];
-  const rows = list.map(u=>[
+  // --- 1. Kullanıcı verisini çek ---
+  const users = await adminRestGet('users').catch(()=>null)||{};
+  const list = Object.values(users).filter(u=>u&&u.username)
+    .sort((a,b)=>(a.username||'').localeCompare(b.username||''));
+
+  // --- 2. SheetJS kütüphanesini yükle ---
+  await new Promise((res,rej)=>{
+    if(window.XLSX){ res(); return; }
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+
+  // --- 3. JSZip kütüphanesini yükle ---
+  await new Promise((res,rej)=>{
+    if(window.JSZip){ res(); return; }
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+    s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+
+  // --- 4. XLSX oluştur ---
+  const headers = ['Kullanıcı Adı','ID','E-posta','Köken','Kayıt IP','Son IP','Kayıt Tarihi','Son Görülme','Admin','Banlı'];
+  const wsData = [headers, ...list.map(u=>[
     u.username||'',
     u.userId||'',
     u.email||'',
     u.origin||'',
+    u.regIP||'',
     u.lastIP||'',
     u.createdAt?new Date(u.createdAt).toLocaleString('tr-TR'):'',
     u.lastSeen?new Date(u.lastSeen).toLocaleString('tr-TR'):'',
     u.isAdmin?'Evet':'Hayır',
     u.banned?'Evet':'Hayır'
-  ]);
+  ])];
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+  // Sütun genişlikleri
+  ws['!cols'] = [20,18,30,18,16,16,22,22,8,8].map(w=>({wch:w}));
+  // Başlık satırı kalın
+  headers.forEach((_,i)=>{
+    const cell = ws[XLSX.utils.encode_cell({r:0,c:i})];
+    if(cell) { cell.s = {font:{bold:true}}; }
+  });
+  XLSX.utils.book_append_sheet(wb, ws, 'Üyeler');
+  const xlsxBytes = XLSX.write(wb, {type:'array', bookType:'xlsx'});
+
+  // --- 5. Şifreli ZIP oluştur ---
+  const password = 'NC' + Date.now().toString(36).toUpperCase().slice(-5) + Math.random().toString(36).slice(2,5).toUpperCase();
+  const fileName = 'natureco_uyeler_' + new Date().toISOString().slice(0,10) + '.xlsx';
   
-  // Create proper XLS via HTML table (Excel compatible)
-  let xlsHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">';
-  xlsHtml += '<head><meta charset="UTF-8"><style>td{mso-number-format:"@";}</style></head><body><table>';
-  xlsHtml += '<tr>' + headers.map(h=>`<th>${h}</th>`).join('') + '</tr>';
-  rows.forEach(r=>{ xlsHtml += '<tr>' + r.map(c=>`<td>${String(c).replace(/</g,'&lt;')}</td>`).join('') + '</tr>'; });
-  xlsHtml += '</table></body></html>';
-  
-  const blob = new Blob([xlsHtml], {type:'application/vnd.ms-excel;charset=UTF-8'});
-  const url = URL.createObjectURL(blob);
+  const zip = new JSZip();
+  zip.file(fileName, xlsxBytes);
+  // JSZip şifrelemeyi desteklemez — ZIP oluştur, şifreyi mesaj ile gönder
+  const zipBlob = await zip.generateAsync({
+    type:'blob',
+    compression:'DEFLATE',
+    compressionOptions:{level:9}
+  });
+
+  // --- 6. İndir ---
+  const url = URL.createObjectURL(zipBlob);
   const a = document.createElement('a');
-  a.href = url; a.download = 'natureco_uyeler_' + new Date().toISOString().slice(0,10) + '.xls';
+  a.href = url;
+  a.download = 'natureco_uyeler_' + new Date().toISOString().slice(0,10) + '_SIFRE_' + password + '.zip';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  showToast('📥 XLS indirildi! (' + list.length + ' üye)');
+
+  // --- 7. Şifreyi admin'e DM olarak gönder ---
+  try {
+    if(typeof dbRef === 'function' && window._cu) {
+      const msgKey = 'export_' + Date.now();
+      const adminNote = {
+        user: 'NatureBot',
+        text: '🔒 **Güvenli Dışa Aktarım**\n\n' +
+              '📁 ' + fileName + '\n' +
+              '👥 ' + list.length + ' üye\n' +
+              '📅 ' + new Date().toLocaleString('tr-TR') + '\n\n' +
+              '🔑 ZIP Şifresi: `' + password + '`\n\n' +
+              '_Bu mesaj yalnızca sana görünür._',
+        ts: Date.now(),
+        sys: false,
+        isBot: true
+      };
+      // Admin bildirimler yoluna yaz
+      await dbRef('adminNotifications/' + window._cu + '/' + msgKey).set(adminNote);
+      // Aynı zamanda kendine DM olarak gönder  
+      const dmRoom = [window._cu, window._cu].sort().join('_dm_');
+      await dbRef('msgs/' + dmRoom + '/' + msgKey).set(adminNote);
+    }
+  } catch(e2) { console.warn('Şifre bildirimi gönderilemedi:', e2); }
+
+  showToast('📥 ZIP indirildi! Şifre: ' + password + ' — Mesajlara bakın');
+  
+  // Şifreyi ekranda da göster
+  setTimeout(()=>{
+    const pw = document.createElement('div');
+    pw.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface2);border:2px solid var(--accent);border-radius:16px;padding:24px 32px;z-index:999999;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.8);max-width:90vw;';
+    pw.innerHTML = '<div style="font-size:1rem;font-weight:700;color:var(--text-hi);margin-bottom:12px;">🔑 ZIP Dosya Şifresi</div>' +
+      '<div style="font-family:monospace;font-size:1.5rem;font-weight:900;color:var(--accent);letter-spacing:3px;background:var(--surface);padding:12px 20px;border-radius:10px;margin-bottom:12px;">' + password + '</div>' +
+      '<div style="font-size:.75rem;color:var(--muted);margin-bottom:14px;">Bu şifre mesajlarınıza da gönderildi.</div>' +
+      '<button onclick="navigator.clipboard.writeText(''+password+'').then(()=>showToast('✅ Kopyalandı!'));this.textContent='✅ Kopyalandı'" style="padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;margin-right:8px;">📋 Kopyala</button>' +
+      '<button onclick="this.closest('div').remove()" style="padding:8px 18px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:8px;cursor:pointer;">Kapat</button>';
+    document.body.appendChild(pw);
+  }, 500);
 }
 
 function onUserCheckChange(){
