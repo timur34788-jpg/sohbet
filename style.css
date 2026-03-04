@@ -5089,3 +5089,9 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
     max-width: 82% !important;
   }
 }
+
+/* Tab bar — giriş ve sunucu seçim ekranlarında gizle */
+#serverSelectScreen.active ~ .tab-bar,
+#loginScreen.active ~ .tab-bar {
+  display: none !important;
+}
