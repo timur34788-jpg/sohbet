@@ -4664,3 +4664,30 @@ textarea#msgInp {
   border: none !important;
   background: none !important;
 }
+
+/* ══ mb-text arka planı kaldır - mb-bubble-wrap kullanıyoruz ══ */
+.mb-text {
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  font-size: .88rem !important;
+  color: var(--text-hi) !important;
+  line-height: 1.45 !important;
+  word-break: break-word !important;
+  white-space: pre-wrap !important;
+}
+.mb.own .mb-text {
+  color: #fff !important;
+}
+
+/* ══ ob ve mb-text iç wrapper - arka plan kaldır ══ */
+.ob, .mb-text {
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
