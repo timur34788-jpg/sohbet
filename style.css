@@ -4941,3 +4941,87 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   #callScreen > div:last-child { padding: 16px 16px calc(16px + env(safe-area-inset-bottom,0px)) !important; }
   #callWaves { margin-bottom: 12px !important; }
 }
+
+/* ══════════════════════════════════════
+   📱 MOBİL KAPSAMLI DÜZELTMELER
+   ══════════════════════════════════════ */
+
+/* iOS momentum scroll - her scrollable alan */
+.screen, #chatMsgs, #roomList, #forumFeed, #msgsScreen, #friendsScreen,
+.admin-body, .prof-body, .games-scroll, .watch-list {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* iOS input zoom önleme - login/register inputlar için */
+@media (max-width: 767px) {
+  #loginUser, #loginPass, #regUser, #regEmail, #regPass, #regPass2,
+  #msgInp, #deskInp, #_sswUser, #_sswPass {
+    font-size: 16px !important;
+  }
+}
+
+/* Tab bar - iOS home indicator ile çakışmasın */
+.tab-bar {
+  padding-bottom: max(env(safe-area-inset-bottom, 8px), 8px) !important;
+}
+
+/* Scroll sırasında tab bar görünmesi - chatScreen dışında */
+@media (max-width: 767px) {
+  .screen:not(#chatScreen):not(#loginScreen):not(#serverSelectScreen) {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* Mobil - tap highlight kaldır */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Mobil - buton/link active state */
+.tab:active, .hdr-btn:active, .room-item:active, .call-btn:active {
+  opacity: 0.7;
+}
+
+/* iOS'ta position:fixed olan elementler keyboard açılınca kaymasın */
+.tab-bar, #callScreen, #incomingCallScreen, #callMinimizedBar {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* Mesaj input alanı - iOS keyboard push fix */
+#chatScreen {
+  height: 100dvh !important;
+  height: -webkit-fill-available !important;
+}
+
+/* incomingCallScreen - mobilde daha küçük */
+@media (max-width: 480px) {
+  #incomingCallScreen {
+    width: calc(100% - 16px) !important;
+    padding: 12px 14px !important;
+  }
+}
+
+/* callMinimizedBar - tab bar üstünde */
+#callMinimizedBar {
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* Uzun içerik overflow - word break */
+.mb-text, .ob {
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+}
+
+/* Forum - mobil */
+@media (max-width: 767px) {
+  .forum-post {
+    margin: 0 8px 10px !important;
+  }
+}
+
+/* Toast - tab bar üstünde */
+#toast {
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 99999 !important;
+}
