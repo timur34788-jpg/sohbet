@@ -4847,6 +4847,16 @@ async function startCall(type) {
     await dbRef('calls/'+_callId+'/parts/'+_cu).set({ active:true, ts:Date.now() });
     showCallScreen(type);
     _listenParticipants && _listenParticipants();
+    // Arama reddedilirse veya sona ererse ring'i durdur
+    dbRef('calls/'+_callId+'/status').on('value', snap => {
+      if(snap.val() === 'ended') endCall();
+    });
+    dbRef('calls/'+_callId+'/rejected').on('child_added', () => {
+      stopRingSound && stopRingSound();
+      const statusEl = document.getElementById('callStatus');
+      if(statusEl) statusEl.textContent = 'Reddedildi';
+      setTimeout(() => endCall(), 1500);
+    });
     // Oda üyelerine davet bildirimi
     inviteToCall(_callId, type);
   } catch(e) {
@@ -4873,6 +4883,7 @@ function inviteToCall(callId, type) {
 }
 
 async function acceptCall(callId, type) {
+  stopRingSound && stopRingSound();
   _callId = callId;
   _groupCallId = callId;
   _callType = type;
@@ -4889,9 +4900,12 @@ async function acceptCall(callId, type) {
 }
 
 function rejectCall(callId) {
+  stopRingSound && stopRingSound();
   dbRef('callInvites/'+_cu).orderByChild('callId').equalTo(callId).once('value', snap => {
     snap.forEach(child => child.ref.remove());
   });
+  // Reddettiğimizi karşı tarafa bildir
+  dbRef('calls/'+callId+'/rejected/'+_cu).set(true);
   showToast('📞 Arama reddedildi');
 }
 
@@ -4943,17 +4957,43 @@ function startCallTimer() {
 }
 
 function endCall() {
-  clearInterval(_callTimer);
+  stopRingSound && stopRingSound();
+  clearInterval(_callTimer); _callTimer = null;
+  // Firebase temizle
   if(_callId) {
     dbRef('calls/'+_callId+'/parts/'+_cu).remove();
     dbRef('calls/'+_callId+'/status').set('ended');
   }
+  // Stream kapat
   if(_localStream) { _localStream.getTracks().forEach(t=>t.stop()); _localStream=null; }
-  Object.values(_peers).forEach(pc => pc.close());
+  // Peer bağlantıları kapat
+  Object.values(_peers||{}).forEach(pc => { try{pc.close();}catch(e){} });
   _peers = {};
+  // Listener'ları temizle
+  if(typeof _callStopListeners !== 'undefined') {
+    _callStopListeners.forEach(fn => { try{fn();}catch(e){} });
+    _callStopListeners = [];
+  }
+  // Remote ses elementlerini temizle
+  document.querySelectorAll('[id^="_rAudio_"]').forEach(el => el.remove());
+  // Remote stream'leri temizle
+  if(typeof _remoteStreams !== 'undefined') _remoteStreams = {};
+  // ID'leri sıfırla
   _callId = null;
+  _groupCallId = null;
+  _callType = null;
+  // Ekranı gizle
   const el = document.getElementById('callScreen');
   if(el) el.style.display = 'none';
+  // Video alanlarını sıfırla
+  const remoteVideo = document.getElementById('remoteVideo');
+  if(remoteVideo) { remoteVideo.srcObject = null; }
+  const localVideo = document.getElementById('localVideo');
+  if(localVideo) { localVideo.srcObject = null; }
+  const videoArea = document.getElementById('callVideoArea');
+  const audioArea = document.getElementById('callAudioArea');
+  if(videoArea) videoArea.style.display = 'none';
+  if(audioArea) audioArea.style.display = 'flex';
   showToast('📞 Arama sonlandırıldı');
 }
 
@@ -5033,7 +5073,7 @@ function listenIncomingCalls() {
       <div style="font-size:.9rem;font-weight:700;">📞 ${inv.from} arıyor</div>
       <div style="font-size:.75rem;color:var(--muted);">${inv.type==='video'?'Görüntülü':'Sesli'} arama</div>
       <div style="display:flex;gap:8px;">
-        <button onclick="acceptCall('${inv.callId}','${inv.type}');this.closest('div').parentNode.remove();" style="flex:1;padding:8px;background:#2ecc71;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">✅ Kabul</button>
+        <button onclick="stopRingSound&&stopRingSound();acceptCall('${inv.callId}','${inv.type}');this.closest('div').parentNode.remove();" style="flex:1;padding:8px;background:#2ecc71;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">✅ Kabul</button>
         <button onclick="rejectCall('${inv.callId}');this.closest('div').parentNode.remove();" style="flex:1;padding:8px;background:#e05555;border:none;border-radius:8px;color:#fff;font-weight:700;cursor:pointer;">❌ Reddet</button>
       </div>`;
     document.body.appendChild(toast);
