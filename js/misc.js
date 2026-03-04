@@ -4827,6 +4827,7 @@ async function startCall(type) {
   if(_callId) { showToast('Zaten aktif bir arama var'); return; }
   _callType = type;
   _callId = _cRoom + '_' + Date.now();
+  _groupCallId = _callId;
   try {
     const constraints = type === 'video'
       ? { audio: true, video: true }
@@ -4873,6 +4874,7 @@ function inviteToCall(callId, type) {
 
 async function acceptCall(callId, type) {
   _callId = callId;
+  _groupCallId = callId;
   _callType = type;
   try {
     _localStream = await navigator.mediaDevices.getUserMedia(
@@ -4977,8 +4979,26 @@ function toggleCamera() {
   }
 }
 
-// Gelen arama dinle (login sonrası çağrılır)
-function listenIncomingCalls() {
+function openCallInviteDialog() {
+  if(!_callId && !_groupCallId) { showToast('Aktif arama yok'); return; }
+  const callId = _callId || _groupCallId;
+  // Oda üyelerini getir ve davet et
+  const room = _cRoom || _deskRoom;
+  if(!room) return;
+  dbRef('rooms/'+room+'/members').once('value').then(snap => {
+    const members = snap.val() || {};
+    const others = Object.keys(members).filter(u => u !== _cu && !_peers[u]);
+    if(others.length === 0) { showToast('Eklenecek başka üye yok'); return; }
+    others.forEach(user => {
+      dbRef('callInvites/'+user).push({
+        callId, type: _callType || 'audio', from: _cu, room, ts: Date.now()
+      });
+    });
+    showToast('✅ ' + others.length + ' kişi davet edildi');
+  });
+}
+
+
   if(!_cu || !_db) return;
   dbRef('callInvites/'+_cu).on('child_added', snap => {
     const inv = snap.val();
