@@ -329,10 +329,10 @@ function deskOpenRoom(roomId) {
       ic.style.background = room.type === 'group' ? 'linear-gradient(135deg,#9b72ff,#c4a7ff)' : 'var(--surface2)';
       document.getElementById('deskChatHdrName').textContent = room.name || roomId;
       document.getElementById('deskChatHdrSub').textContent = room.type === 'group' ? (room.members || []).length + ' üye' : 'Kanal';
-      document.getElementById('deskCallAudio').style.display = 'none';
-      document.getElementById('deskCallVideo').style.display = 'none';
-      document.getElementById('deskCallScreen').style.display = 'none';
-      document.getElementById('deskToggleMembers').style.display = room.type === 'group' ? 'flex' : 'none';
+      const _dca2 = document.getElementById('deskCallAudio'); if(_dca2) _dca2.style.display = 'none';
+      const _dcv2 = document.getElementById('deskCallVideo'); if(_dcv2) _dcv2.style.display = 'none';
+      const _dcs2 = document.getElementById('deskCallScreen'); if(_dcs2) _dcs2.style.display = 'none';
+      const _dtm2 = document.getElementById('deskToggleMembers'); if(_dtm2) _dtm2.style.display = room.type === 'group' ? 'flex' : 'none';
     }
 
     // Spy banner
