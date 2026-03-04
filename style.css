@@ -4330,6 +4330,31 @@ body {
     flex-shrink: 0 !important;
     padding-bottom: max(env(safe-area-inset-bottom, 0px), 4px) !important;
   }
+
+  /* ── WS Header simge boyutları ── */
+  .ws-header .hdr-av {
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 7px !important;
+  }
+  .ws-header > div[style*="width:32px"],
+  .ws-header > div > div[style*="width:32px"] {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  /* ── Chat ekranı tam doldur ── */
+  #chatScreen {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  #chatMsgs {
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+  .inp-wrap {
+    flex-shrink: 0 !important;
+  }
 }
 /* ══════════════════════════════════════════════════════════ */
 
