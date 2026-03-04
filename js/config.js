@@ -242,11 +242,24 @@ function switchMainTab(tab){
   if(tab==='profile'){
     var av=document.getElementById('profAvBig');
     var pn=document.getElementById('profName');
+    var hl=document.getElementById('profHandleLabel');
+    var bn=document.getElementById('profBanner');
     if(av&&_cu) setAvatar(av,_cu);
     if(pn&&_cu) pn.textContent=_cu;
-    // Status dot'u göster (online)
+    if(hl&&_cu) hl.textContent='@'+_cu;
+    if(bn&&_cu) bn.style.background='linear-gradient(135deg,'+strColor(_cu)+'aa 0%,var(--bg2) 100%)';
     var sd=document.querySelector('#profTabBody-profile .prof-status-dot');
     if(sd) sd.style.display='block';
+    // joinDate Firebase'den yükle
+    if(_db&&_cu){
+      dbRef('users/'+_cu+'/createdAt').once('value').then(s=>{
+        const jd=document.getElementById('profJoinDate');
+        if(jd&&s.val()){
+          const d=new Date(s.val());
+          jd.textContent=d.toLocaleDateString('tr-TR',{month:'short',year:'numeric'});
+        }
+      }).catch(()=>{});
+    }
     setTimeout(()=>{ switchProfTab('profile'); }, 50);
   }
   setTimeout(()=>applyTabIcons(true), 0);

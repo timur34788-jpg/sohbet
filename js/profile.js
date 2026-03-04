@@ -279,28 +279,5 @@ function updateProfileBadges(msgCount){
 
 /* ── 13. PROFİL SAYFASI — kullanıcı adı label ── */
 
-(function(){
-  const origLoadBio = window.loadBio;
-  if(origLoadBio){
-    window.loadBio = function(){
-      origLoadBio();
-      // handle label güncelle
-      const hl = document.getElementById('profHandleLabel');
-      if(hl && window._cu) hl.textContent = '@' + _cu;
-    };
-  }
-  // Banner rengini profil açılışında ayarla
-  const origOpenProfile = window.openProfile;
-  if(origOpenProfile){
-    window.openProfile = function(){
-      origOpenProfile();
-      setTimeout(()=>{
-        const banner = document.getElementById('profBanner');
-        const hl = document.getElementById('profHandleLabel');
-        if(banner && window._cu) banner.style.background = `linear-gradient(135deg, ${strColor(_cu)}aa 0%, var(--bg2) 100%)`;
-        if(hl && window._cu) hl.textContent = '@' + _cu;
-      }, 100);
-    };
-  }
-})();
+/* Profile init — artık config.js switchMainTab içinde yönetiliyor */
 

@@ -352,6 +352,7 @@ function showDailyReward(){}
 function claimDailyReward(){}
 
 /* 5. KULLANICI PROFİLİ GÖRÜNTÜLE */
+function openUserProfileModal(username){ viewUserProfile(username); }
 function viewUserProfile(username){
   if(!username) return;
   const m=document.getElementById('userProfileModal'); if(!m) return;

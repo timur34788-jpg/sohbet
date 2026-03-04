@@ -5129,16 +5129,17 @@ async function startCall(type) {
 function inviteToCall(callId, type) {
   const room = _cRoom || _deskRoom;
   if(!room || !_cu) return;
-  dbRef('rooms/'+room+'/members').once('value').then(snap=>{
-    const raw = snap.val();
+  dbRef('rooms/'+room).once('value').then(snap=>{
+    const roomData = snap.val() || {};
+    const raw = roomData.members;
     // members array veya object olabilir
-    const members = Array.isArray(raw) ? raw : Object.keys(raw||{});
-    members.forEach(user => {
-      if(user !== _cu) {
-        dbRef('callInvites/'+user).push({
-          callId, type, from:_cu, room, ts:Date.now()
-        });
-      }
+    let members = [];
+    if(Array.isArray(raw)) members = raw;
+    else if(raw && typeof raw === 'object') members = Object.keys(raw);
+    members.filter(u => u !== _cu).forEach(user => {
+      dbRef('callInvites/'+user).push({
+        callId, type, from:_cu, room, ts:Date.now()
+      });
     });
   });
 }
