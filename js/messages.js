@@ -5,7 +5,7 @@
 
 function renderMsgs(msgsObj, clearedAt){
   const box=document.getElementById('chatMsgs');if(!box)return;
-  const atBot=box.scrollHeight-box.scrollTop-box.clientHeight<120;
+  const atBot=box.scrollHeight-box.scrollTop-box.clientHeight<60;
   const savedTop=box.scrollTop;
   let msgs=msgsObj?Object.entries(msgsObj).map(([k,v])=>({...v,_key:k})).sort((a,b)=>a.ts-b.ts):[];
   // clearedAt filtresini uygula — temizleme zamanından önceki mesajları gösterme

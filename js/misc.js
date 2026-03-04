@@ -256,6 +256,9 @@ function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopT
 
 /* ── Klavye açılınca tab bar gizle ── */
 function _updateTabBarForKeyboard(){
+  // Chat ekranındayken tab bar hiç gösterme
+  var cs = document.getElementById('chatScreen');
+  if(cs && cs.classList.contains('active')) return;
   var tb = document.querySelector('.tab-bar');
   if(!tb) return;
   var viewH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
