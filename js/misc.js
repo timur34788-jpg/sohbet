@@ -258,7 +258,8 @@ function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopT
 function _updateTabBarForKeyboard(){
   // Chat ekranındayken tab bar hiç gösterme
   var cs = document.getElementById('chatScreen');
-  if(cs && cs.classList.contains('active')) return;
+  var inChat = cs && (cs.classList.contains('active') || cs.style.display === 'flex');
+  if(inChat) return;
   var tb = document.querySelector('.tab-bar');
   if(!tb) return;
   var viewH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
