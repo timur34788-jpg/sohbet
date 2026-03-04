@@ -157,9 +157,9 @@ let _activeMainTab='home';
 
 function switchMainTab(tab){
   _activeMainTab=tab;
-  // Tab bar göster + aktif sekmeyi işaretle
+  // Tab bar göster + aktif sekmeyi işaretle (masaüstünde gösterme)
   var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display='flex';
+  if(tb) tb.style.display = window.innerWidth >= 768 ? 'none' : 'flex';
   document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('act');});
   var tabIds={home:'tabHome',msgs:'tabMsgs',forum:'tabForum',friends:'tabFriends',games:'tabGames',watch:'tabWatch',profile:'tabProfile'};
   var activeEl=document.getElementById(tabIds[tab]);
