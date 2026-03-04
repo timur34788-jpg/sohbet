@@ -1,4 +1,50 @@
-/* Nature.co Service Worker — sw-v13 */
+/* Nature.co Service Worker — sw-v14 */
+/* FCM arka plan bildirimi için Firebase Messaging eklendi */
+
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
+
+/* ── Firebase config (her iki proje de burada; aktif olan hangisiyse SW onu kullanır) ──
+   Not: SW birden fazla app init edemez. Kullanıcı hangi sunucudaysa
+   o sunucunun config'ini push.js SW'ye postMessage ile gönderir. */
+let _fbApp = null;
+let _messaging = null;
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'FCM_INIT') {
+    try {
+      if (_fbApp) _fbApp.delete().catch(() => {});
+      _fbApp = firebase.initializeApp(event.data.config, 'sw_bg_' + Date.now());
+      _messaging = firebase.messaging(_fbApp);
+      _messaging.onBackgroundMessage(payload => {
+        handleBackgroundMessage(payload);
+      });
+    } catch (e) {
+      console.warn('[SW] FCM init error:', e);
+    }
+  }
+});
+
+function handleBackgroundMessage(payload) {
+  const notification = payload.notification || {};
+  const title   = notification.title || 'Nature.co';
+  const body    = notification.body  || 'Yeni bir bildirim var';
+  const icon    = 'data:image/svg+xml,<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><path d="M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z" fill="%230e2b0c" stroke="%234a8f40" stroke-width="1.2"/></svg>';
+  const data    = payload.data || {};
+  const tag     = data.type || 'natureco';
+  const url     = '/';
+
+  return self.registration.showNotification(title, {
+    body,
+    icon,
+    badge: icon,
+    tag,
+    data: { url },
+    vibrate: [100, 50, 100],
+    requireInteraction: false,
+  });
+}
+
 const C = 'sw-v1913';
 const CACHE_URLS = ['./'];
 
