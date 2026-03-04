@@ -4763,3 +4763,14 @@ body.in-chat .tab-bar {
 @media (min-width: 768px) {
   .tab-bar { display: none !important; }
 }
+
+/* ══ Tab ic-wrap - arka plan kaldır ══ */
+.tab-ic-wrap {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+.tab.act .tab-ic-wrap,
+.tab-wrap.act .tab-ic-wrap {
+  background: none !important;
+}
