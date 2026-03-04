@@ -4882,6 +4882,7 @@ async function acceptCall(callId, type) {
     );
     await dbRef('calls/'+callId+'/parts/'+_cu).set({active:true,ts:Date.now()});
     showCallScreen(type);
+    _listenParticipants && _listenParticipants();
   } catch(e) {
     showToast('❌ Mikrofon/kamera erişimi reddedildi');
   }

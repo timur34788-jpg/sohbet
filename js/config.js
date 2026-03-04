@@ -165,7 +165,7 @@ function switchMainTab(tab){
   // Hide all screens except login/chat/admin
   ['roomsScreen','forumScreen','msgsScreen','friendsScreen','profileScreen','chatScreen','adminPanel','gamesScreen','watchScreen'].forEach(id=>{
     var el=document.getElementById(id);
-    if(el) el.classList.remove('active');
+    if(el){ el.classList.remove('active'); el.style.display=''; }
   });
   // Show target screen
   var targetId=_mainScreenIds[tab]||'roomsScreen';
