@@ -351,7 +351,6 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 }
 [data-ui="nature"] #roomsScreen {
   background: linear-gradient(180deg,#0b1120 0%,#0f172a 100%);
-  position: relative;
 }
 [data-ui="nature"] #roomsScreen::before {
   content:''; position:absolute; width:250px; height:200px;
@@ -2586,7 +2585,6 @@ body::before {
 /* Arka plan gradient + subtle noise */
 #roomsScreen {
   background: linear-gradient(160deg, #0d1829 0%, #0a0f1e 50%, #0d1520 100%) !important;
-  position: relative;
 }
 #roomsScreen::after {
   content: '';
