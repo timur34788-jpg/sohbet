@@ -4981,8 +4981,8 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
 
 /* Uzun içerik overflow - word break */
 .mb-text, .ob {
-  word-break: break-word !important;
-  overflow-wrap: break-word !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
 }
 
 /* Forum - mobil */
@@ -5006,13 +5006,13 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
 
 /* Gelen mesaj balonu */
 .mb-text {
-  display: block !important;
-  width: fit-content !important;
+  display: inline-block !important;
   max-width: min(75%, 440px) !important;
   min-width: 56px !important;
-  white-space: pre-wrap !important;
-  word-break: break-word !important;
-  overflow-wrap: break-word !important;
+  width: auto !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
   align-self: flex-start !important;
 
   background: var(--incoming-bg, rgba(255,255,255,.07)) !important;
@@ -5077,9 +5077,13 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
     padding-top: 10px !important;
   }
   .mb-text, .ob {
-    max-width: min(78%, 320px) !important;
+    max-width: min(82%, 340px) !important;
     font-size: .88rem !important;
     padding: 7px 11px !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    width: auto !important;
   }
   .mb-body {
     max-width: 82% !important;
