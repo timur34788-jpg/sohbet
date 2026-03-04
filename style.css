@@ -4623,6 +4623,7 @@ textarea#msgInp {
 }
 
 /* ══ BALON ÇERÇEVE FIX ══ */
+/* mb-body reset — styling mb-text/ob üzerinde, body şeffaf */
 .mb-body {
   background: transparent !important;
   border: none !important;
@@ -4631,20 +4632,8 @@ textarea#msgInp {
   padding: 0 !important;
 }
 
-/* ══ FINAL FIX ══ */
-
-/* Gelen mesaj dış kutuyu tamamen kaldır */
-.mb-body {
-  background: none !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  max-width: 78% !important;
-}
-.mb.own .mb-body {
-  align-items: flex-end !important;
-}
+/* ══ FINAL FIX — mb-body layout ══ */
+/* (Asıl genişlik/hizalama BUBBLE_FIX bloğunda altta) */
 
 /* İnp-btm butonları göster */
 .inp-btm {
@@ -4668,31 +4657,14 @@ textarea#msgInp {
 }
 
 /* ══ mb-text arka planı kaldır - mb-bubble-wrap kullanıyoruz ══ */
-.mb-text {
-  background: none !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  font-size: .88rem !important;
-  color: var(--text-hi) !important;
-  line-height: 1.45 !important;
-  word-break: break-word !important;
-  white-space: pre-wrap !important;
-}
+/* ── mb-text eski sıfırlama — kaldırıldı, yeni bubble fix altta ── */
 .mb.own .mb-text {
   color: #fff !important;
 }
 
 /* ══ ob ve mb-text iç wrapper - arka plan kaldır ══ */
-.ob, .mb-text {
-  background: none !important;
-  border: none !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
+/* ── ob/mb-text eski sıfırlama — kaldırıldı, yeni bubble fix altta ── */
+
 
 
 .tab, .tab-wrap {
@@ -5024,4 +4996,92 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
 #toast {
   bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
   z-index: 99999 !important;
+}
+
+/* ══════════════════════════════════════════════════
+   💬 MESAJ BALONU GENIŞLIK DÜZELTMESI
+   Sorun: display:inline-block + white-space:pre-wrap
+   → kısa satırlar balon genişliğini 1 harfe düşürüyordu
+   ══════════════════════════════════════════════════ */
+
+/* Gelen mesaj balonu */
+.mb-text {
+  display: block !important;
+  width: fit-content !important;
+  max-width: min(75%, 440px) !important;
+  min-width: 56px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  align-self: flex-start !important;
+
+  background: var(--incoming-bg, rgba(255,255,255,.07)) !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 4px 14px 14px 14px !important;
+  padding: 8px 13px !important;
+  color: var(--text-hi) !important;
+  font-size: .9rem !important;
+  line-height: 1.5 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15) !important;
+}
+
+/* Kendi mesaj balonu */
+.ob {
+  display: block !important;
+  width: fit-content !important;
+  max-width: min(75%, 440px) !important;
+  min-width: 56px !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  align-self: flex-end !important;
+
+  background: var(--own-bg, rgba(91,155,213,.25)) !important;
+  border: 1px solid rgba(91,155,213,.28) !important;
+  border-radius: 14px 4px 14px 14px !important;
+  padding: 8px 13px !important;
+  color: #fff !important;
+  font-size: .9rem !important;
+  line-height: 1.5 !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15) !important;
+}
+
+/* mb-body — flex column, sola/sağa hizalama */
+.mb-body {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  max-width: 78% !important;
+  min-width: 0 !important;
+}
+.mb.own .mb-body {
+  align-items: flex-end !important;
+}
+
+/* Masaüstü — biraz daha geniş max-width */
+@media (min-width: 768px) {
+  .mb-text, .ob {
+    max-width: min(72%, 580px) !important;
+  }
+  .mb-body {
+    max-width: 74% !important;
+  }
+}
+
+/* Mobil — padding azalt, daha fazla alan bırak */
+@media (max-width: 767px) {
+  .mb {
+    padding: 4px 12px 4px 12px !important;
+  }
+  .mb.first {
+    padding-top: 10px !important;
+  }
+  .mb-text, .ob {
+    max-width: min(78%, 320px) !important;
+    font-size: .88rem !important;
+    padding: 7px 11px !important;
+  }
+  .mb-body {
+    max-width: 82% !important;
+  }
 }
