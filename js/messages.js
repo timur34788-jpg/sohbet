@@ -47,7 +47,7 @@ function renderMsgs(msgsObj, clearedAt){
           <span style="color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc((m.replyTo.text||'').slice(0,60))}</span>
         </div>`;
       }
-      content=own?`<div class="ob">${replyHtml}${linkify(esc(m.text))}</div>`:`<div class="mb-text">${replyHtml}${linkify(esc(m.text))}</div>`;
+      content=`${replyHtml}${linkify(esc(m.text))}`;
     }
     // WhatsApp style meta: username only for received+first, time always at bottom
     const senderName = (!own && first) ? `<div class="mb-name">${esc(m.user)}</div>` : '';
