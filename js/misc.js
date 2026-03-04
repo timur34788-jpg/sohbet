@@ -4651,34 +4651,7 @@ window.openTimeCapsule = function() {
 
 
 function openProfileDrawer() {
-  // Masaüstünde deskNav kullan
-  if (typeof IS_DESKTOP === 'function' && IS_DESKTOP()) {
-    if (typeof deskNav === 'function') deskNav('profile');
-    return;
-  }
-  // Mevcut profil verilerini drawer'a kopyala
-  const avatar = document.getElementById('profAvBig');
-  const name   = document.getElementById('profName');
-  const handle = document.getElementById('profHandleLabel');
-  const msgs   = document.getElementById('profMsgCount');
-  const frnd   = document.getElementById('profFriendCount');
-  const join   = document.getElementById('profJoinDate');
-
-  const da = document.getElementById('drawerAvatar');
-  if (da && avatar) { da.innerHTML = avatar.innerHTML; da.style.background = avatar.style.background; }
-  const dn = document.getElementById('drawerName');
-  if (dn && name) dn.textContent = name.textContent;
-  const dh = document.getElementById('drawerHandle');
-  if (dh && handle) dh.textContent = handle.textContent;
-  const dm = document.getElementById('drawerMsgCount');
-  if (dm && msgs) dm.textContent = msgs.textContent;
-  const df = document.getElementById('drawerFriendCount');
-  if (df && frnd) df.textContent = frnd.textContent;
-  const dj = document.getElementById('drawerJoinDate');
-  if (dj && join) dj.textContent = join.textContent;
-
-  document.getElementById('profileDrawer').classList.add('open');
-  document.getElementById('profileDrawerOverlay').classList.add('open');
+  switchMainTab('profile');
 }
 function closeProfileDrawer() {
   document.getElementById('profileDrawer').classList.remove('open');
