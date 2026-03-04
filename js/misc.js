@@ -238,7 +238,8 @@ function showScreen(id){
   window._inChat = (id==='chatScreen');
   document.body.classList.toggle('in-chat', window._inChat);
   var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display = window._inChat ? 'none' : (window.innerWidth>=768 ? 'none' : 'flex');
+  const _noTabScreens=['chatScreen','loginScreen','serverSelectScreen'];
+  if(tb) tb.style.display = (window._inChat || _noTabScreens.includes(id)) ? 'none' : (window.innerWidth>=768 ? 'none' : 'flex');
   // Chat'te NatureBot gizle
   if(window._natureBotInstance && window._natureBotInstance.el){
     window._natureBotInstance.el.style.display = (id==='chatScreen') ? 'none' : '';
