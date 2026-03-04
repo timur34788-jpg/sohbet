@@ -1935,11 +1935,14 @@ async function loadAdminNatureBot() {
   const body = document.getElementById('adminBody');
   body.innerHTML = '<div class="ld"><span></span><span></span><span></span></div>';
 
-  const [botSettings, mutes, modLogs] = await Promise.all([
-    adminRestGet('botSettings').catch(()=>null)||{},
-    adminRestGet('mutes').catch(()=>null)||{},
-    adminRestGet('modLogs').catch(()=>null)||{}
+  const [_bs, _mutes, _modLogs] = await Promise.all([
+    adminRestGet('botSettings').catch(()=>null),
+    adminRestGet('mutes').catch(()=>null),
+    adminRestGet('modLogs').catch(()=>null)
   ]);
+  const botSettings = _bs || {};
+  const mutes = _mutes || {};
+  const modLogs = _modLogs || {};
 
   const ms = botSettings.modSettings || {};
   const bw = (botSettings.badWords||[]).join('\n');
