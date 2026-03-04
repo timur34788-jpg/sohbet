@@ -377,6 +377,9 @@ function openRoom(roomId){
   document.body.classList.add('in-chat');
   var _tb = document.querySelector('.tab-bar');
   if(_tb){ _tb.style.display='none'; _tb.style.visibility='hidden'; }
+  // Input kutusunu her zaman göster (önceki oda gizlemiş olabilir)
+  var _inp = document.getElementById('chatInputRow');
+  if(_inp) _inp.style.display = '';
   // clearedAt bilgisini ONCE al, SONRA listener başlat (race condition fix)
   const ref=dbRef('msgs/'+roomId);
   dbRef('rooms/'+roomId+'/clearedAt').once('value').then(cs=>{
