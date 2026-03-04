@@ -59,8 +59,10 @@ function renderMsgs(msgsObj, clearedAt){
      h+=`<div class="mb ${own?'own':''} ${first?'first':''}" data-key="${m._key}"${own?' data-ts="'+m.ts+'"':''}>
        <div class="av ${first?'':' ghost'}" style="background:${strColor(m.user)}" data-av-user="${m.user}">${initials(m.user)}</div>
        ${own ? avMenuBtn : ''}
-       <div class="mb-body">${meta}${content}${reactionsHtml}</div>
-       ${own ? '' : avMenuBtn}
+       ${own
+         ? `<div class="mb-body">${meta}${content}${reactionsHtml}</div>`
+         : `<div style="display:flex;align-items:center;gap:4px;min-width:0;"><div class="mb-body">${meta}${content}${reactionsHtml}</div>${avMenuBtn}</div>`
+       }
      </div>`;
   });
   box.innerHTML=h;
@@ -158,7 +160,7 @@ function clearUnreadBadge(roomId){
   });
 }
 function deleteMsg(roomId,key){
-  if(typeof _closeCtx==='function') _closeCtx();
+  document.getElementById('msgCtxMenu').classList.remove('show');
   if(!confirm('Bu mesajı sil?'))return;
   dbRef('msgs/'+roomId+'/'+key).remove().catch(()=>showToast('Silinemedi'));
 }
