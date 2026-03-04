@@ -255,6 +255,22 @@ function showScreen(id){
 }
 function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();window._inChat=false;document.body.classList.remove('in-chat');var _tb=document.querySelector('.tab-bar');if(_tb){_tb.style.visibility='';_tb.style.display=window.innerWidth>=768?'none':'flex';}document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
 
+/* ── Tab ic-wrap arka planını temizle ── */
+document.addEventListener('DOMContentLoaded', function(){
+  function clearTabIcBg(){
+    document.querySelectorAll('.tab-ic-wrap').forEach(function(el){
+      el.style.background='none';
+      el.style.backgroundColor='transparent';
+      el.style.border='none';
+      el.style.boxShadow='none';
+    });
+  }
+  clearTabIcBg();
+  // Tab değişiminde de temizle
+  setTimeout(clearTabIcBg, 500);
+  setTimeout(clearTabIcBg, 1500);
+});
+
 /* ── Klavye açılınca tab bar gizle ── */
 function _updateTabBarForKeyboard(){
   if(window._inChat) return; // Chat'teyken tab bar'a dokunma
