@@ -4619,3 +4619,12 @@ textarea#msgInp {
   padding: 8px 10px !important;
   padding-bottom: max(env(safe-area-inset-bottom, 8px), 8px) !important;
 }
+
+/* ══ BALON ÇERÇEVE FIX ══ */
+.mb-body {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
