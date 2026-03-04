@@ -1841,9 +1841,9 @@ function renderForumCard(p) {
         <div class="forum-comment-user">${esc(c.user)}</div>
         <div class="forum-comment-text">${esc(c.text)}</div>
         <div class="forum-comment-actions">
-          <div class="com-act-btn${cLiked?' liked':''}" onclick="toggleCommentReact('${p._key}','${cKey}','like',${cLiked})">👍 <span>${cLikeCount||''}</span></div>
-          <div class="com-act-btn${cDisliked?' disliked':''}" onclick="toggleCommentReact('${p._key}','${cKey}','dislike',${cDisliked})">👎 <span>${cDislikeCount||''}</span></div>
-          ${(c.user===_cu||_isAdmin)?`<div class="com-act-btn" onclick="deleteForumComment('${p._key}','${cKey}')">🗑️</div>`:''}
+          <div class="com-act-btn${cLiked?' liked':''}" onclick="toggleCommentReact('${p._key}','${cKey}','like',${cLiked})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> <span>${cLikeCount||''}</span></div>
+          <div class="com-act-btn${cDisliked?' disliked':''}" onclick="toggleCommentReact('${p._key}','${cKey}','dislike',${cDisliked})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg> <span>${cDislikeCount||''}</span></div>
+          ${(c.user===_cu||_isAdmin)?`<div class="com-act-btn" onclick="deleteForumComment('${p._key}','${cKey}')" style="cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg></div>`:''}
         </div>
       </div>
     </div>`;
@@ -1861,18 +1861,18 @@ function renderForumCard(p) {
     <div class="forum-card-text">${p.bbcode ? parseBBCode(p.text) : (p.html ? sanitizeForumHtml(p.html) : esc(p.text))}</div>
     <div class="forum-card-actions">
       <div class="forum-action-btn${liked?' liked':''}" onclick="toggleForumReact('${p._key}','like',${liked})">
-        👍 <span>${likeCount||''}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg> <span>${likeCount||''}</span>
       </div>
       <div class="forum-action-btn${disliked?' disliked':''}" onclick="toggleForumReact('${p._key}','dislike',${disliked})">
-        👎 <span>${dislikeCount||''}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg> <span>${dislikeCount||''}</span>
       </div>
       <div class="forum-action-btn${hearted?' liked':''}" onclick="toggleForumHeart('${p._key}',${hearted})">
-        ❤️ <span>${heartCount||''}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg> <span>${heartCount||''}</span>
       </div>
       <div class="forum-action-btn" onclick="toggleForumComments('${p._key}')">
-        💬 <span>${commentCount||''}</span>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> <span>${commentCount||''}</span>
       </div>
-      ${(isOwn||_isAdmin)?`<div class="forum-del-btn" onclick="deleteForumPost('${p._key}')">🗑️</div>`:''}
+      ${(isOwn||_isAdmin)?`<div class="forum-del-btn" onclick="deleteForumPost('${p._key}')">${'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6m4-6v6"/><path d="M9 6V4h6v2"/></svg>'}</div>`:''}
     </div>
     <div id="fcomments-${p._key}" style="display:none;">
       <div class="forum-comments">
@@ -5255,7 +5255,7 @@ function showCallScreen(type) {
           if(avatarEl) { avatarEl.textContent = initials(other); avatarEl.style.background = strColor(other); }
         } else {
           nameEl.textContent = r.name || room;
-          if(avatarEl) { avatarEl.textContent = '👥'; avatarEl.style.background = 'linear-gradient(135deg,#9b72ff,#c4a7ff)'; }
+          if(avatarEl) { avatarEl.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-2a3 3 0 0 0-3-3h-2"/></svg>'; avatarEl.style.cssText = 'background:linear-gradient(135deg,#9b72ff,#c4a7ff);display:flex;align-items:center;justify-content:center;'; }
         }
       });
     } else {
@@ -5269,6 +5269,25 @@ function showCallScreen(type) {
   if(type === 'video' && _localStream) {
     const vid = document.getElementById('localVideo');
     if(vid) { vid.srcObject = _localStream; vid.play().catch(()=>{}); }
+  }
+}
+
+function _updateCallQuality(level) {
+  const qi = document.getElementById('callQualityIndicator');
+  if(!qi) return;
+  qi.style.display = 'flex';
+  const colors = { good:'#2ecc71', poor:'#f5a623', bad:'#e74c3c', connecting:'rgba(255,255,255,.3)' };
+  const bars = { good:3, poor:2, bad:1, connecting:0 };
+  const col = colors[level] || colors.connecting;
+  const filled = bars[level] ?? 0;
+  for(let i=1;i<=4;i++){
+    const el = document.getElementById('cqi'+i);
+    if(el) el.style.background = i <= filled ? col : 'rgba(255,255,255,.18)';
+  }
+  const st = document.getElementById('callStatus');
+  if(st && level !== 'good') {
+    const labels = { poor:'Bağlantı zayıf...', bad:'Bağlantı kesildi', connecting:'Bağlanıyor...' };
+    if(labels[level]) st.textContent = labels[level];
   }
 }
 
@@ -5416,7 +5435,12 @@ function listenIncomingCalls() {
       const tp = document.getElementById('incomingCallType');
       if(av) { av.textContent = initials(inv.from); av.style.background = strColor(inv.from); }
       if(nm) nm.textContent = inv.from;
-      if(tp) tp.textContent = inv.type === 'video' ? '📹 Görüntülü Arama' : '📞 Sesli Arama';
+      if(tp) {
+        const vidSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>';
+        const phSvg = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.38 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>';
+        tp.innerHTML = (inv.type === 'video' ? vidSvg + ' Görüntülü Arama' : phSvg + ' Sesli Arama');
+        tp.style.cssText = 'display:flex;align-items:center;gap:6px;';
+      }
       // Butonlara doğru callId bağla
       const rejectBtn = banner.querySelector('.inc-reject');
       const acceptBtn = banner.querySelector('.inc-accept');

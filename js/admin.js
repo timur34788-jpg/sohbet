@@ -322,10 +322,14 @@ function loadAdminMsgs(){
       let h=`<div class="admin-section">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
           <div class="admin-sec-title" style="margin:0">Son Mesajlar (${allMsgs.length})</div>
-          <button class="a-btn red" onclick="adminClearAllMsgs()">🗑️ Tümünü Sil</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <input id="adminMsgSearch" placeholder="Ara..." oninput="adminFilterMsgs(this.value)" style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 10px;color:var(--text-hi);font-size:.78rem;outline:none;width:160px;">
+            <button class="a-btn red" onclick="adminClearAllMsgs()">Tümünü Sil</button>
+          </div>
         </div>
-        <div class="admin-card">`;
-      allMsgs.forEach(m=>{
+        <div class="admin-card" id="adminMsgList">`;
+      const _shownMsgs = allMsgs.slice(0, 100);
+      _shownMsgs.forEach(m=>{
         const txt=m.file?`📎 ${m.file.name||'Dosya'}`:m.text;
         h+=`<div class="admin-row" style="align-items:flex-start">
           <div class="admin-row-av" style="background:${strColor(m.user)};flex-shrink:0">${initials(m.user)}</div>
@@ -343,6 +347,7 @@ function loadAdminMsgs(){
           </div>
         </div>`;
       });
+      if(allMsgs.length > 100) h += `<div style="text-align:center;padding:14px;"><button class="a-btn" style="background:var(--surface2);" onclick="adminTab('msgs')">Sadece ilk 100 mesaj gösteriliyor. Tümü için arama kullanın.</button></div>`;
       h+='</div></div>';
       body.innerHTML=h;
     }
@@ -354,6 +359,16 @@ async function adminDeleteMsgFromPanel(roomId,key){
     await adminRestDelete('msgs/'+roomId+'/'+key);
     showToast('Mesaj silindi.');loadAdminMsgs();
   }catch(e){showToast('Hata.');}
+}
+
+function adminFilterMsgs(q){
+  const list = document.getElementById('adminMsgList');
+  if(!list) return;
+  const term = (q||'').toLowerCase().trim();
+  list.querySelectorAll('.admin-row').forEach(row=>{
+    const text = row.textContent.toLowerCase();
+    row.style.display = (!term || text.includes(term)) ? '' : 'none';
+  });
 }
 
 
@@ -2087,4 +2102,160 @@ async function saveAdminBotSettings() {
     // Çalışan bota yeni ayarları bildir
     if(window._natureBotMod?.reload) window._natureBotMod.reload();
   } catch(e) { showToast('❌ Hata: ' + (e.message||e)); }
+}
+
+/* ═══════════════════════════════════
+   EKSİK ADMIN SEKMELERİ
+═══════════════════════════════════ */
+
+async function loadAdminStats() {
+  const b = document.getElementById('adminBody');
+  if(!b) return;
+  b.innerHTML = '<div style="color:var(--muted);padding:40px;text-align:center;">Yükleniyor...</div>';
+
+  try {
+    const [usersSnap, roomsSnap, msgsSnap, forumSnap] = await Promise.all([
+      adminRestGet('users'),
+      adminRestGet('rooms'),
+      adminRestGet('msgs'),
+      adminRestGet('forum'),
+    ]);
+
+    const users  = usersSnap  || {};
+    const rooms  = roomsSnap  || {};
+    const msgs   = msgsSnap   || {};
+    const forum  = forumSnap  || {};
+
+    const uCount = Object.keys(users).length;
+    const rCount = Object.keys(rooms).length;
+    const mCount = Object.values(msgs).reduce((s,r)=>s+Object.keys(r||{}).length,0);
+    const fCount = Object.keys(forum).length;
+
+    // Son 7 gün aktif kullanıcı
+    const weekAgo = Date.now() - 7*24*60*60*1000;
+    const activeWeek = Object.values(users).filter(u=>u&&u.lastSeen&&u.lastSeen>weekAgo).length;
+
+    // Sunucu başına dağılım
+    const byServer = {};
+    Object.values(users).forEach(u=>{ if(u&&u._ws){ byServer[u._ws]=(byServer[u._ws]||0)+1; } });
+
+    b.innerHTML = `
+      <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        ${[
+          {label:'Toplam Üye',   val:uCount,      icon:'👤', color:'#5b9bd5'},
+          {label:'Aktif (7g)',   val:activeWeek,  icon:'🟢', color:'#2ecc71'},
+          {label:'Odalar',       val:rCount,      icon:'💬', color:'#9b72ff'},
+          {label:'Mesajlar',     val:mCount,      icon:'📨', color:'#f5a623'},
+          {label:'Forum',        val:fCount,      icon:'📋', color:'#e05555'},
+        ].map(s=>`
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;">
+            <div style="font-size:1.6rem;margin-bottom:4px;">${s.icon}</div>
+            <div style="font-size:1.4rem;font-weight:900;color:${s.color};">${s.val.toLocaleString('tr-TR')}</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:2px;">${s.label}</div>
+          </div>`).join('')}
+      </div>
+      <div style="padding:0 20px 20px;">
+        <div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Sunucu Dağılımı</div>
+        ${Object.entries(byServer).map(([s,n])=>`
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <div style="font-size:.82rem;color:var(--text-hi);min-width:80px;">${esc(s)}</div>
+            <div style="flex:1;height:8px;background:var(--surface);border-radius:4px;overflow:hidden;">
+              <div style="height:100%;width:${Math.round(n/uCount*100)}%;background:var(--accent);border-radius:4px;transition:width .6s;"></div>
+            </div>
+            <div style="font-size:.75rem;color:var(--muted);min-width:30px;text-align:right;">${n}</div>
+          </div>`).join('') || '<div style="color:var(--muted);font-size:.82rem;">Veri yok</div>'}
+      </div>`;
+  } catch(e) {
+    b.innerHTML = `<div style="color:#e05555;padding:20px;">Hata: ${e.message||e}</div>`;
+  }
+}
+
+async function loadAdminReports() {
+  const b = document.getElementById('adminBody');
+  if(!b) return;
+  b.innerHTML = '<div style="color:var(--muted);padding:40px;text-align:center;">Yükleniyor...</div>';
+
+  try {
+    const data = await adminRestGet('reports') || {};
+    const list = Object.entries(data).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+
+    if(!list.length){
+      b.innerHTML = '<div style="color:var(--muted);padding:40px;text-align:center;">📭 Henüz şikayet yok</div>';
+      return;
+    }
+
+    b.innerHTML = `<div style="padding:16px;">` +
+      list.map(([id,r])=>`
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <div style="font-size:.8rem;font-weight:700;color:var(--text-hi);">
+              <span style="color:#e05555;">${esc(r.reporter||'?')}</span> → <span style="color:var(--accent);">${esc(r.reported||'?')}</span>
+            </div>
+            <div style="font-size:.68rem;color:var(--muted);">${r.ts?new Date(r.ts).toLocaleDateString('tr-TR'):''}</div>
+          </div>
+          <div style="font-size:.78rem;color:var(--text);margin-bottom:8px;">${esc(r.reason||'Sebep belirtilmedi')}</div>
+          <div style="display:flex;gap:6px;">
+            <button onclick="adminMuteUser('${esc(r.reported||'')}',60)" style="font-size:.7rem;padding:4px 10px;background:rgba(245,166,35,.15);border:1px solid rgba(245,166,35,.3);border-radius:6px;color:#f5a623;cursor:pointer;">60dk Sustur</button>
+            <button onclick="adminBanUser('${esc(r.reported||'')}')" style="font-size:.7rem;padding:4px 10px;background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.3);border-radius:6px;color:#e05555;cursor:pointer;">Banla</button>
+            <button onclick="adminRestDelete('reports/${id}').then(()=>loadAdminReports())" style="font-size:.7rem;padding:4px 10px;background:rgba(255,255,255,.06);border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;">Kapat</button>
+          </div>
+        </div>`).join('') + `</div>`;
+  } catch(e) {
+    b.innerHTML = `<div style="color:#e05555;padding:20px;">Hata: ${e.message||e}</div>`;
+  }
+}
+
+async function loadAdminGrowthChart() {
+  const b = document.getElementById('adminBody');
+  if(!b) return;
+  b.innerHTML = '<div style="color:var(--muted);padding:40px;text-align:center;">Yükleniyor...</div>';
+
+  try {
+    const users = await adminRestGet('users') || {};
+    // Son 30 gün — gün başına kayıt sayısı
+    const days = 30;
+    const now = Date.now();
+    const counts = Array(days).fill(0);
+    Object.values(users).forEach(u=>{
+      if(!u||!u.createdAt) return;
+      const diff = Math.floor((now - u.createdAt) / (24*60*60*1000));
+      if(diff>=0 && diff<days) counts[days-1-diff]++;
+    });
+    const maxCount = Math.max(...counts, 1);
+    const labels = Array.from({length:days},(_,i)=>{
+      const d = new Date(now - (days-1-i)*24*60*60*1000);
+      return i % 5 === 0 ? d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'}) : '';
+    });
+
+    b.innerHTML = `
+      <div style="padding:20px;">
+        <div style="font-size:.85rem;font-weight:900;color:var(--text-hi);margin-bottom:16px;">📈 Son 30 Gün — Yeni Kayıt</div>
+        <div style="display:flex;align-items:flex-end;gap:3px;height:120px;border-bottom:1px solid var(--border);padding-bottom:4px;">
+          ${counts.map((c,i)=>`
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+              ${c>0?`<div style="font-size:.55rem;color:var(--accent);">${c}</div>`:''}
+              <div title="${labels[i]||''}" style="width:100%;background:var(--accent);border-radius:3px 3px 0 0;height:${Math.round(c/maxCount*100)}px;min-height:${c>0?'3px':'0'};opacity:.85;transition:height .3s;"></div>
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          ${labels.filter(Boolean).map(l=>`<div style="font-size:.6rem;color:var(--muted);">${l}</div>`).join('')}
+        </div>
+        <div style="margin-top:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center;">
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <div style="font-size:1.2rem;font-weight:900;color:var(--accent);">${counts.slice(-7).reduce((s,n)=>s+n,0)}</div>
+            <div style="font-size:.7rem;color:var(--muted);">Son 7 gün</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <div style="font-size:1.2rem;font-weight:900;color:var(--accent);">${counts.reduce((s,n)=>s+n,0)}</div>
+            <div style="font-size:.7rem;color:var(--muted);">Son 30 gün</div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;">
+            <div style="font-size:1.2rem;font-weight:900;color:var(--accent);">${Object.keys(users).length}</div>
+            <div style="font-size:.7rem;color:var(--muted);">Toplam üye</div>
+          </div>
+        </div>
+      </div>`;
+  } catch(e) {
+    b.innerHTML = `<div style="color:#e05555;padding:20px;">Hata: ${e.message||e}</div>`;
+  }
 }
