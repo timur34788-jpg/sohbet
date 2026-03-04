@@ -231,6 +231,9 @@ async function submitLogin(){
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');});
+  // Chat ekranında tab bar gizle
+  var tb=document.querySelector('.tab-bar');
+  if(tb) tb.style.display = (id==='chatScreen') ? 'none' : '';
   // loginScreen display'ini sıfırla (onLoginSuccess'ta none yapılmış olabilir)
   const ls=document.getElementById('loginScreen');
   if(ls) ls.style.display='';

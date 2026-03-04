@@ -157,6 +157,9 @@ let _activeMainTab='home';
 
 function switchMainTab(tab){
   _activeMainTab=tab;
+  // Tab bar'ı göster (chat'ten çıkınca)
+  var tb=document.querySelector('.tab-bar');
+  if(tb) tb.style.display='';
   // Track last mobile tab for orientation restore
   if(['home','forum','watch','msgs','friends'].includes(tab)) {
     if(typeof _lastMobileTab !== 'undefined') _lastMobileTab = tab;
