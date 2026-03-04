@@ -5,7 +5,8 @@
 
 function renderMsgs(msgsObj, clearedAt){
   const box=document.getElementById('chatMsgs');if(!box)return;
-  const atBot=box.scrollHeight-box.scrollTop-box.clientHeight<80;
+  const atBot=box.scrollHeight-box.scrollTop-box.clientHeight<120;
+  const savedTop=box.scrollTop;
   let msgs=msgsObj?Object.entries(msgsObj).map(([k,v])=>({...v,_key:k})).sort((a,b)=>a.ts-b.ts):[];
   // clearedAt filtresini uygula — temizleme zamanından önceki mesajları gösterme
   if(clearedAt) msgs=msgs.filter(m=>m.ts>clearedAt);
@@ -73,10 +74,20 @@ function renderMsgs(msgsObj, clearedAt){
   box.querySelectorAll('[data-av-user]').forEach(el=>{
     setAvatar(el,el.dataset.avUser);
   });
-  if(atBot)scrollBottom();
+  if(atBot){
+    scrollBottom();
+  } else {
+    // Scroll pozisyonunu koru - zıplama önle
+    box.scrollTop=savedTop;
+  }
   if(_cRoom){markRoomRead(_cRoom);updateMsgStatuses(_cRoom);}
 }
-function scrollBottom(){const b=document.getElementById('chatMsgs');if(b)b.scrollTop=b.scrollHeight;}
+function scrollBottom(){
+  var b=document.getElementById('chatMsgs');
+  if(!b)return;
+  b.style.scrollBehavior='auto';
+  b.scrollTop=b.scrollHeight+9999;
+}
 
 
 /* ── Read Receipts ── */
