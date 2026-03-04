@@ -171,6 +171,11 @@ function switchMainTab(tab){
   var targetId=_mainScreenIds[tab]||'roomsScreen';
   var el=document.getElementById(targetId);
   if(el) el.classList.add('active');
+  // Update tab bar active indicator
+  var tabMap={home:'tabHome',forum:'tabForum',msgs:'tabMsgs',friends:'tabFriends',profile:'tabProfile',games:'tabGames',watch:'tabWatch'};
+  document.querySelectorAll('.tab-bar .tab').forEach(function(t){t.classList.remove('act');});
+  var atId=tabMap[tab];
+  if(atId){var at=document.getElementById(atId);if(at)at.classList.add('act');}
   // Tab specific actions
   if(tab==='forum'){
     var fav=document.getElementById('forumMyAv');
