@@ -186,12 +186,16 @@ async function adminExportUsersXLS(){
   setTimeout(()=>{
     const pw = document.createElement('div');
     pw.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface2);border:2px solid var(--accent);border-radius:16px;padding:24px 32px;z-index:999999;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.8);max-width:90vw;';
-    pw.innerHTML = '<div style="font-size:1rem;font-weight:700;color:var(--text-hi);margin-bottom:12px;">🔑 ZIP Dosya Şifresi</div>' +
-      '<div style="font-family:monospace;font-size:1.5rem;font-weight:900;color:var(--accent);letter-spacing:3px;background:var(--surface);padding:12px 20px;border-radius:10px;margin-bottom:12px;">' + password + '</div>' +
-      '<div style="font-size:.75rem;color:var(--muted);margin-bottom:14px;">Bu şifre mesajlarınıza da gönderildi.</div>' +
-      '<button onclick="navigator.clipboard.writeText(''+password+'').then(()=>showToast('✅ Kopyalandı!'));this.textContent='✅ Kopyalandı'" style="padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;margin-right:8px;">📋 Kopyala</button>' +
-      '<button onclick="this.closest('div').remove()" style="padding:8px 18px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:8px;cursor:pointer;">Kapat</button>';
+    pw.innerHTML = [
+      '<div style="font-size:1rem;font-weight:700;color:var(--text-hi);margin-bottom:12px;">🔑 ZIP Dosya Şifresi</div>',
+      '<div style="font-family:monospace;font-size:1.5rem;font-weight:900;color:var(--accent);letter-spacing:3px;background:var(--surface);padding:12px 20px;border-radius:10px;margin-bottom:12px;">' + password + '</div>',
+      '<div style="font-size:.75rem;color:var(--muted);margin-bottom:14px;">Bu şifre mesajlarınıza da gönderildi.</div>',
+      '<button id="_pwCopyBtn" style="padding:8px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;margin-right:8px;">📋 Kopyala</button>',
+      '<button id="_pwCloseBtn" style="padding:8px 18px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:8px;cursor:pointer;">Kapat</button>'
+    ].join('');
     document.body.appendChild(pw);
+    document.getElementById('_pwCopyBtn').onclick = function(){ navigator.clipboard.writeText(password).then(()=>{ this.textContent='✅ Kopyalandı'; }); };
+    document.getElementById('_pwCloseBtn').onclick = function(){ pw.remove(); };
   }, 500);
 }
 

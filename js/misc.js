@@ -3087,14 +3087,14 @@ deskAdminTab = function(tab){
   else if(tab==='msgs') loadAdminMsgs();
   else if(tab==='forum') loadAdminForum();
   else if(tab==='announce') loadAdminAnnounce();
-  else if(tab==='broadcast') loadAdminBroadcast();
+  else if(tab==='broadcast') { if(typeof loadAdminAnnounce==='function') loadAdminAnnounce(); }
   else if(tab==='games') loadAdminGames();
   else if(tab==='health') loadAdminSystemHealth();
-  else if(tab==='stats') loadAdminStats();
+  else if(tab==='stats') { if(typeof loadAdminStats==='function') loadAdminStats(); }
   else if(tab==='security') loadAdminSecurity();
-  else if(tab==='ipban') loadAdminIPBan();
-  else if(tab==='reports') loadAdminReports();
-  else if(tab==='growth') loadAdminGrowthChart();
+  else if(tab==='ipban' || tab==='ipbans') loadAdminIPBans();
+  else if(tab==='reports') { if(typeof loadAdminReports==='function') loadAdminReports(); }
+  else if(tab==='growth') { if(typeof loadAdminGrowthChart==='function') loadAdminGrowthChart(); }
   else if(tab==='activity') loadAdminActivityFull();
   else if(tab==='settings') loadAdminSettings();
   else if(tab==='design') loadAdminDesign();
