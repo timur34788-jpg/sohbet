@@ -379,6 +379,9 @@ class NatureBotPet {
     if (slot && !slot.contains(this.el)) {
       slot.appendChild(this.el);
     }
+    // Mobilden bubble ve voiceWave'i gizle
+    if (this.bubble) { this.bubble.style.display = 'none'; }
+    if (this.voiceWave) { this.voiceWave.style.display = 'none'; }
     // Slot içinde relative konumlanır
     this.el.style.cssText = '';
     this.el.style.position = 'relative';
@@ -814,6 +817,26 @@ class NatureBotPet {
     }
     // Wanderlamayı sıfırla
     this.wanderStartTime = Date.now();
+  }
+
+  showBubble(msg, autoHide = true) {
+    if (IS_MOBILE()) return; // Mobilden bubble gösterme
+    if (!this.bubble) return;
+    clearTimeout(this.bubbleTimeout);
+    this.bubble.style.display = 'block';
+    this.bubble.innerHTML = `<span class="bot-bubble-close" onclick="this.parentNode.style.display='none'">✕</span><div class="bot-bubble-name">🌿 NatureBot</div><div class="bot-bubble-msg">${msg}</div>`;
+    this.bubble.classList.add('visible');
+    this.updateBubblePos();
+    if (autoHide) {
+      this.bubbleTimeout = setTimeout(() => this.hideBubble(), 5000);
+    }
+  }
+
+  hideBubble() {
+    if (!this.bubble) return;
+    this.bubble.classList.remove('visible');
+    clearTimeout(this.bubbleTimeout);
+    setTimeout(() => { if (this.bubble) this.bubble.style.display = 'none'; }, 300);
   }
 
   updateBubblePos() {
