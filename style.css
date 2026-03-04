@@ -4482,7 +4482,7 @@ body {
 /* ══ Mesaj kutusu — WhatsApp style ══ */
 .inp-wrap {
   padding: 8px 10px !important;
-  padding-bottom: max(env(safe-area-inset-bottom, 8px), 8px) !important;
+  padding-bottom: max(env(safe-area-inset-bottom, 10px), 10px) !important;
   background: var(--bg) !important;
   border-top: 1px solid var(--border);
 }
