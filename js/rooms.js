@@ -320,8 +320,6 @@ function openRoom(roomId){
   document.getElementById('chatMsgs').innerHTML='<div class="ld"><span></span><span></span><span></span></div>';
   dbRef('rooms/'+roomId).once('value').then(snap=>{
     const room=snap.val();if(!room)return;
-    // @mention önbelleği için üyeleri sakla
-    if(typeof cacheRoomMembers==='function') cacheRoomMembers(roomId, room.members||[]);
     if(room.type==='dm'){
       const other=(room.members||[]).find(m=>m!==_cu)||'?';
       const ic=document.getElementById('chatHdrIcon');
@@ -375,13 +373,6 @@ function openRoom(roomId){
     }
   });
   showScreen('chatScreen');
-  window._inChat = true;
-  document.body.classList.add('in-chat');
-  var _tb = document.querySelector('.tab-bar');
-  if(_tb){ _tb.style.display='none'; _tb.style.visibility='hidden'; }
-  // Input kutusunu her zaman göster (önceki oda gizlemiş olabilir)
-  var _inp = document.getElementById('chatInputRow');
-  if(_inp) _inp.style.display = '';
   // clearedAt bilgisini ONCE al, SONRA listener başlat (race condition fix)
   const ref=dbRef('msgs/'+roomId);
   dbRef('rooms/'+roomId+'/clearedAt').once('value').then(cs=>{
@@ -404,14 +395,11 @@ function updateChatStatus(){
     // Mobil header
     const el=document.getElementById('chatHdrSub');
     if(el){
-      if(on){
-        const newHtml='🟢 Çevrimiçi';
-        if(el.innerHTML!==newHtml){ el.innerHTML=newHtml; }
-      } else {
+      if(on){ el.className='c-hdr-sub on'; el.innerHTML='🟢 Çevrimiçi'; }
+      else {
         dbRef(wsPath('users/'+other+'/lastSeen')).once('value').then(ls=>{
-          const ts=ls.val();
-          const newText = ts ? 'Son görülme: '+fmtLastSeen(ts) : 'Çevrimdışı';
-          if(el.textContent!==newText){ el.textContent=newText; }
+          const ts=ls.val(); el.className='c-hdr-sub';
+          el.textContent = ts ? 'Son görülme: '+fmtLastSeen(ts) : 'Çevrimdışı';
         });
       }
     }
@@ -774,7 +762,102 @@ function loadAdminNatureBot() {
         <button class="a-btn blue" onclick="adminBotSendCustomMsg()" style="padding:8px 16px;">📤 Söyle</button>
       </div>
     </div>
+  </div>
+
+  <div class="admin-section" style="margin-top:12px;">
+    <div class="admin-sec-title">🛡 Moderatör Ayarları</div>
+    <div class="admin-card" style="padding:14px;display:flex;flex-direction:column;gap:12px;">
+
+      <div style="font-size:.78rem;font-weight:700;color:var(--text-hi);margin-bottom:2px;">⚙️ Otomatik İşlemler</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
+        <input type="checkbox" id="mod_autoWarn" onchange="botSaveModSettings()" checked>
+        ⚠️ Küfür tespitinde otomatik uyar
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
+        <input type="checkbox" id="mod_deleteMsg" onchange="botSaveModSettings()" checked>
+        🗑 Küfürlü mesajları sil
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
+        <input type="checkbox" id="mod_autoKick" onchange="botSaveModSettings()">
+        🦶 Küfürde 30dk uzaklaştır
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
+        <input type="checkbox" id="mod_autoBan" onchange="botSaveModSettings()">
+        🚫 Küfürde otomatik ban
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
+        <input type="checkbox" id="mod_autoMuteSpam" onchange="botSaveModSettings()" checked>
+        🔇 Spam tespitinde otomatik sustur
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;">
+        <input type="checkbox" id="mod_welcome" onchange="botSaveModSettings()" checked>
+        👋 Yeni üye karşılama mesajı
+      </label>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+        <div>
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:3px;">Spam eşiği (mesaj sayısı)</div>
+          <input id="mod_spamThreshold" type="number" min="2" max="20" value="5" class="admin-inp" onchange="botSaveModSettings()">
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:3px;">Spam penceresi (saniye)</div>
+          <input id="mod_spamWindow" type="number" min="2" max="60" value="6" class="admin-inp" onchange="botSaveModSettings()">
+        </div>
+        <div>
+          <div style="font-size:.7rem;color:var(--muted);margin-bottom:3px;">Spam mute süresi (dk)</div>
+          <input id="mod_muteDuration" type="number" min="1" max="1440" value="60" class="admin-inp" onchange="botSaveModSettings()">
+        </div>
+      </div>
+
+      <div style="margin-top:4px;">
+        <div style="font-size:.7rem;color:var(--muted);margin-bottom:4px;">👋 Karşılama mesajı ({user} = kullanıcı adı)</div>
+        <input id="mod_welcomeMsg" class="admin-inp" value="👋 {user} aramıza katıldı! Hoş geldin 🌿" style="width:100%;" onchange="botSaveModSettings()">
+      </div>
+    </div>
+  </div>
+
+  <div class="admin-section" style="margin-top:12px;">
+    <div class="admin-sec-title">🚫 Yasaklı Kelimeler</div>
+    <div class="admin-card" style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+      <div style="font-size:.75rem;color:var(--muted);">Her satıra bir kelime. Büyük/küçük harf fark etmez.</div>
+      <textarea id="mod_badWords" rows="8"
+        style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text-hi);font-size:.82rem;font-family:monospace;resize:vertical;box-sizing:border-box;outline:none;line-height:1.6;"
+        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      <button class="a-btn blue" onclick="botSaveBadWords()" style="align-self:flex-start;padding:8px 18px;">💾 Kelimeleri Kaydet</button>
+    </div>
+  </div>
+
+  <div class="admin-section" style="margin-top:12px;">
+    <div class="admin-sec-title">📋 Mod Logları</div>
+    <div class="admin-card" style="padding:14px;" id="modLogContainer">
+      <button class="a-btn blue" onclick="loadModLogs()" style="padding:8px 16px;">🔄 Logları Yükle</button>
+    </div>
+  </div>
+
+  <div class="admin-section" style="margin-top:12px;">
+    <div class="admin-sec-title">🔇 Susturulanlar</div>
+    <div class="admin-card" style="padding:14px;" id="muteListContainer">
+      <button class="a-btn blue" onclick="loadMuteList()" style="padding:8px 16px;">🔄 Listeyi Yükle</button>
+    </div>
   </div>`;
+
+  // Ayarları doldur
+  setTimeout(() => {
+    const s = window._natureBotMod?.getSettings() || {};
+    const bw = window._natureBotMod?.getBadWords() || [];
+    const el = id => document.getElementById(id);
+    if(el('mod_autoWarn')) el('mod_autoWarn').checked = s.autoWarnBadWord !== false;
+    if(el('mod_deleteMsg')) el('mod_deleteMsg').checked = s.deleteBadWord !== false;
+    if(el('mod_autoKick')) el('mod_autoKick').checked = !!s.autoKickBadWord;
+    if(el('mod_autoBan')) el('mod_autoBan').checked = !!s.autoBanBadWord;
+    if(el('mod_autoMuteSpam')) el('mod_autoMuteSpam').checked = s.autoMuteSpam !== false;
+    if(el('mod_welcome')) el('mod_welcome').checked = s.welcomeEnabled !== false;
+    if(el('mod_spamThreshold')) el('mod_spamThreshold').value = s.spamThreshold || 5;
+    if(el('mod_spamWindow')) el('mod_spamWindow').value = Math.round((s.spamWindow||6000)/1000);
+    if(el('mod_muteDuration')) el('mod_muteDuration').value = s.spamMuteDuration || 60;
+    if(el('mod_welcomeMsg')) el('mod_welcomeMsg').value = s.welcomeMsg || '👋 {user} aramıza katıldı! Hoş geldin 🌿';
+    if(el('mod_badWords')) el('mod_badWords').value = bw.join('\n');
+  }, 500);
 }
 
 function adminBotAction(action) {
@@ -850,6 +933,85 @@ function adminBotSendCustomMsg() {
   bot.say && bot.say(msg);
   if (inp) inp.value = '';
   showToast('📤 Mesaj gönderildi!');
+}
+
+async function botSaveModSettings() {
+  const el = id => document.getElementById(id);
+  const settings = {
+    autoWarnBadWord: el('mod_autoWarn')?.checked !== false,
+    deleteBadWord:   el('mod_deleteMsg')?.checked !== false,
+    autoKickBadWord: !!el('mod_autoKick')?.checked,
+    autoBanBadWord:  !!el('mod_autoBan')?.checked,
+    autoMuteSpam:    el('mod_autoMuteSpam')?.checked !== false,
+    welcomeEnabled:  el('mod_welcome')?.checked !== false,
+    spamThreshold:   parseInt(el('mod_spamThreshold')?.value)||5,
+    spamWindow:      (parseInt(el('mod_spamWindow')?.value)||6)*1000,
+    spamMuteDuration:parseInt(el('mod_muteDuration')?.value)||60,
+    welcomeMsg:      el('mod_welcomeMsg')?.value||'👋 {user} aramıza katıldı! Hoş geldin 🌿',
+    logEnabled:      true
+  };
+  try {
+    await adminRestSet('botSettings/modSettings', settings);
+    if (window._natureBotMod) Object.assign(window._natureBotMod.getSettings(), settings);
+    showToast('✅ Moderatör ayarları kaydedildi!');
+  } catch(e) { showToast('❌ Kaydedilemedi: '+(e.message||e)); }
+}
+
+async function botSaveBadWords() {
+  const ta = document.getElementById('mod_badWords');
+  if (!ta) return;
+  const words = ta.value.split('\n').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  if (!words.length) { showToast('⚠ En az bir kelime gir!'); return; }
+  try {
+    await adminRestSet('botSettings/badWords', words);
+    if (window._natureBotMod) window._natureBotMod.getBadWords().splice(0, 9999, ...words);
+    showToast('✅ '+ words.length +' yasaklı kelime kaydedildi!');
+  } catch(e) { showToast('❌ Kaydedilemedi: '+(e.message||e)); }
+}
+
+async function loadModLogs() {
+  const container = document.getElementById('modLogContainer');
+  if (!container) return;
+  container.innerHTML = '<div style="color:var(--muted);font-size:.8rem;">Yükleniyor...</div>';
+  try {
+    const logs = await adminRestGet('modLogs').catch(()=>null)||{};
+    const list = Object.values(logs).sort((a,b)=>(b.ts||0)-(a.ts||0)).slice(0,50);
+    if (!list.length) { container.innerHTML = '<div style="color:var(--muted);font-size:.8rem;">Henüz log yok.</div>'; return; }
+    const actionColors = { ban:'var(--red)', kick:'#e67e22', mute:'#8e44ad', warn:'#f0c040', unmute:'var(--green)' };
+    container.innerHTML = list.map(l=>`
+      <div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border);font-size:.75rem;flex-wrap:wrap;">
+        <span style="background:${actionColors[l.action]||'var(--surface2)'};color:#fff;border-radius:5px;padding:2px 7px;font-weight:700;white-space:nowrap;">${(l.action||'?').toUpperCase()}</span>
+        <span style="color:var(--text-hi);font-weight:600;">@${esc(l.target||'?')}</span>
+        <span style="color:var(--muted);">${esc(l.detail||'')}</span>
+        <span style="color:var(--muted);margin-left:auto;white-space:nowrap;">${l.ts?new Date(l.ts).toLocaleString('tr-TR'):''}</span>
+      </div>`).join('');
+  } catch(e) { container.innerHTML = '<div style="color:var(--red);font-size:.8rem;">Yüklenemedi.</div>'; }
+}
+
+async function loadMuteList() {
+  const container = document.getElementById('muteListContainer');
+  if (!container) return;
+  container.innerHTML = '<div style="color:var(--muted);font-size:.8rem;">Yükleniyor...</div>';
+  try {
+    const mutes = await adminRestGet('mutes').catch(()=>null)||{};
+    const active = Object.entries(mutes).filter(([,d])=>d&&d.expiresAt&&Date.now()<d.expiresAt);
+    if (!active.length) { container.innerHTML = '<div style="color:var(--muted);font-size:.8rem;">Susturulan kullanıcı yok.</div>'; return; }
+    container.innerHTML = active.map(([user, d])=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border);font-size:.78rem;flex-wrap:wrap;">
+        <span style="font-weight:700;color:var(--text-hi);">🔇 @${esc(user)}</span>
+        <span style="color:var(--muted);">Bitiş: ${new Date(d.expiresAt).toLocaleString('tr-TR')}</span>
+        <button onclick="adminUnmuteUser('${esc(user)}')" style="margin-left:auto;padding:3px 10px;background:var(--green);color:#fff;border:none;border-radius:6px;font-size:.72rem;cursor:pointer;">🔊 Kaldır</button>
+      </div>`).join('');
+  } catch(e) { container.innerHTML = '<div style="color:var(--red);font-size:.8rem;">Yüklenemedi.</div>'; }
+}
+
+async function adminUnmuteUser(username) {
+  try {
+    await adminRestSet('mutes/'+username, null);
+    if (window._natureBotMod) delete window._natureBotMod.getMuteList()[username];
+    showToast('🔊 '+username+' susturması kaldırıldı.');
+    loadMuteList();
+  } catch(e) { showToast('❌ Hata: '+(e.message||e)); }
 }
 
 function loadAdminBroadcast(){

@@ -103,6 +103,7 @@ async function submitRegister(){
       _passwordHash=ph; _cu=user; _isAdmin=false;
       _regPending=null;
       onLoginSuccess();
+      setTimeout(()=>{ if(typeof window._botWelcomeNewUser==='function') window._botWelcomeNewUser(user); }, 3000);
     }catch(e){
       showLoginErr('Kayıt hatası. İnternet bağlantını kontrol et.');
       rstReg();
@@ -177,8 +178,10 @@ async function verifyRegCode(){
       window._pendingInviteToken = null;
     }
     _passwordHash=_regPending.pass;_cu=_regPending.user;_isAdmin=false;
+    const _newUserForWelcome = _regPending.user;
     _regPending=null;
     onLoginSuccess();
+    setTimeout(()=>{ if(typeof window._botWelcomeNewUser==='function') window._botWelcomeNewUser(_newUserForWelcome); }, 3000);
   }catch(e){
     showLoginErr('Bağlantı hatası. İnterneti kontrol et.');
     vBtn.textContent='Hesabı Aktifleştir ✓';vBtn.disabled=false;

@@ -385,10 +385,8 @@ class NatureBotPet {
     this.el.style.left = 'auto';
     this.el.style.top = 'auto';
     this.el.style.right = 'auto';
-    this.el.style.width = '28px';
-    this.el.style.height = '28px';
-    this.el.style.transform = 'none';
-    this.el.style.overflow = 'hidden';
+    this.el.style.width = '44px';
+    this.el.style.height = '54px';
     this.el.style.zIndex = '9997';
     this.el.style.cursor = 'pointer';
     this.el.style.display = 'block';
@@ -921,11 +919,6 @@ window._natureBotReply = function(text) {
 
 function startNatureBot() {
   if (document.getElementById('natureBotPet')) return;
-  // misc.js'nin prototype kopyalamasi tamamlanmadan baslatma
-  if (typeof NatureBotPet.prototype.bindClick !== 'function') {
-    setTimeout(startNatureBot, 300);
-    return;
-  }
   window._natureBotInstance = new NatureBotPet();
 }
 
@@ -1059,3 +1052,385 @@ document.addEventListener('click', e => {
     panel.classList.remove('open');
   }
 }, true);
+
+/* ═══════════════════════════════════════════════════════════════
+   NatureBot Moderatör Sistemi — Kural Tabanlı, AI Yok
+   ═══════════════════════════════════════════════════════════════ */
+
+(function initModeratorBot() {
+
+  // ── Varsayılan kötü kelime listesi (Firebase'den override edilir)
+  const DEFAULT_BAD_WORDS = [
+    'orospu','orospu çocuğu','piç','piç kurusu','siktir','sik','göt',
+    'amk','amına','bok','oç','mal','gerizekalı','salak','aptal',
+    'şerefsiz','haysiyetsiz','kahpe','fahişe','götveren','ibne',
+    'sürtük','kaltak','yavşak','pezevenk','bok','bok gibi','boktan',
+    'fuck','shit','bitch','asshole','bastard','motherfucker'
+  ];
+
+  let _badWords = [...DEFAULT_BAD_WORDS];
+  let _muteList = {}; // { username: muteExpiresAt }
+  let _spamTracker = {}; // { username: [timestamps] }
+  let _modSettings = {
+    autoKickBadWord: false,    // küfürde kick
+    autoBanBadWord: false,     // küfürde ban
+    autoWarnBadWord: true,     // küfürde uyar
+    deleteBadWord: true,       // küfürlü mesajı sil
+    spamThreshold: 5,          // kaç mesaj
+    spamWindow: 6000,          // kaç ms içinde (6sn)
+    autoMuteSpam: true,        // spam'da sustur
+    spamMuteDuration: 60,      // dakika
+    welcomeEnabled: true,      // yeni üye karşılama
+    welcomeMsg: '👋 {user} aramıza katıldı! Hoş geldin 🌿',
+    logEnabled: true            // mod log
+  };
+
+  // ── Firebase'den ayarları yükle
+  async function loadModSettings() {
+    try {
+      const s = await fbRestGet('botSettings').catch(()=>null);
+      if (s) {
+        if (s.modSettings) Object.assign(_modSettings, s.modSettings);
+        if (s.badWords && Array.isArray(s.badWords)) _badWords = s.badWords;
+      }
+    } catch(e) {}
+  }
+
+  // ── Bot olarak Firebase'e mesaj gönder (belirtilen odaya)
+  async function botSendToRoom(roomId, text) {
+    if (!roomId || !text) return;
+    try {
+      if (typeof dbRef === 'function') {
+        await dbRef('msgs/' + roomId).push({
+          user: 'NatureBot',
+          text: text,
+          ts: Date.now(),
+          sys: false,
+          isBot: true
+        });
+      }
+    } catch(e) {}
+  }
+
+  // ── Bot olarak sistem mesajı gönder (görsel, Firebase değil)
+  function botLocalMsg(text) {
+    if (typeof showBotMsg === 'function') showBotMsg(text);
+  }
+
+  // ── Mod logu — Firebase'e yaz
+  async function modLog(action, target, detail, roomId) {
+    if (!_modSettings.logEnabled) return;
+    try {
+      if (typeof dbRef === 'function') {
+        await dbRef('modLogs').push({
+          action, target, detail,
+          room: roomId || '?',
+          by: 'NatureBot',
+          ts: Date.now()
+        });
+      }
+    } catch(e) {}
+  }
+
+  // ── Admin'e DM bildirim gönder
+  async function notifyAdmins(text) {
+    try {
+      const users = await fbRestGet('users').catch(()=>null)||{};
+      const admins = Object.values(users).filter(u=>u&&u.isAdmin&&u.username);
+      for (const admin of admins) {
+        if (typeof dbRef === 'function') {
+          await dbRef('msgs/dm_' + admin.username).push({
+            user: 'NatureBot',
+            text: '🚨 ' + text,
+            ts: Date.now(),
+            isBot: true
+          });
+        }
+      }
+    } catch(e) {}
+  }
+
+  // ── Küfür/yasaklı kelime kontrol
+  function containsBadWord(text) {
+    const lower = text.toLowerCase().replace(/[*@#!.]/g, '');
+    return _badWords.find(w => {
+      const wl = w.toLowerCase();
+      return lower.includes(wl);
+    }) || null;
+  }
+
+  // ── Mesajı Firebase'den sil
+  async function deleteMessage(roomId, msgKey) {
+    try {
+      if (typeof dbRef === 'function') {
+        await dbRef('msgs/' + roomId + '/' + msgKey).remove();
+      }
+    } catch(e) {}
+  }
+
+  // ── Kullanıcıyı mute et (Firebase'e yaz)
+  async function muteUser(username, durationMin) {
+    const exp = Date.now() + durationMin * 60 * 1000;
+    _muteList[username] = exp;
+    try {
+      if (typeof dbRef === 'function') {
+        await dbRef('mutes/' + username).set({ mutedAt: Date.now(), expiresAt: exp, by: 'NatureBot' });
+      }
+    } catch(e) {}
+  }
+
+  // ── Kullanıcıyı ban et
+  async function banUser(username, reason) {
+    try {
+      await fbRestSet('users/' + username + '/banned', true);
+      await fbRestSet('users/' + username + '/banReason', reason || 'NatureBot otomatik ban');
+      await modLog('ban', username, reason, null);
+      await notifyAdmins(username + ' kullanıcısı banlandı. Sebep: ' + reason);
+    } catch(e) {}
+  }
+
+  // ── Spam kontrolü
+  function checkSpam(username) {
+    const now = Date.now();
+    if (!_spamTracker[username]) _spamTracker[username] = [];
+    _spamTracker[username] = _spamTracker[username].filter(t => now - t < _modSettings.spamWindow);
+    _spamTracker[username].push(now);
+    return _spamTracker[username].length >= _modSettings.spamThreshold;
+  }
+
+  // ── Mute kontrolü
+  function isMuted(username) {
+    const exp = _muteList[username];
+    if (!exp) return false;
+    if (Date.now() > exp) { delete _muteList[username]; return false; }
+    return true;
+  }
+
+  // ══ ANA MODERASYON MANTIĞI ══
+  async function moderateMessage(roomId, msgKey, msg) {
+    if (!msg || !msg.user || msg.user === 'NatureBot' || msg.isBot || msg.sys) return;
+    const username = msg.user;
+    const text = (msg.text || '').trim();
+    if (!text) return;
+
+    // 1. Mute kontrolü
+    if (isMuted(username)) {
+      await deleteMessage(roomId, msgKey);
+      await botSendToRoom(roomId, '🔇 ' + username + ' susturulmuş durumda, mesaj gönderemez.');
+      return;
+    }
+
+    // 2. Spam kontrolü
+    if (checkSpam(username)) {
+      await deleteMessage(roomId, msgKey);
+      if (_modSettings.autoMuteSpam) {
+        await muteUser(username, _modSettings.spamMuteDuration);
+        await botSendToRoom(roomId, '⚠️ ' + username + ' spam yaptığı için ' + _modSettings.spamMuteDuration + ' dakika susturuldu.');
+        await modLog('mute', username, 'Spam', roomId);
+        await notifyAdmins(username + ' spam nedeniyle ' + _modSettings.spamMuteDuration + ' dk susturuldu. Oda: ' + roomId);
+      } else {
+        await botSendToRoom(roomId, '⚠️ ' + username + ', lütfen spam yapmayın!');
+      }
+      return;
+    }
+
+    // 3. Küfür/yasaklı kelime kontrolü
+    const badWord = containsBadWord(text);
+    if (badWord) {
+      if (_modSettings.deleteBadWord) await deleteMessage(roomId, msgKey);
+
+      if (_modSettings.autoBanBadWord) {
+        await banUser(username, 'Yasaklı kelime kullanımı');
+        await botSendToRoom(roomId, '🚫 ' + username + ' yasaklı kelime kullandığı için banlandı.');
+      } else if (_modSettings.autoKickBadWord) {
+        // Kick = odadan at (mute + mesaj)
+        await muteUser(username, 30);
+        await botSendToRoom(roomId, '🦶 ' + username + ' uygunsuz dil kullandığı için 30 dakika uzaklaştırıldı.');
+        await modLog('kick', username, 'Küfür: ' + badWord, roomId);
+      } else if (_modSettings.autoWarnBadWord) {
+        await botSendToRoom(roomId, '⚠️ ' + username + ', uygunsuz dil kullanmayın! Kural ihlali tespit edildi.');
+        await modLog('warn', username, 'Küfür: ' + badWord, roomId);
+      }
+      await notifyAdmins(username + ' yasaklı kelime kullandı ("' + badWord + '") — Oda: ' + roomId);
+      return;
+    }
+  }
+
+  // ══ ADMIN KOMUTLARI ══
+  // /mod ban @kullanıcı [sebep]
+  // /mod mute @kullanıcı [dk]
+  // /mod unmute @kullanıcı
+  // /mod warn @kullanıcı [mesaj]
+  // /mod kick @kullanıcı
+  // /mod duyuru [mesaj]
+  // /mod yardım
+
+  async function handleModCommand(text, roomId) {
+    if (!window._isAdmin) return false;
+    const lower = text.trim().toLowerCase();
+    if (!lower.startsWith('/mod ') && lower !== '/mod') return false;
+
+    const parts = text.trim().split(' ');
+    const sub = (parts[1]||'').toLowerCase();
+    const target = (parts[2]||'').replace('@','');
+    const rest = parts.slice(3).join(' ');
+
+    if (sub === 'yardım' || !sub) {
+      botLocalMsg(
+        '🛡 Mod Komutları:\n' +
+        '/mod ban @kullanıcı [sebep] — Banla\n' +
+        '/mod mute @kullanıcı [dk] — Sustur (varsayılan 60dk)\n' +
+        '/mod unmute @kullanıcı — Susturmayı kaldır\n' +
+        '/mod warn @kullanıcı [mesaj] — Uyar\n' +
+        '/mod kick @kullanıcı — 30dk uzaklaştır\n' +
+        '/mod duyuru [mesaj] — Tüm odalara duyuru\n' +
+        '/mod durum @kullanıcı — Kullanıcı durumu'
+      );
+      return true;
+    }
+
+    if (!target) { botLocalMsg('❌ Kullanıcı adı belirtmelisin.'); return true; }
+
+    if (sub === 'ban') {
+      await banUser(target, rest || 'Admin komutu');
+      await botSendToRoom(roomId, '🚫 ' + target + ' banlandı.' + (rest ? ' Sebep: ' + rest : ''));
+      botLocalMsg('✅ ' + target + ' banlandı.');
+    }
+    else if (sub === 'mute') {
+      const min = parseInt(target.replace('@','')) && !isNaN(parseInt(rest)) ? parseInt(rest) : (parseInt(parts[3])||60);
+      const realTarget = target;
+      await muteUser(realTarget, min);
+      await botSendToRoom(roomId, '🔇 ' + realTarget + ' ' + min + ' dakika susturuldu.');
+      botLocalMsg('✅ ' + realTarget + ' ' + min + ' dk susturuldu.');
+    }
+    else if (sub === 'unmute') {
+      delete _muteList[target];
+      try { if (typeof dbRef === 'function') await dbRef('mutes/' + target).remove(); } catch(e){}
+      await botSendToRoom(roomId, '🔊 ' + target + ' susturması kaldırıldı.');
+      botLocalMsg('✅ ' + target + ' unmute edildi.');
+    }
+    else if (sub === 'warn') {
+      const warnMsg = rest || 'Lütfen kurallara uy.';
+      await botSendToRoom(roomId, '⚠️ ' + target + ': ' + warnMsg);
+      await modLog('warn', target, warnMsg, roomId);
+      botLocalMsg('✅ ' + target + ' uyarıldı.');
+    }
+    else if (sub === 'kick') {
+      await muteUser(target, 30);
+      await botSendToRoom(roomId, '🦶 ' + target + ' admin kararıyla 30 dakika uzaklaştırıldı.');
+      await modLog('kick', target, 'Admin komutu', roomId);
+      botLocalMsg('✅ ' + target + ' kick edildi.');
+    }
+    else if (sub === 'duyuru') {
+      const announcement = parts.slice(2).join(' ');
+      if (!announcement) { botLocalMsg('❌ Duyuru metni yaz.'); return true; }
+      try {
+        const rooms = await fbRestGet('rooms').catch(()=>null)||{};
+        const roomIds = Object.keys(rooms);
+        for (const rid of roomIds) {
+          await botSendToRoom(rid, '📢 DUYURU: ' + announcement);
+          await new Promise(r=>setTimeout(r, 200));
+        }
+        botLocalMsg('✅ Duyuru ' + roomIds.length + ' odaya gönderildi.');
+      } catch(e) { botLocalMsg('❌ Duyuru gönderilemedi.'); }
+    }
+    else if (sub === 'durum') {
+      const muted = isMuted(target);
+      const mutedUntil = _muteList[target] ? new Date(_muteList[target]).toLocaleTimeString('tr-TR') : '';
+      const spamCount = (_spamTracker[target]||[]).length;
+      botLocalMsg(
+        '👤 ' + target + ' durumu:\n' +
+        '🔇 Susturma: ' + (muted ? 'Evet (kadar: '+mutedUntil+')' : 'Hayır') + '\n' +
+        '📨 Son spam sayısı: ' + spamCount
+      );
+    }
+
+    return true;
+  }
+
+  // ══ YENİ ÜYE KARŞILAMA ══
+  window._botWelcomeNewUser = async function(username) {
+    if (!_modSettings.welcomeEnabled) return;
+    const msg = _modSettings.welcomeMsg.replace('{user}', username);
+    // Genel odaya gönder
+    try {
+      const rooms = await fbRestGet('rooms').catch(()=>null)||{};
+      const generalRoom = Object.entries(rooms).find(([,r])=>r.type==='channel')?.[0];
+      if (generalRoom) {
+        await botSendToRoom(generalRoom, msg);
+      }
+    } catch(e) {}
+  };
+
+  // ══ MESAJ DİNLEYİCİ HOOK ══
+  // sendMsg çağrıldığında moderation çalıştır
+  const _origSendMsg = window.sendMsg;
+  window.sendMsg = async function(...args) {
+    if (_origSendMsg) await _origSendMsg.apply(this, args);
+    // Gönderilen mesajı yakala
+  };
+
+  // Firebase realtime listener ile gelen mesajları moderasyona gönder
+  window._startModListener = function(roomId) {
+    if (!roomId || typeof dbRef !== 'function') return;
+    const ref = dbRef('msgs/' + roomId);
+    ref.orderByChild('ts').startAt(Date.now()).on('child_added', async (snap) => {
+      const msg = snap.val();
+      const key = snap.key;
+      if (!msg) return;
+
+      // Admin komut kontrolü
+      if (msg.text && msg.text.startsWith('/mod')) {
+        const handled = await handleModCommand(msg.text, roomId);
+        if (handled && window._isAdmin) return;
+      }
+
+      await moderateMessage(roomId, key, msg);
+    });
+  };
+
+  // Oda açıldığında dinleyiciyi başlat
+  const _origOpenRoom = window.openRoom;
+  window.openRoom = function(roomId, ...rest) {
+    if (_origOpenRoom) _origOpenRoom.call(this, roomId, ...rest);
+    setTimeout(() => window._startModListener && window._startModListener(roomId), 800);
+  };
+
+  // ══ ADMIN KOMUT HİT HOOK (checkBotCommand'a ekle) ══
+  const _origCheckBotCommand = window.checkBotCommand;
+  window.checkBotCommand = function(text) {
+    if (text && text.toLowerCase().startsWith('/mod')) {
+      const room = window._cRoom || window._deskRoom;
+      handleModCommand(text, room);
+      return true;
+    }
+    return _origCheckBotCommand ? _origCheckBotCommand(text) : false;
+  };
+
+  // ══ BAŞLAT ══
+  setTimeout(async () => {
+    await loadModSettings();
+    // Mevcut mute listesini Firebase'den yükle
+    try {
+      const mutes = await fbRestGet('mutes').catch(()=>null)||{};
+      Object.entries(mutes).forEach(([user, data]) => {
+        if (data && data.expiresAt && Date.now() < data.expiresAt) {
+          _muteList[user] = data.expiresAt;
+        }
+      });
+    } catch(e) {}
+    // Mevcut oda varsa dinleyici başlat
+    if (window._cRoom) window._startModListener(window._cRoom);
+    if (window._deskRoom) window._startModListener(window._deskRoom);
+  }, 2000);
+
+  // Global erişim
+  window._natureBotMod = {
+    muteUser, banUser, notifyAdmins, botSendToRoom, modLog,
+    getSettings: () => _modSettings,
+    getBadWords: () => _badWords,
+    getMuteList: () => _muteList,
+    reload: loadModSettings
+  };
+
+})();
