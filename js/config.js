@@ -219,8 +219,8 @@ function switchMainTab(tab){
           bot.el.style.left = 'auto';
           bot.el.style.top = 'auto';
           bot.el.style.transform = 'none';
-          bot.el.style.width = '44px';
-          bot.el.style.height = '54px';
+          bot.el.style.width = '30px';
+          bot.el.style.height = '30px';
           bot.isAtHome = false;
           bot.el.classList.remove('at-home');
         }
