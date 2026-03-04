@@ -253,7 +253,7 @@ function showScreen(id){
     _activeMainTab=Object.keys(_mainScreenIds).find(k=>_mainScreenIds[k]===id)||'home';
   }
 }
-function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();window._inChat=false;var _tb=document.querySelector('.tab-bar');if(_tb)_tb.style.display=window.innerWidth>=768?'none':'flex';document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
+function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();window._inChat=false;document.body.classList.remove('in-chat');var _tb=document.querySelector('.tab-bar');if(_tb){_tb.style.visibility='';_tb.style.display=window.innerWidth>=768?'none':'flex';}document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
 
 /* ── Klavye açılınca tab bar gizle ── */
 function _updateTabBarForKeyboard(){

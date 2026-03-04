@@ -5,8 +5,9 @@
 
 function renderMsgs(msgsObj, clearedAt){
   const box=document.getElementById('chatMsgs');if(!box)return;
-  const atBot=box.scrollHeight-box.scrollTop-box.clientHeight<60;
-  const savedTop=box.scrollTop;
+  const prevScrollHeight=box.scrollHeight;
+  const prevScrollTop=box.scrollTop;
+  const atBot=box.scrollHeight-box.scrollTop-box.clientHeight<80;
   let msgs=msgsObj?Object.entries(msgsObj).map(([k,v])=>({...v,_key:k})).sort((a,b)=>a.ts-b.ts):[];
   // clearedAt filtresini uygula — temizleme zamanından önceki mesajları gösterme
   if(clearedAt) msgs=msgs.filter(m=>m.ts>clearedAt);
@@ -77,8 +78,9 @@ function renderMsgs(msgsObj, clearedAt){
   if(atBot){
     scrollBottom();
   } else {
-    // Scroll pozisyonunu koru - zıplama önle
-    box.scrollTop=savedTop;
+    // Yeni mesaj eklendiyse scroll farkını koru (zıplama önle)
+    var heightDiff = box.scrollHeight - prevScrollHeight;
+    box.scrollTop = prevScrollTop + (heightDiff > 0 ? heightDiff : 0);
   }
   if(_cRoom){markRoomRead(_cRoom);updateMsgStatuses(_cRoom);}
 }

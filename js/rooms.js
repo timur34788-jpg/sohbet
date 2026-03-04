@@ -373,10 +373,10 @@ function openRoom(roomId){
     }
   });
   showScreen('chatScreen');
-  // Tab bar'ı kesin gizle
   window._inChat = true;
+  document.body.classList.add('in-chat');
   var _tb = document.querySelector('.tab-bar');
-  if(_tb) _tb.style.display = 'none';
+  if(_tb){ _tb.style.display='none'; _tb.style.visibility='hidden'; }
   // clearedAt bilgisini ONCE al, SONRA listener başlat (race condition fix)
   const ref=dbRef('msgs/'+roomId);
   dbRef('rooms/'+roomId+'/clearedAt').once('value').then(cs=>{
@@ -399,11 +399,14 @@ function updateChatStatus(){
     // Mobil header
     const el=document.getElementById('chatHdrSub');
     if(el){
-      if(on){ el.className='c-hdr-sub on'; el.innerHTML='🟢 Çevrimiçi'; }
-      else {
+      if(on){
+        const newHtml='🟢 Çevrimiçi';
+        if(el.innerHTML!==newHtml){ el.className='c-hdr-sub on'; el.innerHTML=newHtml; }
+      } else {
         dbRef(wsPath('users/'+other+'/lastSeen')).once('value').then(ls=>{
-          const ts=ls.val(); el.className='c-hdr-sub';
-          el.textContent = ts ? 'Son görülme: '+fmtLastSeen(ts) : 'Çevrimdışı';
+          const ts=ls.val();
+          const newText = ts ? 'Son görülme: '+fmtLastSeen(ts) : 'Çevrimdışı';
+          if(el.textContent!==newText){ el.className='c-hdr-sub'; el.textContent=newText; }
         });
       }
     }
