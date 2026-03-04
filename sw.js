@@ -1,5 +1,5 @@
 /* Nature.co Service Worker — sw-v13 */
-const C = 'sw-v1854';
+const C = 'sw-v1855';
 const CACHE_URLS = ['./'];
 
 self.addEventListener('install', e => {

@@ -1442,8 +1442,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
   }
 
   /* ── Mobile screens hidden in desktop ── */
-  #roomsScreen, #chatScreen, #forumScreen,
-  #msgsScreen, #friendsScreen, #profileScreen, #adminPanel { display: none !important; }
+  #roomsScreen, 
 
   /* ── Forum / Friends / Profile as panels in deskMain ── */
   #deskContentPanel {
