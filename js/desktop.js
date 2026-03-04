@@ -320,19 +320,19 @@ function deskOpenRoom(roomId) {
       ic.textContent = initials(other); ic.style.background = strColor(other);
       document.getElementById('deskChatHdrName').textContent = other;
       document.getElementById('deskChatHdrSub').textContent = _online[other] ? '🟢 Çevrimiçi' : 'Çevrimdışı';
-      const _dca = document.getElementById('deskCallAudio'); if(_dca) _dca.style.display = 'flex';
-      const _dcv = document.getElementById('deskCallVideo'); if(_dcv) _dcv.style.display = 'flex';
-      const _dcs = document.getElementById('deskCallScreen'); if(_dcs) _dcs.style.display = (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) ? 'flex' : 'none';
-      const _dtm = document.getElementById('deskToggleMembers'); if(_dtm) _dtm.style.display = 'none';
+      document.getElementById('deskCallAudio').style.display = 'flex';
+      document.getElementById('deskCallVideo').style.display = 'flex';
+      document.getElementById('deskCallScreen').style.display = (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) ? 'flex' : 'none';
+      document.getElementById('deskToggleMembers').style.display = 'none';
     } else {
       ic.textContent = room.type === 'group' ? '👥' : '#';
       ic.style.background = room.type === 'group' ? 'linear-gradient(135deg,#9b72ff,#c4a7ff)' : 'var(--surface2)';
       document.getElementById('deskChatHdrName').textContent = room.name || roomId;
       document.getElementById('deskChatHdrSub').textContent = room.type === 'group' ? (room.members || []).length + ' üye' : 'Kanal';
-      const _dca2 = document.getElementById('deskCallAudio'); if(_dca2) _dca2.style.display = 'none';
-      const _dcv2 = document.getElementById('deskCallVideo'); if(_dcv2) _dcv2.style.display = 'none';
-      const _dcs2 = document.getElementById('deskCallScreen'); if(_dcs2) _dcs2.style.display = 'none';
-      const _dtm2 = document.getElementById('deskToggleMembers'); if(_dtm2) _dtm2.style.display = room.type === 'group' ? 'flex' : 'none';
+      document.getElementById('deskCallAudio').style.display = 'none';
+      document.getElementById('deskCallVideo').style.display = 'none';
+      document.getElementById('deskCallScreen').style.display = 'none';
+      document.getElementById('deskToggleMembers').style.display = room.type === 'group' ? 'flex' : 'none';
     }
 
     // Spy banner
@@ -410,8 +410,11 @@ function deskRenderMsgs(msgsObj) {
        h += '<div class="mb ' + (own ? 'own' : '') + ' ' + (first ? 'first' : '') + '" data-key="' + m._key + '"' + (own ? ' data-ts="' + m.ts + '"' : '') + '>' +
          '<div class="av ' + (first ? '' : 'ghost') + '" style="background:' + strColor(m.user) + '">' + initials(m.user) + '</div>' +
          (own ? avMenuBtnDesk : '') +
-         '<div class="mb-body">' + meta + content + reactionsHtml + '</div>' +
-         (own ? '' : avMenuBtnDesk) +
+         (own
+           ? '<div class="mb-body">' + meta + content + reactionsHtml + '</div>'
+           : '<div style="display:flex;align-items:center;gap:4px;min-width:0;"><div class="mb-body">' + meta + content + reactionsHtml + '</div>' + avMenuBtnDesk + '</div>'
+         ) +
+         (own ? '' : '') +
          '</div>';
     } catch(e) {}
   });
@@ -892,12 +895,6 @@ function deskSwitchProfTab(tab){
 }
 
 function deskLoadAdmin() {
-  // ── GÜVENLİK: Admin yetkisi yoksa reddedip ana sayfaya yönlendir ──
-  if(!_isAdmin){
-    showToast('⛔ Bu bölüme erişim yetkiniz yok.');
-    deskNav('home');
-    return;
-  }
   const panel = document.getElementById('deskPanelContent');
   const tabs = [
     { key: 'users',      label: '👥 Kullanıcı' },

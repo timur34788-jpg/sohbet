@@ -161,7 +161,6 @@ function clearUnreadBadge(roomId){
 }
 function deleteMsg(roomId,key){
   document.getElementById('msgCtxMenu').classList.remove('show');
-  if(!confirm('Bu mesajı sil?'))return;
   dbRef('msgs/'+roomId+'/'+key).remove().catch(()=>showToast('Silinemedi'));
 }
 
