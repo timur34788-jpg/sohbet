@@ -10,7 +10,16 @@ function openAddFriendTab(){ switchMainTab('friends'); switchFrTab(3); }
 
 /* ── Keyboard / Back ── */
 
-window.visualViewport&&window.visualViewport.addEventListener('resize',()=>{if(document.getElementById('chatScreen').classList.contains('active'))setTimeout(scrollBottom,100);});
+// visualViewport resize: sadece klavye kapanınca scroll et (zıplama önlendi)
+window.visualViewport&&window.visualViewport.addEventListener('resize',()=>{
+  var cs=document.getElementById('chatScreen');
+  if(!cs||!cs.classList.contains('active'))return;
+  var viewH=window.visualViewport.height;
+  var winH=window.screen.height;
+  var keyboardOpen=viewH<winH*0.75;
+  // Sadece klavye kapanınca (büyüdüğünde) scroll et
+  if(!keyboardOpen) setTimeout(scrollBottom,150);
+});
 
 
 /* ── CSS Enjeksiyonu ── */
