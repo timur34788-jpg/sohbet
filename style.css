@@ -199,8 +199,8 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
   border-bottom-color: rgba(255,255,255,.08) !important;
 }
 [data-ui="glass"] .tab-bar {
-  background: rgba(255,255,255,.04);
-  backdrop-filter: blur(20px);
+  background: transparent;
+  backdrop-filter: none;
   border-top-color: rgba(255,255,255,.07);
 }
 [data-ui="glass"] .login-btn { background: linear-gradient(135deg,#6c63ff,#a855f7); }
@@ -238,7 +238,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 [data-ui="clean"] #roomsScreen { background: #0d0f14; }
 [data-ui="clean"] .ws-header { background: #111418 !important; border-bottom: 1px solid #181b22 !important; }
 [data-ui="clean"] .c-header { background: #111418 !important; border-bottom-color: #181b22 !important; }
-[data-ui="clean"] .tab-bar { background: #0d0f14; border-top-color: #181b22; }
+[data-ui="clean"] .tab-bar { background: transparent; border-top-color: #181b22; }
 [data-ui="clean"] .ob { background: #1d2d4a; border-radius: 14px 3px 14px 14px; }
 [data-ui="clean"] .inp-box { background: #181b22; border-color: #1e2230; }
 [data-ui="clean"] .r-row { border-radius: 6px; margin: 1px 6px; }
@@ -368,8 +368,8 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
   border-bottom-color: rgba(255,255,255,.07) !important;
 }
 [data-ui="nature"] .tab-bar {
-  background: rgba(11,17,32,.85);
-  backdrop-filter: blur(20px);
+  background: transparent;
+  backdrop-filter: none;
   border-top-color: rgba(255,255,255,.07);
 }
 /* Mesaj balonları */
