@@ -245,6 +245,11 @@ function switchMainTab(tab){
     setTimeout(()=>{ switchProfTab('profile'); }, 50);
   }
   setTimeout(()=>applyTabIcons(true), 0);
+  // Tab bar aktif sekmeyi güncelle
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('act'));
+  const tabMap = {home:'tabHome',msgs:'tabMsgs',forum:'tabForum',friends:'tabFriends',games:'tabGames',watch:'tabWatch',profile:'tabProfile'};
+  const activeTabEl = document.getElementById(tabMap[tab]);
+  if(activeTabEl) activeTabEl.classList.add('act');
 }
 
 let _stopMsg=null,_stopOnl=null,_hbTimer=null,_stopReads=null;
