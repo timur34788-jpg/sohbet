@@ -4891,3 +4891,29 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   width: 28px !important;
   height: 28px !important;
 }
+
+/* ══ ChatScreen input kutusu - Android fix ══ */
+#chatScreen {
+  display: flex !important;
+  flex-direction: column !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  overflow: hidden !important;
+}
+#chatScreen .c-header {
+  flex-shrink: 0 !important;
+}
+#msgArea {
+  flex: 1 1 auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  min-height: 0 !important;
+}
+#chatInputRow,
+.inp-wrap {
+  flex-shrink: 0 !important;
+  position: relative !important;
+  bottom: auto !important;
+  width: 100% !important;
+  z-index: 10 !important;
+}
