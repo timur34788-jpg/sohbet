@@ -4541,12 +4541,12 @@ window.closeCarbonModal = closeCarbonModal;
 ══════════════════════════════════════════════ */
 
 const AMBIANCE_TRACKS = [
-  { id:'rain',    icon:'🌧️', name:'Yağmur',       url:'https://www.soundjay.com/nature/sounds/rain-01.mp3' },
-  { id:'forest',  icon:'🌲', name:'Orman',         url:'https://www.soundjay.com/nature/sounds/forest-birds-ambience-01.mp3' },
-  { id:'ocean',   icon:'🌊', name:'Okyanus',       url:'https://www.soundjay.com/nature/sounds/ocean-wave-1.mp3' },
-  { id:'fire',    icon:'🔥', name:'Şömine',        url:'https://www.soundjay.com/nature/sounds/fire-01.mp3' },
-  { id:'wind',    icon:'💨', name:'Rüzgar',        url:'https://www.soundjay.com/nature/sounds/wind-01.mp3' },
-  { id:'birds',   icon:'🐦', name:'Kuş Sesleri',   url:'https://www.soundjay.com/nature/sounds/birds-chirping-1.mp3' },
+  { id:'rain',    icon:'🌧️', name:'Yağmur',       url:'https://cdn.pixabay.com/download/audio/2022/03/10/audio_270f15b567.mp3' },
+  { id:'forest',  icon:'🌲', name:'Orman',         url:'https://cdn.pixabay.com/download/audio/2021/09/06/audio_6a3b0571ad.mp3' },
+  { id:'ocean',   icon:'🌊', name:'Okyanus',       url:'https://cdn.pixabay.com/download/audio/2021/08/09/audio_b5b4a8d3c3.mp3' },
+  { id:'fire',    icon:'🔥', name:'Şömine',        url:'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0c6ff1bab.mp3' },
+  { id:'wind',    icon:'💨', name:'Rüzgar',        url:'https://cdn.pixabay.com/download/audio/2022/02/23/audio_d1718ab41b.mp3' },
+  { id:'birds',   icon:'🐦', name:'Kuş Sesleri',   url:'https://cdn.pixabay.com/download/audio/2021/09/30/audio_99bed6c8d5.mp3' },
 ];
 
 let _ambiAudio = null;
