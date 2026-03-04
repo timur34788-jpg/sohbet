@@ -395,6 +395,7 @@ async function backToServerSelect(){
   _functions=null;
   document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='';});
   document.getElementById('serverSelectScreen').classList.add('active');
+  document.body.classList.add('auth-screen');
   const tb=document.querySelector('.tab-bar'); if(tb) tb.style.display='none';
   renderServerSelect();
 }

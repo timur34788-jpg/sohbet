@@ -687,7 +687,7 @@ function loadProfileStats(){ return; /*kaldırıldı*/
 let _unreadNotifs=0;
 function listenNotifications(){}
 function openNotifications(){}
-function markAllNotifsRead(){}
+/* markAllNotifsRead → search.js */
 
 /* 14. YENİ SEKME & ADMIN SEKME EKLEME */
 function injectProfileTabs(){
@@ -732,46 +732,7 @@ function adminTabNew(tab){
 
 /* 15. MESAJ MENÜSÜNE YENİ ÖĞELER */
 const _origShowMsgMenu2=showMsgMenu;
-function showMsgMenu(e,room,key,own,isAdmin,text){
-  e.stopPropagation(); e.preventDefault();
-  document.removeEventListener('click',_closeCtx);
-  const menu=document.getElementById('msgCtxMenu'); if(!menu) return;
-  let html='';
-  // ── Hızlı Emoji Satırı ──
-  const _qEmojis=['👍','❤️','😂','😮','😢','🔥','👏','🎉'];
-  html+=`<div style="display:flex;gap:1px;padding:7px 8px 6px;border-bottom:1px solid var(--border);margin-bottom:3px;">`;
-  _qEmojis.forEach(em=>{
-    html+=`<span onclick="addReaction(event,'${room}','${key}','${em}');_closeCtx()" style="font-size:1.3rem;cursor:pointer;padding:5px 6px;border-radius:8px;line-height:1;transition:background .12s,transform .15s;display:inline-flex;align-items:center;justify-content:center;" onmouseover="this.style.background='var(--border)';this.style.transform='scale(1.3)'" onmouseout="this.style.background='transparent';this.style.transform='scale(1)'">${em}</span>`;
-  });
-  html+=`</div>`;
-  html+=`<div class="ctx-item" onclick="event.stopPropagation();showReactMenu(event,'${room}','${key}')"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span> Tepki Ekle</div>`;
-  html+=`<div class="ctx-item" onclick="event.stopPropagation();replyToMsg('${room}','${key}');_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></span> Cevapla</div>`;
-  html+=`<div class="ctx-item" onclick="event.stopPropagation();pinMsg('${room}','${key}');_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></svg></span> Sabitle</div>`;
-  html+=`<div class="ctx-item" onclick="event.stopPropagation();copyMsgText(${JSON.stringify(text)});_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></span> Kopyala</div>`;
-  html+=`<div class="ctx-item" onclick="event.stopPropagation();openCreatePoll();_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span> Anket Oluştur</div>`;
-  const msgEl=document.querySelector('.mb[data-key="'+key+'"]');
-  const msgUser=msgEl?msgEl.querySelector('.mb-name')?.textContent||'':'';
-  if(!own&&msgUser){
-    html+=`<div class="ctx-item" onclick="event.stopPropagation();viewUserProfile('${esc(msgUser)}');_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></span> Profili Gör</div>`;
-  
-  }
-  if(own){
-    html+=`<div class="ctx-item" onclick="event.stopPropagation();startEditMsg('${room}','${key}');_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span> Düzenle</div>`;
-    html+=`<div class="ctx-item" onclick="event.stopPropagation();showEditHistory('${room}','${key}');_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Düzenleme Geçmişi</div>`;
-  }
-  if(own||isAdmin){
-    html+=`<div style="height:1px;background:var(--border);margin:3px 4px;"></div>`;
-    html+=`<div class="ctx-item danger" onclick="event.stopPropagation();deleteMsg('${room}','${key}');_closeCtx()"><span style="width:22px;display:inline-flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></span> Sil</div>`;
-  }
-  menu.innerHTML=html;
-  const mW=270, mH=(html.match(/ctx-item/g)||[]).length*42+62;
-  let x=e.clientX, y=e.clientY;
-  if(x+mW>window.innerWidth) x=window.innerWidth-mW-8;
-  if(y+mH>window.innerHeight) y=window.innerHeight-mH-8;
-  if(y<8) y=8;
-  menu.style.cssText=`display:block;position:fixed;left:${x}px;top:${y}px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:5px;z-index:999999;box-shadow:0 8px 32px rgba(0,0,0,.7);min-width:220px;`;
-  setTimeout(()=>document.addEventListener('click',_closeCtx,{once:true}),300);
-}
+/* showMsgMenu → messages.js */
 
 /* 16. AVATAR TIKLANINCA PROFİL */
 document.addEventListener('click',function(e){
@@ -788,15 +749,28 @@ function switchProfTab(tab){
     if(btn){btn.style.color=t===tab?'#fff':'var(--muted)';btn.style.borderBottom=t===tab?'2px solid var(--accent)':'2px solid transparent';}
     if(body) body.style.display=t===tab?(t==='profile'?'flex':'block'):'none';
   });
-  // Seçili tab butonunu görünür yap (kaydırmalı tab bar için)
   const activeBtn = document.getElementById('ptab-'+tab);
   if(activeBtn) activeBtn.scrollIntoView({inline:'center', behavior:'smooth'});
-  // İçerik alanını en üste kaydır
   const scrollWrap = document.querySelector('#profileScreen > div[style*="overflow-y"]');
   if(scrollWrap) scrollWrap.scrollTop = 0;
+  if(tab==='profile'){
+    if(typeof loadBio==='function') setTimeout(loadBio, 50);
+    setTimeout(()=>{
+      if(typeof updateProfileFriendCount==='function') updateProfileFriendCount();
+      if(window._db && window._cu){
+        dbRef('users/'+_cu).once('value').then(snap=>{
+          const d=snap.val()||{};
+          const mc=d.msgCount||0;
+          const el=document.getElementById('profMsgCount');
+          if(el) el.textContent=mc>999?Math.floor(mc/1000)+'K':mc;
+          if(typeof updateProfileBadges==='function') updateProfileBadges(mc);
+        }).catch(()=>{});
+      }
+    },100);
+  }
+  if(tab==='appearance'){ if(typeof renderUiStyleGrid==='function') renderUiStyleGrid(); }
+  if(tab==='sounds'){ if(typeof renderToneGrids==='function') renderToneGrids(); }
   if(tab==='account'){const ab=document.getElementById('adminPanelBtn');if(ab) ab.style.display=_isAdmin?'flex':'none';}
-  if(tab==='sounds'){ renderToneGrids(); }
-  // Sosyal sekmesi kaldırıldı
 }
 
 /* 18. BİLDİRİM BUTONU — kaldırıldı */

@@ -298,7 +298,7 @@ function submitCreateGroup(){
   if(!name){showToast('Grup adı girin.');return;}
   const members=[_cu,..._cgSelected];
   const id='group_'+name.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'')+'_'+Date.now();
-  const data={id,name,type:'group',members,createdBy:_cu,ts:Date.now()};
+  const data={id,name,type:'group',members,createdBy:_cu,founder:_cu,ts:Date.now()};
   dbRef('rooms/'+id).set(data).then(()=>{
     showToast('"'+name+'" grubu oluşturuldu!');
     closeCGModal();
