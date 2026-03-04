@@ -4386,4 +4386,96 @@ body {
   }
 }
 
+/* ══ WhatsApp-style mesaj baloncukları ══ */
+.mb {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 1px 12px;
+  max-width: 100%;
+}
+.mb.own {
+  flex-direction: row-reverse;
+}
+.mb.first { margin-top: 8px; }
 
+/* Avatar */
+.mb .av {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-size: .65rem;
+  font-weight: 700;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  background: #555;
+  margin-bottom: 2px;
+}
+.mb .av.ghost {
+  visibility: hidden;
+}
+.mb.own .av { display: none; }
+
+/* Body */
+.mb-body {
+  display: flex;
+  flex-direction: column;
+  max-width: 72%;
+  min-width: 0;
+}
+.mb.own .mb-body { align-items: flex-end; }
+
+/* Sender name */
+.mb-name {
+  font-size: .7rem;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 2px;
+  padding-left: 2px;
+}
+
+/* Bubble wrap */
+.mb-bubble-wrap {
+  position: relative;
+  background: var(--surface2);
+  border-radius: 12px 12px 12px 4px;
+  padding: 6px 10px 20px 10px;
+  word-break: break-word;
+  font-size: .88rem;
+  line-height: 1.4;
+  color: var(--text-hi);
+  max-width: 100%;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.mb.own .mb-bubble-wrap {
+  background: var(--blue);
+  color: #fff;
+  border-radius: 12px 12px 4px 12px;
+}
+
+/* Time inside bubble - bottom right */
+.mb-time-inside {
+  position: absolute;
+  bottom: 4px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.mb-ts-row {
+  font-size: .65rem;
+  color: rgba(255,255,255,.6);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.mb:not(.own) .mb-ts-row {
+  color: var(--muted);
+}
+
+/* Status ticks */
+.msg-status svg { width: 14px; height: 8px; }
+
+/* Remove old meta styles that conflict */
+.mb-meta, .mb-meta-mini { display: none !important; }
