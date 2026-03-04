@@ -160,7 +160,7 @@ function clearUnreadBadge(roomId){
   });
 }
 function deleteMsg(roomId,key){
-  document.getElementById('msgCtxMenu').classList.remove('show');
+  if(typeof _closeCtx==='function') _closeCtx();
   dbRef('msgs/'+roomId+'/'+key).remove().catch(()=>showToast('Silinemedi'));
 }
 
