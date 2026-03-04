@@ -404,12 +404,12 @@ function updateChatStatus(){
     if(el){
       if(on){
         const newHtml='🟢 Çevrimiçi';
-        if(el.innerHTML!==newHtml){ el.className='c-hdr-sub on'; el.innerHTML=newHtml; }
+        if(el.innerHTML!==newHtml){ el.innerHTML=newHtml; }
       } else {
         dbRef(wsPath('users/'+other+'/lastSeen')).once('value').then(ls=>{
           const ts=ls.val();
           const newText = ts ? 'Son görülme: '+fmtLastSeen(ts) : 'Çevrimdışı';
-          if(el.textContent!==newText){ el.className='c-hdr-sub'; el.textContent=newText; }
+          if(el.textContent!==newText){ el.textContent=newText; }
         });
       }
     }
