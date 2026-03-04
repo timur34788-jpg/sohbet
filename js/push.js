@@ -106,7 +106,7 @@ function initForegroundPushListener(){
       const body  = (payload.notification && payload.notification.body)  || '';
       if(typeof showToast === 'function') showToast('\uD83D\uDD14 ' + (body || title));
       if(Notification.permission === 'granted'){
-        new Notification(title, { body, icon:'data:image/svg+xml,<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><path d="M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z" fill="%230e2b0c" stroke="%234a8f40" stroke-width='1.2'/>\u003c/svg>', tag:'natureco' });
+        new Notification(title, { body, icon:'data:image/svg+xml,<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><path d="M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z" fill="%230e2b0c" stroke="%234a8f40" stroke-width="1.2"/>\u003c/svg>', tag:'natureco' });
       }
     });
   }catch(e){ console.warn('FCM foreground listener hatasi:', e); }
