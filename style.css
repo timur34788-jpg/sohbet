@@ -270,7 +270,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 [data-ui="vivid"] #roomsScreen { background: #080a10; }
 [data-ui="vivid"] .ws-header { background: #0c0e14 !important; border-bottom: 1px solid rgba(255,255,255,.05) !important; }
 [data-ui="vivid"] .c-header { background: rgba(255,255,255,.02) !important; border-bottom-color: rgba(255,255,255,.05) !important; }
-[data-ui="vivid"] .tab-bar { background: #080a10; border-top-color: rgba(255,255,255,.05); }
+[data-ui="vivid"] .tab-bar { border-top-color: rgba(255,255,255,.05); }
 [data-ui="vivid"] .ob {
   background: linear-gradient(135deg,#f97316,#ec4899) !important;
   box-shadow: 0 4px 16px rgba(249,115,22,.25);
@@ -4755,7 +4755,7 @@ body.in-chat .tab-bar {
   flex-direction: row !important;
   padding-top: 6px !important;
   padding-bottom: 0px !important;
-  background: #080a10 !important;
+  background: transparent !important;
   border-top: none !important;
   z-index: 1000 !important;
   box-sizing: border-box !important;
@@ -4792,4 +4792,14 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   background-color: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
+}
+
+/* ══ Tab bar arka plan - şeffaf ══ */
+[data-ui] .tab-bar,
+.tab-bar {
+  background: transparent !important;
+  background-color: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
 }
