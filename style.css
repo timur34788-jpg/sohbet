@@ -4892,12 +4892,11 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   height: 28px !important;
 }
 
-/* ══ ChatScreen input kutusu - Android fix ══ */
+/* ══ ChatScreen layout fix ══ */
 #chatScreen {
   display: flex !important;
   flex-direction: column !important;
   height: 100% !important;
-  height: 100dvh !important;
   overflow: hidden !important;
 }
 #chatScreen .c-header {
