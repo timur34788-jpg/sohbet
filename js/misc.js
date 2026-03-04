@@ -235,8 +235,9 @@ function showScreen(id){
   var cs=document.getElementById('callScreen');
   if(cs && !_callId) cs.style.display='none';
   // Chat ekranında tab bar gizle (WhatsApp gibi)
+  window._inChat = (id==='chatScreen');
   var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display = (id==='chatScreen') ? 'none' : 'flex';
+  if(tb) tb.style.display = window._inChat ? 'none' : 'flex';
   // Chat'te NatureBot gizle
   if(window._natureBotInstance && window._natureBotInstance.el){
     window._natureBotInstance.el.style.display = (id==='chatScreen') ? 'none' : '';
@@ -252,14 +253,11 @@ function showScreen(id){
     _activeMainTab=Object.keys(_mainScreenIds).find(k=>_mainScreenIds[k]===id)||'home';
   }
 }
-function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();var _tb=document.querySelector('.tab-bar');if(_tb)_tb.style.display='flex';document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
+function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();window._inChat=false;var _tb=document.querySelector('.tab-bar');if(_tb)_tb.style.display='flex';document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
 
 /* ── Klavye açılınca tab bar gizle ── */
 function _updateTabBarForKeyboard(){
-  // Chat ekranındayken tab bar hiç gösterme
-  var cs = document.getElementById('chatScreen');
-  var inChat = cs && (cs.classList.contains('active') || cs.style.display === 'flex');
-  if(inChat) return;
+  if(window._inChat) return; // Chat'teyken tab bar'a dokunma
   var tb = document.querySelector('.tab-bar');
   if(!tb) return;
   var viewH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
