@@ -4901,7 +4901,8 @@ function showCallScreen(type) {
   el.style.display = 'flex';
 
   // Katılımcı adını göster — DM'de karşı tarafın adı, grupta oda adı
-  const nameEl = document.getElementById('callScreenName');
+  const nameEl = document.getElementById('callName');
+  const avatarEl = document.getElementById('callAvatar');
   if(nameEl) {
     const room = _cRoom || _deskRoom;
     if(room) {
@@ -4911,8 +4912,10 @@ function showCallScreen(type) {
         if(r.type === 'dm') {
           const other = (r.members||[]).find(m => m !== _cu) || room;
           nameEl.textContent = other;
+          if(avatarEl) { avatarEl.textContent = initials(other); avatarEl.style.background = strColor(other); }
         } else {
           nameEl.textContent = r.name || room;
+          if(avatarEl) { avatarEl.textContent = '👥'; avatarEl.style.background = 'linear-gradient(135deg,#9b72ff,#c4a7ff)'; }
         }
       });
     } else {

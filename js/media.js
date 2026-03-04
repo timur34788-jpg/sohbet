@@ -13,6 +13,40 @@
    ══════════════════════════════════════ */
 
 
+/* ── Yardımcı fonksiyonlar ── */
+
+function _pairKey(a, b) {
+  return [a, b].sort().join('__');
+}
+
+function _attachRemoteMedia(username, stream) {
+  // Ses
+  let audio = document.getElementById('_rAudio_' + username);
+  if (!audio) {
+    audio = document.createElement('audio');
+    audio.id = '_rAudio_' + username;
+    audio.autoplay = true;
+    audio.playsInline = true;
+    document.body.appendChild(audio);
+  }
+  audio.srcObject = stream;
+
+  // Görüntü (video aramasıysa)
+  const remoteVideo = document.getElementById('remoteVideo');
+  if (remoteVideo && stream.getVideoTracks().length > 0) {
+    remoteVideo.srcObject = stream;
+    remoteVideo.play().catch(() => {});
+    const videoArea = document.getElementById('callVideoArea');
+    const audioArea = document.getElementById('callAudioArea');
+    if (videoArea) videoArea.style.display = 'block';
+    if (audioArea) audioArea.style.display = 'none';
+  }
+
+  // Status güncelle
+  const statusEl = document.getElementById('callStatus');
+  if (statusEl) statusEl.textContent = 'Bağlandı';
+}
+
 const STUN_SERVERS = {iceServers:[
   {urls:'stun:stun.l.google.com:19302'},
   {urls:'stun:stun1.l.google.com:19302'},
