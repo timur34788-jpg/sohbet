@@ -4692,19 +4692,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const mobileAv = document.getElementById('myAvatar');
   if (mobileAv) {
     mobileAv.onclick = null;
-    mobileAv.addEventListener('click', openProfileDrawer);
+    mobileAv.addEventListener('click', openProfile);
   }
   // Desktop sidebar avatar
   const deskAv = document.getElementById('deskSidebarAvatar');
   if (deskAv) {
     deskAv.onclick = null;
-    deskAv.addEventListener('click', openProfileDrawer);
+    deskAv.addEventListener('click', openProfile);
   }
   // Rail user
   const railUser = document.getElementById('deskRailUser');
   if (railUser) {
     railUser.onclick = null;
-    railUser.addEventListener('click', openProfileDrawer);
+    railUser.addEventListener('click', openProfile);
   }
 });
 
