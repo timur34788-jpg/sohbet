@@ -4774,3 +4774,9 @@ body.in-chat .tab-bar {
 .screen:not(#chatScreen) {
   padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)) !important;
 }
+
+/* ══ Tab bar safe area final fix ══ */
+.tab-bar {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px) !important;
+  background: #080a10 !important;
+}
