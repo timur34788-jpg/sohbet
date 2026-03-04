@@ -230,15 +230,19 @@ async function submitLogin(){
 /* ── Nav ── */
 
 function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');});
-  // Chat ekranında tab bar gizle
+  // Tüm screen'leri gizle — inline style'ı da temizle
+  document.querySelectorAll('.screen').forEach(s=>{
+    s.classList.remove('active');
+    s.style.display = 'none';
+  });
+  // Tab bar: chat'te gizle, diğerlerinde göster
   var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display = (id==='chatScreen') ? 'none' : '';
+  if(tb) tb.style.display = (id==='chatScreen') ? 'none' : 'flex';
   // loginScreen display'ini sıfırla (onLoginSuccess'ta none yapılmış olabilir)
   const ls=document.getElementById('loginScreen');
   if(ls) ls.style.display='';
   const el=document.getElementById(id);
-  if(el){ el.style.display=''; el.classList.add('active'); }
+  if(el){ el.style.display='flex'; el.classList.add('active'); }
   if(id==='chatScreen') setTimeout(scrollBottom,100);
   // If returning to a main tab screen, restore active tab
   if(Object.values(_mainScreenIds).includes(id)){
