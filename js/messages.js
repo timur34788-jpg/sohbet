@@ -5,8 +5,6 @@
 
 function renderMsgs(msgsObj, clearedAt){
   const box=document.getElementById('chatMsgs');if(!box)return;
-  const prevScrollHeight=box.scrollHeight;
-  const prevScrollTop=box.scrollTop;
   const atBot=box.scrollHeight-box.scrollTop-box.clientHeight<80;
   let msgs=msgsObj?Object.entries(msgsObj).map(([k,v])=>({...v,_key:k})).sort((a,b)=>a.ts-b.ts):[];
   // clearedAt filtresini uygula — temizleme zamanından önceki mesajları gösterme
@@ -48,25 +46,20 @@ function renderMsgs(msgsObj, clearedAt){
           <span style="color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc((m.replyTo.text||'').slice(0,60))}</span>
         </div>`;
       }
-      content=`${replyHtml}${linkify(esc(m.text))}`;
+      content=own?`<div class="ob">${replyHtml}${linkify(esc(m.text))}</div>`:`<div class="mb-text">${replyHtml}${linkify(esc(m.text))}</div>`;
     }
-    // WhatsApp style meta: username only for received+first, time always at bottom
-    const senderName = (!own && first) ? `<div class="mb-name">${esc(m.user)}</div>` : '';
-    const timeSt = `<div class="mb-ts-row">${fmtTime(m.ts)}${own?getMsgStatusSvg('sent'):''}</div>`;
-    const meta = senderName;
-    const timeStamp = timeSt;
+    const meta=first?`<div class="mb-meta"><div class="mb-name">${esc(own?_cu:m.user)}</div><div class="mb-ts">${fmtTime(m.ts)}${own?getMsgStatusSvg('sent'):''}</div></div>`:
+    own?`<div class="mb-meta mb-meta-mini"><div class="mb-ts">${fmtTime(m.ts)}${getMsgStatusSvg('sent')}</div></div>`:'';
     const reactionsHtml = buildReactionsHtml(_cRoom, m._key, m.reactions);
      const avMenuBtn = `<button class="mb-av-menu-btn" data-room="${_cRoom}" data-key="${m._key}" data-own="${own}" data-admin="${_isAdmin}" data-text="${esc(m.text||'').replace(/"/g,'&quot;')}" onclick="showMsgMenuAtBtn(event)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>`;
 
 
 
 
-     // Avatar: only show for received messages, first in group
-     const showAv = !own && first;
      h+=`<div class="mb ${own?'own':''} ${first?'first':''}" data-key="${m._key}"${own?' data-ts="'+m.ts+'"':''}>
-       <div class="av${showAv?'':' ghost'}" style="background:${strColor(m.user)}" data-av-user="${m.user}">${showAv?initials(m.user):''}</div>
+       <div class="av ${first?'':' ghost'}" style="background:${strColor(m.user)}" data-av-user="${m.user}">${initials(m.user)}</div>
        ${own ? avMenuBtn : ''}
-       <div class="mb-body">${meta}<div class="mb-bubble-wrap">${content}<div class="mb-time-inside">${timeStamp}</div></div>${reactionsHtml}</div>
+       <div class="mb-body">${meta}${content}${reactionsHtml}</div>
        ${own ? '' : avMenuBtn}
      </div>`;
   });
@@ -75,21 +68,10 @@ function renderMsgs(msgsObj, clearedAt){
   box.querySelectorAll('[data-av-user]').forEach(el=>{
     setAvatar(el,el.dataset.avUser);
   });
-  if(atBot){
-    scrollBottom();
-  } else {
-    // Yeni mesaj eklendiyse scroll farkını koru (zıplama önle)
-    var heightDiff = box.scrollHeight - prevScrollHeight;
-    box.scrollTop = prevScrollTop + (heightDiff > 0 ? heightDiff : 0);
-  }
+  if(atBot)scrollBottom();
   if(_cRoom){markRoomRead(_cRoom);updateMsgStatuses(_cRoom);}
 }
-function scrollBottom(){
-  var b=document.getElementById('chatMsgs');
-  if(!b)return;
-  b.style.scrollBehavior='auto';
-  b.scrollTop=b.scrollHeight+9999;
-}
+function scrollBottom(){const b=document.getElementById('chatMsgs');if(b)b.scrollTop=b.scrollHeight;}
 
 
 /* ── Read Receipts ── */
@@ -176,7 +158,7 @@ function clearUnreadBadge(roomId){
   });
 }
 function deleteMsg(roomId,key){
-  document.getElementById('msgCtxMenu').classList.remove('show');
+  if(typeof _closeCtx==='function') _closeCtx();
   if(!confirm('Bu mesajı sil?'))return;
   dbRef('msgs/'+roomId+'/'+key).remove().catch(()=>showToast('Silinemedi'));
 }
