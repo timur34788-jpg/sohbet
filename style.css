@@ -4743,3 +4743,16 @@ textarea#msgInp {
 @media (min-width: 768px) {
   .tab-bar { display: none !important; }
 }
+
+/* ══ Tab bar - chat'te kesin gizle ══ */
+#chatScreen ~ .tab-bar,
+body.in-chat .tab-bar {
+  display: none !important;
+}
+/* chatScreen aktifken padding-bottom sıfırla */
+#chatScreen.active ~ .tab-bar {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
