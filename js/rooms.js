@@ -107,11 +107,12 @@ function renderRooms(rooms){
     ch.forEach(r=>{h+=chRow(r,false,false);});
   }
   const allGr=[...grMember,...grHidden];
-  if(allGr.length||_isAdmin){
-    h+=`<div class="sec-hdr"><span class="chev">▾</span>Gruplar<span class="sec-add" onclick="openCreateGroupModal()">＋</span></div>`;
+  h+=`<div class="sec-hdr"><span class="chev">▾</span>Gruplar<span class="sec-add" onclick="openCreateGroupModal()">＋</span></div>`;
+  if(allGr.length){
     grMember.forEach(r=>{h+=chRow(r,true,false);});
-    // Admin için üye olmadığı gruplar - gizli mod ile
     grHidden.forEach(r=>{h+=chRow(r,false,true);});
+  } else if(!_isAdmin) {
+    h+=`<div style="padding:5px 44px;font-size:.82rem;color:rgba(255,255,255,.3)">＋ ile yeni grup oluştur</div>`;
   }
   h+=`<div class="sec-hdr"><span class="chev">▾</span>Direkt Mesajlar<span class="sec-add" onclick="openDMModal()">＋</span></div>`;
   if(dm.length){dm.forEach(r=>{h+=dmRowHTML(r);});}
