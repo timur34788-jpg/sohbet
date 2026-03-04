@@ -4332,3 +4332,14 @@ body {
   }
 }
 /* ══════════════════════════════════════════════════════════ */
+
+/* ── PWA Standalone mod — tab bar tam alta sabitlenir ── */
+@media (display-mode: standalone) {
+  .tab-bar {
+    bottom: 0 !important;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px) !important;
+  }
+  .screen {
+    height: 100dvh !important;
+  }
+}
