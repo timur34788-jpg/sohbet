@@ -172,12 +172,14 @@ function switchMainTab(tab){
   // Hide all screens except login/chat/admin
   ['roomsScreen','forumScreen','msgsScreen','friendsScreen','profileScreen','chatScreen','adminPanel','gamesScreen','watchScreen'].forEach(id=>{
     var el=document.getElementById(id);
-    if(el) el.classList.remove('active');
+    if(el){ el.classList.remove('active'); el.style.display='none'; }
   });
+  // Tab bar göster
+  var _tb=document.querySelector('.tab-bar'); if(_tb) _tb.style.display='flex';
   // Show target screen
   var targetId=_mainScreenIds[tab]||'roomsScreen';
   var el=document.getElementById(targetId);
-  if(el) el.classList.add('active');
+  if(el){ el.style.display='flex'; el.classList.add('active'); }
   // Tab specific actions
   if(tab==='forum'){
     var fav=document.getElementById('forumMyAv');
