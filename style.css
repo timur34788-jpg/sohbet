@@ -4916,3 +4916,10 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   width: 100% !important;
   z-index: 10 !important;
 }
+
+/* ══ chatHdrSub - sabit yükseklik, zıplama önle ══ */
+.c-hdr-sub {
+  min-height: 16px !important;
+  line-height: 1.2 !important;
+  display: block !important;
+}
