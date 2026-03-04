@@ -257,6 +257,8 @@ function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopT
 
 /* ── Tab ic-wrap arka planını temizle ── */
 document.addEventListener('DOMContentLoaded', function(){
+  // myAvatar yeniden render
+  setTimeout(function(){ if(typeof renderMyAvatar==='function') renderMyAvatar(); }, 1000);
   function clearTabIcBg(){
     document.querySelectorAll('.tab-ic-wrap').forEach(function(el){
       el.style.background='none';
@@ -4445,23 +4447,7 @@ window.nc_replaceIcons = runIconSystem;
 </div>
 
 <!-- Doğa Sesleri Panel HTML -->
-<div id="ambiancePanelOverlay" onclick="if(event.target===this)closeAmbiancePanel()">
-  <div id="ambiancePanel">
-    <div class="ap-header">
-      <div class="ap-title">🎵 Doğa Sesleri</div>
-      <button class="cm-close" onclick="closeAmbiancePanel()">✕</button>
-    </div>
-    <div class="ap-tracks" id="apTrackList"></div>
-    <div class="ap-vol-wrap">
-      <div class="ap-vol-label">🔊 Ses Seviyesi</div>
-      <div class="ap-vol-row">
-        <input type="range" class="ap-vol-slider" id="apVolSlider" min="0" max="100" value="70" oninput="setAmbianceVolume(this.value)">
-        <div class="ap-vol-num" id="apVolNum">70%</div>
-      </div>
-    </div>
-    <button class="ap-stop-btn" onclick="stopAmbiance()">⏹ Sesi Durdur</button>
-  </div>
-</div>
+
   `;
   document.addEventListener("DOMContentLoaded", function() {
     document.body.insertAdjacentHTML("beforeend", html);

@@ -385,8 +385,10 @@ class NatureBotPet {
     this.el.style.left = 'auto';
     this.el.style.top = 'auto';
     this.el.style.right = 'auto';
-    this.el.style.width = '44px';
-    this.el.style.height = '54px';
+    this.el.style.width = '28px';
+    this.el.style.height = '28px';
+    this.el.style.transform = 'none';
+    this.el.style.overflow = 'hidden';
     this.el.style.zIndex = '9997';
     this.el.style.cursor = 'pointer';
     this.el.style.display = 'block';
