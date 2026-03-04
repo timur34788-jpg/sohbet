@@ -4848,3 +4848,46 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
   height: 30px !important;
   object-fit: contain !important;
 }
+
+/* ══ mobileRobotSlot - overflow düzelt ══ */
+#mobileRobotSlot {
+  width: 28px !important;
+  height: 28px !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+#mobileRobotSlot > * {
+  width: 28px !important;
+  height: 28px !important;
+  max-width: 28px !important;
+  max-height: 28px !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+
+/* ══ NatureBot slot - taşmayı önle ══ */
+#mobileRobotSlot {
+  width: 28px !important;
+  height: 28px !important;
+  overflow: hidden !important;
+  flex-shrink: 0 !important;
+  position: relative !important;
+}
+#mobileRobotSlot #natureBotPet {
+  width: 28px !important;
+  height: 28px !important;
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+}
+#mobileRobotSlot #natureBotPet svg {
+  width: 28px !important;
+  height: 28px !important;
+}
