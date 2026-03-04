@@ -1,4 +1,4 @@
-/* Nature.co Service Worker — sw-v12 */
+/* Nature.co Service Worker — sw-v13 */
 const C = 'sw-v1846';
 const CACHE_URLS = ['./'];
 
