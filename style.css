@@ -494,7 +494,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .ui-style-card .ui-style-desc { font-size:.6rem;color:var(--muted);margin-top:2px; }
 
 .screen{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;height:100dvh;display:none;flex-direction:column;background:var(--bg);overflow:hidden;}
-.screen.active{display:flex;}
+.screen.active{display:flex !important;}
 
 /* ── Tab bar (fixed 82px) altında kalan scroll alanları ── */
 #forumFeed,
