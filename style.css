@@ -4365,10 +4365,7 @@ body {
   }
 
   /* ── Chat ekranı tam doldur ── */
-  #chatScreen {
-    display: flex !important;
-    flex-direction: column !important;
-  }
+  
   #chatMsgs {
     flex: 1 !important;
     min-height: 0 !important;
@@ -4390,22 +4387,4 @@ body {
   }
 }
 
-/* ── Chat ekranı — mesaj kutusu alt kilitli ── */
-#chatScreen .inp-wrap {
-  flex-shrink: 0 !important;
-  width: 100% !important;
-}
-#chatScreen #chatMsgs {
-  flex: 1 1 0% !important;
-  min-height: 0 !important;
-  overflow-y: auto !important;
-  -webkit-overflow-scrolling: touch !important;
-}
-#chatScreen {
-  display: none;
-  flex-direction: column !important;
-  overflow: hidden !important;
-}
-#chatScreen.active {
-  display: flex !important;
-}
+
