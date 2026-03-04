@@ -55,7 +55,7 @@ function showCallBtns(show){
   const canScreen = !!(navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia);
   document.getElementById('callAudioBtn').style.display=show?'flex':'none';
   var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display=show?'flex':'none';};
-  document.getElementById('callScreenBtn').style.display=(show&&canScreen)?'flex':'none';
+  (function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display=(show&&canScreen)?'flex':'none';})();
 }
 
 
