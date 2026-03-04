@@ -712,7 +712,7 @@ body.is-android .ws-av { width: 34px !important; height: 34px !important; }
 .hdr-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;border-radius:6px;color:var(--muted);transition:background .1s;}
 .hdr-btn:active{background:var(--surface);}
 
-#chatMsgs{flex:1;overflow-y:auto;overflow-x:visible;-webkit-overflow-scrolling:touch;padding:6px 0 4px;display:flex;flex-direction:column;}
+#chatMsgs{flex:1;overflow-y:auto;overflow-x:visible;-webkit-overflow-scrolling:touch;padding:6px 0 4px;display:flex;flex-direction:column;justify-content:flex-end;}
 #chatMsgs::-webkit-scrollbar{display:none;}
 
 .date-div{display:flex;align-items:center;gap:10px;padding:12px 14px 4px;}
