@@ -231,9 +231,9 @@ async function submitLogin(){
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none';});
-  // Tab bar: chat'te gizle, diğerlerinde göster
+  // Tab bar her zaman görünür
   var tb=document.querySelector('.tab-bar');
-  if(tb) tb.style.display = (id==='chatScreen') ? 'none' : 'flex';
+  if(tb) tb.style.display='flex';
   // loginScreen display'ini sıfırla (onLoginSuccess'ta none yapılmış olabilir)
   const ls=document.getElementById('loginScreen');
   if(ls) ls.style.display='';
@@ -246,6 +246,23 @@ function showScreen(id){
   }
 }
 function goBack(){if(_stopMsg){_stopMsg();_stopMsg=null;}clearTypingFlag();stopTypingListener();_cRoom=null;closeEmoji();closeChatMenu();document.getElementById('callAudioBtn').style.display='none';var _cvb=document.getElementById('callVideoBtn');if(_cvb){document.getElementById('callVideoBtn').style.display='none';};(function(){var _b=document.getElementById('callScreenBtn');if(_b)_b.style.display='none';})();switchMainTab('home');loadRooms();}
+
+/* ── Klavye açılınca tab bar gizle ── */
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', function(){
+    var tb = document.querySelector('.tab-bar');
+    if(!tb) return;
+    var viewH = window.visualViewport.height;
+    var winH = window.innerHeight;
+    // Klavye açıksa viewport yüksekliği küçülür
+    if(viewH < winH * 0.85) {
+      tb.style.display = 'none';
+    } else {
+      tb.style.display = 'flex';
+    }
+  });
+}
+
 
 
 /* ── Chat Context Menu ── */

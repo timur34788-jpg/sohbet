@@ -160,7 +160,7 @@ function switchMainTab(tab){
   // Tab bar göster + aktif sekmeyi işaretle
   var tb=document.querySelector('.tab-bar');
   if(tb) tb.style.display='flex';
-  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('act');});
+  document.querySelectorAll('.tab,.tab-wrap').forEach(function(t){t.classList.remove('act');});
   var tabIds={home:'tabHome',msgs:'tabMsgs',forum:'tabForum',friends:'tabFriends',games:'tabGames',watch:'tabWatch',profile:'tabProfile'};
   var activeEl=document.getElementById(tabIds[tab]);
   if(activeEl) activeEl.classList.add('act');
