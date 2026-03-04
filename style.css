@@ -5095,3 +5095,12 @@ html body .tab-bar .tab-wrap .tab.act .tab-ic-wrap {
 
 /* ── Auth ekranlarında tab-bar gizle (JS body class) ── */
 body.auth-screen .tab-bar { display: none !important; }
+
+/* ── Mesaj Arama Bar ── */
+#_msgSearchBar { box-shadow: 0 2px 8px rgba(0,0,0,.25); }
+mark.msg-hl { background:#f0c040 !important; color:#000 !important; border-radius:2px; padding:0 2px; }
+mark.msg-hl-active { background:#ff9900 !important; color:#000 !important; outline:2px solid #ff9900; border-radius:2px; }
+
+/* ── Desktop Header Butonları ── */
+.dsk-hdr-btn { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; cursor:pointer; color:var(--muted); transition:background .15s,color .15s; flex-shrink:0; }
+.dsk-hdr-btn:hover { background:var(--surface2); color:var(--text-hi); }
