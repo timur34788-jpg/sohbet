@@ -231,6 +231,9 @@ async function submitLogin(){
 
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='none';});
+  // callScreen'i her screen geçişinde gizle (aktif arama yoksa)
+  var cs=document.getElementById('callScreen');
+  if(cs && !_callId) cs.style.display='none';
   // Tab bar her zaman görünür
   var tb=document.querySelector('.tab-bar');
   if(tb) tb.style.display='flex';
@@ -4954,12 +4957,25 @@ function endCall() {
 function minimizeCallScreen() {
   _callMin = true;
   const el = document.getElementById('callScreen');
-  if(el) { el.style.opacity='.3'; el.style.transform='scale(.35)'; el.style.transformOrigin='bottom right'; }
+  if(el) { el.style.display='none'; }
+  // Küçük "aramaya dön" pill göster
+  var pill = document.getElementById('callPill');
+  if(!pill){
+    pill = document.createElement('div');
+    pill.id = 'callPill';
+    pill.style.cssText = 'position:fixed;bottom:90px;right:12px;background:var(--green);color:#fff;border-radius:20px;padding:6px 14px;font-size:.8rem;font-weight:700;z-index:6000;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,.4);';
+    pill.innerHTML = '📞 Aramaya Dön';
+    pill.onclick = maximizeCallScreen;
+    document.body.appendChild(pill);
+  }
+  pill.style.display = 'flex';
 }
 function maximizeCallScreen() {
   _callMin = false;
   const el = document.getElementById('callScreen');
-  if(el) { el.style.opacity='1'; el.style.transform=''; }
+  if(el) { el.style.display='flex'; el.style.opacity='1'; el.style.transform=''; }
+  var pill = document.getElementById('callPill');
+  if(pill) pill.style.display='none';
 }
 
 function toggleMute() {
