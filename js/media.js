@@ -18,10 +18,12 @@ const STUN_SERVERS = {iceServers:[
   {urls:'stun:stun1.l.google.com:19302'},
   {urls:'stun:stun2.l.google.com:19302'},
   {urls:'stun:stun.cloudflare.com:3478'},
-  // Ücretsiz public TURN — farklı ağlardaki (4G↔WiFi) bağlantıları sağlar
-  {urls:'turn:openrelay.metered.ca:80',  username:'openrelayproject',credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443', username:'openrelayproject',credential:'openrelayproject'},
-  {urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject',credential:'openrelayproject'},
+  {urls:'stun:stun.relay.metered.ca:80'},
+  // Metered TURN - daha güvenilir
+  {urls:'turn:global.relay.metered.ca:80',  username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
+  {urls:'turn:global.relay.metered.ca:80?transport=tcp', username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
+  {urls:'turn:global.relay.metered.ca:443', username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
+  {urls:'turns:global.relay.metered.ca:443?transport=tcp', username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
 ]};
 
 
