@@ -19,7 +19,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'><defs><clipPath id='lci'><path d='M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z'/></clipPath></defs><path d='M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z' fill='%230e2b0c'/><g clip-path='url(%23lci)'><line x1='60' y1='14' x2='60' y2='108' stroke='%234a8f40' stroke-width='1.2'/><line x1='60' y1='35' x2='78' y2='55' stroke='%234a8f40' stroke-width='.7'/><line x1='60' y1='35' x2='42' y2='55' stroke='%234a8f40' stroke-width='.7'/><line x1='60' y1='52' x2='82' y2='68' stroke='%234a8f40' stroke-width='.6'/><line x1='60' y1='52' x2='38' y2='68' stroke='%234a8f40' stroke-width='.6'/><line x1='60' y1='68' x2='78' y2='82' stroke='%234a8f40' stroke-width='.5'/><line x1='60' y1='68' x2='42' y2='82' stroke='%234a8f40' stroke-width='.5'/><line x1='60' y1='82' x2='70' y2='94' stroke='%234a8f40' stroke-width='.4'/><line x1='60' y1='82' x2='50' y2='94' stroke='%234a8f40' stroke-width='.4'/></g><path d='M60 14 C76 22 98 44 98 68 C98 92 81 108 60 108 C39 108 22 92 22 68 C22 44 44 22 60 14Z' fill='none' stroke='%234a8f40' stroke-width='1.2'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">  <link rel="stylesheet" href="style.css?v=2">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -50,6 +50,17 @@
       <div class="rail-btn-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="4"/><path d="M6 12h4m-2-2v4"/><circle cx="16" cy="10" r="1.2" fill="currentColor" stroke="none"/><circle cx="18" cy="13" r="1.2" fill="currentColor" stroke="none"/></svg></div>
       <div class="notif-pill" id="deskGameInviteNotif" style="display:none">!</div>
     </div>
+    <div class="rail-btn" id="rb-liveroom" onclick="deskNav('liveroom')" title="Canlı Sohbet Odası">
+      <div class="rail-btn-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="13" rx="2"/>
+          <circle cx="12" cy="9" r="2.5" fill="currentColor" stroke="none" opacity=".7"/>
+          <path d="M8 21h8m-4-5v5"/>
+          <circle cx="6" cy="7" r="1" fill="#e05555" stroke="none"/>
+        </svg>
+      </div>
+      <div class="notif-pill" id="deskLiveNotif" style="display:none">●</div>
+    </div>
     <div class="rail-btn" id="rb-watch" onclick="deskNav('watch')" title="Canlı İzle">
       <div class="rail-btn-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="15" rx="2"/><path d="M8 21h8m-4-3v3"/></svg></div>
     </div>
@@ -79,6 +90,16 @@
        </div>
      </div>
     <div class="rail-sep"></div>
+    <div class="rail-btn" id="rb-addServer" onclick="showCreateGuildModal ? showCreateGuildModal() : showServerSwitchWithLogin()" title="Sunucu Oluştur" style="background:rgba(16,185,129,0.1);border:2px dashed rgba(16,185,129,0.35);">
+      <div class="rail-btn-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+    </div>
+    <div class="rail-btn" id="rb-searchServer" onclick="showDiscoverGuilds ? showDiscoverGuilds() : openGlobalSearch()" title="Sunucu Ara">
+      <div class="rail-btn-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+    </div>
     <div class="rail-btn" id="rb-admin" onclick="deskNav('admin')" title="Admin Paneli" style="display:none">
       <div class="rail-btn-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
   <path d="M2 19h20v2H2v-2z" fill="#f0c040"/>
@@ -88,6 +109,7 @@
   <circle cx="22" cy="10" r="1.5" fill="#f0c040" stroke="#d4a017" stroke-width="0.5"/>
 </svg></div>
     </div>
+
     <div id="deskRailUser" onclick="deskNav('profile')">
       <div class="sdot"></div>
     </div>
@@ -114,6 +136,28 @@
           </div>
         </div>
       </div>
+    </div>
+    <!-- Slack benzeri ekstra butonlar - kalıcı -->
+    <div id="sidebarExtraBtns" style="display:flex;align-items:center;gap:4px;padding:6px 12px 4px;flex-shrink:0;border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:2px;">
+      <button onclick="typeof showCreateMenu==='function'?showCreateMenu(this):null" title="Oluştur"
+        style="display:flex;align-items:center;gap:6px;background:rgba(74,143,64,.15);border:1px solid rgba(74,143,64,.3);
+               color:#6dbf67;border-radius:9px;padding:5px 12px;font-size:.75rem;font-weight:800;cursor:pointer;transition:all .15s;flex:1;"
+        onmouseover="this.style.background='rgba(74,143,64,.25)'" onmouseout="this.style.background='rgba(74,143,64,.15)'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Oluştur
+      </button>
+      <button onclick="typeof showChannelListMenu==='function'?showChannelListMenu(this):null" title="Kanal Listesini Yönet"
+        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:transparent;
+               border:1px solid rgba(255,255,255,.1);border-radius:9px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;flex-shrink:0;"
+        onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='transparent'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+      <button onclick="typeof showPreferencesModal==='function'?showPreferencesModal():null" title="Tercihler"
+        style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:transparent;
+               border:1px solid rgba(255,255,255,.1);border-radius:9px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .15s;flex-shrink:0;"
+        onmouseover="this.style.background='rgba(255,255,255,.07)'" onmouseout="this.style.background='transparent'">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41M20 12h2M2 12h2M12 20v2M12 2v2"/></svg>
+      </button>
     </div>
     <div id="deskSearch" onclick="openGlobalSearch()" style="cursor:pointer;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -152,6 +196,10 @@
           <div class="dsk-hdr-btn" id="deskCallAudio" onclick="startCall('audio')" title="Sesli Arama" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.38 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div>
           <div class="dsk-hdr-btn" id="deskCallVideo" onclick="startCall('video')" title="Görüntülü Arama" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
           <div class="dsk-hdr-btn" id="deskCallScreen" onclick="startCall('screen')" title="Ekran Paylaş" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="15" rx="2"/><path d="M8 21h8m-4-3v3"/></svg></div>
+          <!-- Konferans Butonları -->
+          <div class="dsk-hdr-btn" id="deskConfAudio" onclick="(typeof startConference==='function'?startConference('audio'):showToast('Yükleniyor...'))" title="Sesli Konferans"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="dsk-hdr-btn" id="deskConfVideo" onclick="(typeof startConference==='function'?startConference('conference'):showToast('Yükleniyor...'))" title="Görüntülü Konferans"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/><circle cx="8" cy="12" r="2" fill="currentColor" stroke="none" opacity=".5"/></svg></div>
+          <div class="dsk-hdr-btn" id="deskConfStream" onclick="(typeof startGameStream==='function'?startGameStream():showToast('Yükleniyor...'))" title="Ekran/Oyun Yayını" style="color:#e05555;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/><path d="M7 10h2m-1-1v2m5-1h2" stroke-width="1.8"/></svg></div>
           <div class="dsk-hdr-btn" id="deskManageGroup" onclick="openGroupPanel(_deskRoom||_cRoom)" title="Grubu Yönet" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-2a3 3 0 0 0-3-3h-2"/></svg></div>
           <div class="dsk-hdr-btn" id="deskToggleMembers" onclick="toggleDeskMembers()" title="Üyeler" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg></div>
           <div class="dsk-hdr-btn" onclick="toggleChatMenu(event)" title="Daha Fazla"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></div>
@@ -258,31 +306,33 @@
 
     <div class="login-err" id="loginErr"></div>
 
-    <!-- GİRİŞ FORMU -->
+    <!-- GİRİŞ FORMU — tek adım: kullanıcı adı + şifre -->
     <div id="girisForm">
-      <!-- ADIM 1: Kullanıcı adı -->
       <div id="loginStep1">
         <div class="login-field">
           <div class="login-label">Kullanıcı Adı</div>
           <input class="login-inp" id="loginUser" type="text" placeholder="Kullanıcı adın..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
         </div>
-        <button class="login-btn" onclick="loginNext()">İleri →</button>
-      </div>
-      <!-- ADIM 2: Güvenlik Kodu -->
-      <div id="loginStep2" style="display:none;">
-        <div class="login-field" style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-          <div style="width:32px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:900;color:#fff;flex-shrink:0;" id="loginUserAvatar"></div>
-          <div>
-            <div style="font-size:.82rem;font-weight:700;color:var(--text-hi);" id="loginUserLabel"></div>
-            <div style="font-size:.7rem;color:var(--muted);">hesabına giriş yapılıyor</div>
-          </div>
-          <div style="margin-left:auto;font-size:.8rem;color:var(--blue);cursor:pointer;" onclick="loginBack()">← Değiştir</div>
+        <div class="login-field" style="margin-top:12px;">
+          <div class="login-label">Şifre</div>
+          <input class="login-inp" id="loginPass" type="password" placeholder="Şifren..." autocomplete="current-password" autocorrect="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter')submitLogin()">
         </div>
-        <div class="login-field">
-          <div class="login-label">Doğrulama</div>
-          <input class="login-inp" id="loginPass" type="password" placeholder="Kodunu gir..." autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false">
+        <div style="text-align:right;margin-top:4px;">
+          <span onclick="showForgotPassword()" style="font-size:.72rem;color:var(--blue);cursor:pointer;">Şifremi unuttum</span>
         </div>
-        <button class="login-btn" id="loginBtn" onclick="submitLogin()">Giriş Yap →</button>
+        <button class="login-btn" id="loginBtn" onclick="submitLogin()" style="margin-top:16px;">Giriş Yap →</button>
+        <!-- Gizli elementler — JS uyumluluğu için -->
+        <div id="loginStep2" style="display:none;"></div>
+        <div id="loginUserAvatar" style="display:none;"></div>
+        <div id="loginUserLabel" style="display:none;"></div>
+        <div id="loginEmailField" style="display:none;"></div>
+        <div id="loginPhoneField" style="display:none;"></div>
+        <div id="loginPhoneOtpStep" style="display:none;"></div>
+        <input id="loginPhone" type="hidden">
+        <input id="loginPhoneOtp" type="hidden">
+        <div id="loginPhoneOtpMain" style="display:none;"></div>
+        <button id="phoneOtpBtn" style="display:none;"></button>
+        <div id="loginForgotRow" style="display:none;"></div>
       </div>
     </div>
 
@@ -303,10 +353,32 @@
         <div class="login-label">Kullanıcı Adı</div>
         <input class="login-inp" id="regUser" type="text" placeholder="Kullanıcı adın..." autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
       </div>
-      <div class="login-field">
-        <div class="login-label">E-posta Adresi</div>
-        <input class="login-inp" id="regEmail" type="email" placeholder="ornek@mail.com" autocomplete="email" autocorrect="off" autocapitalize="none" spellcheck="false">
-      </div>
+        <!-- Kayıt yöntemi seçimi -->
+        <div style="margin-bottom:14px;">
+          <div class="login-label">Kayıt Yöntemi</div>
+          <div style="display:flex;gap:8px;">
+            <label style="flex:1;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text-hi);">
+              <input type="radio" name="regMethod" value="email" checked onchange="toggleRegMethod()" style="accent-color:var(--green);"> 📧 E-posta
+            </label>
+            <label style="flex:1;display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--text-hi);">
+              <input type="radio" name="regMethod" value="phone" onchange="toggleRegMethod()" style="accent-color:var(--green);"> 📱 Telefon
+            </label>
+          </div>
+        </div>
+        <!-- E-posta alanı -->
+        <div id="regEmailField">
+          <div class="login-field">
+            <div class="login-label">E-posta Adresi</div>
+            <input class="login-inp" id="regEmail" type="email" placeholder="ornek@mail.com" autocomplete="email" autocorrect="off" autocapitalize="none" spellcheck="false">
+          </div>
+        </div>
+        <!-- Telefon alanı (gizli) -->
+        <div id="regPhoneField" style="display:none;">
+          <div class="login-field">
+            <div class="login-label">Telefon Numarası</div>
+            <input class="login-inp" id="regPhone" type="tel" placeholder="+90 5xx xxx xx xx" autocomplete="tel">
+          </div>
+        </div>
       <div class="login-field">
           <div class="login-label">Doğrulama</div>
           <input class="login-inp" id="regPass" type="password" placeholder="En az 6 karakter..." autocomplete="new-password" autocorrect="off" autocapitalize="none" spellcheck="false">
@@ -403,6 +475,7 @@
             <button class="login-btn" id="regBtn" onclick="submitRegister()">Kayıt Ol →</button>
       <!-- Kod doğrulama adımı -->
       <div id="regVerifyStep" style="display:none;margin-top:12px;">
+        <div id="regVerifyLabel" class="login-label" style="font-size:.75rem;color:var(--muted);margin-bottom:6px;">Telefonuna gelen 6 haneli kodu gir</div>
         <div class="login-label" style="margin-bottom:6px;">📧 E-postana onay kodu gönderildi. Kodu girin:</div>
         <input class="login-inp" id="regVerifyCode" type="text" placeholder="6 haneli kod..." maxlength="6" autocomplete="one-time-code" style="text-align:center;letter-spacing:6px;font-size:22px;">
         <button class="login-btn" id="regVerifyBtn" onclick="verifyRegCode()" style="margin-top:8px;">Hesabı Aktifleştir ✓</button>
@@ -505,6 +578,7 @@
     <div class="tab-wrap" onclick="openFriendsModal()"><div class="tab" id="tabFriends"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4"/><circle cx="17" cy="9" r="3"/><path d="M21 21v-2a3 3 0 0 0-3-3h-2"/></svg></div></div><div class="tab-lb">Arkadaşlar</div></div><div class="notif-dot" id="frNotifDot"></div></div>
     <div class="tab" id="tabGames" onclick="switchMainTab('games')"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M12 12h.01M8 12h.01"/><path d="M17 10v4"/><path d="M15 12h4"/></svg></div></div><div class="tab-lb">Oyunlar</div></div>
     <div class="tab" id="tabWatch" onclick="switchMainTab('watch')"><div class="tab-ic-wrap"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="15" rx="2"/><path d="M8 21h8m-4-3v3"/></svg></div></div><div class="tab-lb">İzle</div></div>
+    <div class="tab" id="tabLiveRoom" onclick="switchMainTab('liveroom');mobLiveRoomInit()"><div class="tab-ic-wrap" style="position:relative;"><div class="tab-ic" style="font-size:0;display:flex;align-items:center;justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg></div><div id="tabLiveRoomDot" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;background:#e05555;border-radius:50%;animation:livepulse 1.2s ease-in-out infinite;"></div></div><div class="tab-lb">Canlı</div></div>
   </div>
 
 <!-- ══ FORUM ══ -->
@@ -814,7 +888,16 @@
       <!-- UI Stil Seçici -->
       <div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding:0 2px 10px;display:flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:-1px"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Arayüz Stili</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;" id="uiStyleGrid"></div>
-
+      <!-- Hazır Temalar -->
+      <div style="font-size:.72rem;font-weight:900;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">🎨 Hazır Temalar</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;" id="themePresetGrid">
+        <div onclick="applyThemePreset('nature')" id="tp-nature" style="cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(74,143,64,.6);"><div style="height:44px;background:linear-gradient(135deg,#080f08,#0f1c0f);display:flex;align-items:center;justify-content:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#4a8f40;"></div><div style="height:3px;background:#4a8f40;border-radius:2px;width:24px;"></div></div><div style="background:#0c160c;padding:5px 8px;display:flex;justify-content:space-between;align-items:center;"><span style="font-size:.67rem;font-weight:800;color:rgba(255,255,255,.8);">🌿 Nature</span><span style="font-size:.58rem;background:rgba(74,143,64,.25);color:#6dbf67;border-radius:4px;padding:1px 5px;">✓</span></div></div>
+        <div onclick="applyThemePreset('midnight')" id="tp-midnight" style="cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.1);"><div style="height:44px;background:linear-gradient(135deg,#060818,#0d1433);display:flex;align-items:center;justify-content:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#5b9bd5;"></div><div style="height:3px;background:#5b9bd5;border-radius:2px;width:24px;"></div></div><div style="background:#0a1228;padding:5px 8px;"><span style="font-size:.67rem;font-weight:800;color:rgba(255,255,255,.8);">🌌 Gece Mavisi</span></div></div>
+        <div onclick="applyThemePreset('crimson')" id="tp-crimson" style="cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.1);"><div style="height:44px;background:linear-gradient(135deg,#140808,#2a0a0a);display:flex;align-items:center;justify-content:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#e05555;"></div><div style="height:3px;background:#e05555;border-radius:2px;width:24px;"></div></div><div style="background:#180a0a;padding:5px 8px;"><span style="font-size:.67rem;font-weight:800;color:rgba(255,255,255,.8);">🔴 Kızıl</span></div></div>
+        <div onclick="applyThemePreset('amethyst')" id="tp-amethyst" style="cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.1);"><div style="height:44px;background:linear-gradient(135deg,#10081a,#1e0f38);display:flex;align-items:center;justify-content:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#9b59b6;"></div><div style="height:3px;background:#9b59b6;border-radius:2px;width:24px;"></div></div><div style="background:#140a24;padding:5px 8px;"><span style="font-size:.67rem;font-weight:800;color:rgba(255,255,255,.8);">💜 Ametist</span></div></div>
+        <div onclick="applyThemePreset('amber')" id="tp-amber" style="cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.1);"><div style="height:44px;background:linear-gradient(135deg,#120e02,#251a04);display:flex;align-items:center;justify-content:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#f0c040;"></div><div style="height:3px;background:#f0c040;border-radius:2px;width:24px;"></div></div><div style="background:#1a1404;padding:5px 8px;"><span style="font-size:.67rem;font-weight:800;color:rgba(255,255,255,.8);">🟡 Kehribar</span></div></div>
+        <div onclick="applyThemePreset('teal')" id="tp-teal" style="cursor:pointer;border-radius:12px;overflow:hidden;border:2px solid rgba(255,255,255,.1);"><div style="height:44px;background:linear-gradient(135deg,#041414,#081f1f);display:flex;align-items:center;justify-content:center;gap:4px;"><div style="width:6px;height:6px;border-radius:50%;background:#1abc9c;"></div><div style="height:3px;background:#1abc9c;border-radius:2px;width:24px;"></div></div><div style="background:#061818;padding:5px 8px;"><span style="font-size:.67rem;font-weight:800;color:rgba(255,255,255,.8);">🩵 Turkuaz</span></div></div>
+      </div>
       <!-- SVG İkon - Kalıcı Aktif -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding:12px;background:var(--surface);border-radius:12px;border:1px solid var(--border);">
         <div>
@@ -1245,7 +1328,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-functions-compat.js"></script>
 
@@ -1268,6 +1350,83 @@
 </div>
 
 <!-- ══ GAMES SCREEN (Mobile) ══ -->
+<!-- ══ CANLI SOHBET ODASI (Mobile) ══ -->
+<div class="screen" id="liveRoomScreen">
+  <div class="ws-header" style="background:linear-gradient(135deg,#0a140a,#0f1f0f);">
+    <div onclick="switchMainTab('home')" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:rgba(255,255,255,.6);flex-shrink:0;">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </div>
+    <div style="flex:1;display:flex;align-items:center;gap:8px;">
+      <div style="font-size:.92rem;font-weight:900;color:#fff;">📡 Canlı Oda</div>
+      <div id="mobLiveBadge" style="display:none;align-items:center;gap:5px;background:rgba(224,80,80,.15);border:1px solid rgba(224,80,80,.35);border-radius:100px;padding:3px 9px;font-size:.65rem;font-weight:900;color:#e05555;letter-spacing:.05em;">
+        <div style="width:6px;height:6px;border-radius:50%;background:#e05555;animation:livepulse 1.2s ease-in-out infinite;"></div>CANLI
+      </div>
+    </div>
+    <span id="mobLiveViewers" style="font-size:.72rem;color:rgba(255,255,255,.35);flex-shrink:0;"></span>
+  </div>
+
+  <!-- Video Alanı -->
+  <div id="mobLiveVideoPane" style="background:#050d05;position:relative;width:100%;aspect-ratio:16/9;flex-shrink:0;overflow:hidden;max-height:42vh;">
+    <div id="mobLivePlaceholder" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:rgba(255,255,255,.2);">
+      <div style="width:56px;height:56px;border-radius:50%;background:rgba(74,143,64,.08);border:1.5px solid rgba(74,143,64,.15);display:flex;align-items:center;justify-content:center;font-size:1.6rem;">📡</div>
+      <div style="font-size:.85rem;font-weight:700;color:rgba(255,255,255,.25);">Şu an aktif yayın yok</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.15);text-align:center;padding:0 24px;line-height:1.5;">Yayın başlatmak için aşağıdaki butonları kullan</div>
+    </div>
+    <video id="mobLiveMainVideo" autoplay playsinline style="width:100%;height:100%;object-fit:contain;display:none;"></video>
+    <div id="mobLiveConfGrid" style="display:none;position:absolute;inset:0;padding:8px;gap:6px;grid-template-columns:1fr 1fr;overflow:hidden;"></div>
+    <div id="mobLiveStreamInfo" style="display:none;position:absolute;top:10px;left:10px;z-index:5;align-items:center;gap:6px;">
+      <div style="background:rgba(0,0,0,.6);backdrop-filter:blur(4px);color:#fff;font-size:.7rem;font-weight:800;padding:3px 9px;border-radius:7px;border:1px solid rgba(255,255,255,.1);" id="mobLiveStreamHost"></div>
+    </div>
+  </div>
+
+  <!-- Kontrol Butonları (yayın aktifken) -->
+  <div id="mobLiveControlBar" style="display:none;background:rgba(0,0,0,.5);padding:10px 16px;flex-shrink:0;flex-direction:row;align-items:center;justify-content:center;gap:10px;border-bottom:1px solid rgba(74,143,64,.1);">
+    <button id="mobLiveMuteBtn" onclick="mobLiveMute()" style="width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;display:flex;align-items:center;justify-content:center;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+    </button>
+    <button id="mobLiveCamBtn" onclick="mobLiveCam()" style="display:none;width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;align-items:center;justify-content:center;">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+    </button>
+    <button onclick="mobLiveEnd()" style="width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;background:rgba(224,80,80,.85);color:#fff;display:flex;align-items:center;justify-content:center;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- Başlat Butonları (yayın yokken) -->
+  <div id="mobLiveStartBtns" style="display:flex;gap:8px;padding:10px 14px;flex-shrink:0;border-bottom:1px solid rgba(74,143,64,.08);">
+    <button onclick="mobLiveStartStream()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(224,80,80,.1);border:1.5px solid rgba(224,80,80,.3);color:#f07070;border-radius:10px;padding:9px 12px;font-size:.78rem;font-weight:800;font-family:inherit;cursor:pointer;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>Ekran Yayını
+    </button>
+    <button onclick="mobLiveStartConference()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:7px;background:rgba(74,143,64,.1);border:1.5px solid rgba(74,143,64,.3);color:#6dbf67;border-radius:10px;padding:9px 12px;font-size:.78rem;font-weight:800;font-family:inherit;cursor:pointer;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>Konferans
+    </button>
+  </div>
+
+  <!-- Canlı Sohbet -->
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(180deg,#080f08 0%,#060d06 100%);">
+    <div style="padding:8px 14px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:6px;flex-shrink:0;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span style="font-size:.78rem;font-weight:800;color:rgba(255,255,255,.5);">Canlı Sohbet</span>
+      <span id="mobLiveMsgCount" style="background:rgba(74,143,64,.18);color:#6dbf67;border-radius:100px;font-size:.62rem;padding:1px 6px;font-weight:900;">0</span>
+    </div>
+    <div id="mobLiveChatMsgs" style="flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;">
+      <div style="display:flex;gap:6px;align-items:flex-start;padding:2px 0;">
+        <div style="flex:1;min-width:0;"><div style="font-size:.73rem;color:rgba(255,255,255,.25);font-style:italic;">Sohbet başladı 👋</div></div>
+      </div>
+    </div>
+    <div style="padding:8px 12px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(255,255,255,.05);flex-shrink:0;background:rgba(0,0,0,.2);">
+      <div style="display:flex;gap:8px;align-items:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:7px 10px;">
+        <input id="mobLiveChatInput" type="text" placeholder="Mesaj yaz..." maxlength="200" autocomplete="off"
+          onkeydown="if(event.key==='Enter')mobLiveSendMsg()"
+          style="flex:1;background:none;border:none;color:#fff;font-size:.84rem;font-family:inherit;outline:none;">
+        <button onclick="mobLiveSendMsg()" style="width:30px;height:30px;border:none;border-radius:8px;cursor:pointer;background:rgba(74,143,64,.25);color:#6dbf67;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="screen" id="gamesScreen">
   <div class="ws-header">
     <div class="ws-name">🎮 Mini Oyunlar</div>
@@ -1736,24 +1895,43 @@
 </div>
 </div>
   <!-- JS Modülleri -->
-  <script src="js/config.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/rooms.js"></script>
-  <script src="js/messages.js"></script>
-  <script src="js/friends.js"></script>
-  <script src="js/profile.js"></script>
-  <script src="js/admin.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/desktop.js"></script>
+  <script src="js/config.js?v=12"></script>
+  <script src="js/rooms.js?v=12"></script>
+  <script src="js/messages.js?v=12"></script>
+  <script src="js/friends.js?v=12"></script>
+  <script src="js/profile.js?v=12"></script>
+  <script src="js/admin.js?v=12"></script>
+  <script src="js/ui.js?v=12"></script>
+  <script src="js/desktop.js?v=12"></script>
+  <script>
+    // guildRail overlay'ini tamamen engelle
+    window.renderGuildRail = function() {
+      var el = document.getElementById('guildRail');
+      if (el) el.remove();
+      document.body.style.paddingLeft = '';
+    };
+    // MutationObserver: #guildRail DOM'a eklenirse anında sil
+    var _grObs = new MutationObserver(function(muts) {
+      muts.forEach(function(m) {
+        m.addedNodes.forEach(function(n) {
+          if (n.id === 'guildRail') { n.remove(); document.body.style.paddingLeft = ''; }
+        });
+      });
+    });
+    _grObs.observe(document.documentElement, { childList: true, subtree: true });
+  </script>
+  <script src="js/servers.js?v=12"></script>
   <!-- games.js kaldırıldı -->
-  <script src="js/media.js"></script>
-  <script src="js/bot.js"></script>
-  <script src="js/search.js"></script>
-  <script src="js/misc.js"></script>
-  <script src="js/canvas.js"></script>
-  <script src="js/lists.js"></script>
-  <script src="js/features.js"></script>
-  <script src="js/mentions.js"></script>
+  <script src="js/media.js?v=12"></script>
+  <script src="js/auth.js?v=12"></script>
+  <script src="js/bot.js?v=12"></script>
+  <script src="js/misc.js?v=12"></script>
+  <script src="js/naturebot-brain.js?v=5"></script>
+  <script src="js/search.js?v=11"></script>
+  <script src="js/canvas.js?v=11"></script>
+  <script src="js/lists.js?v=11"></script>
+  <script src="js/features.js?v=11"></script>
+  <script src="js/mentions.js?v=11"></script>
   <script>
     // Tüm modüller yüklendi, sunucu listesini doldur
     if (typeof renderServerSelect === 'function') renderServerSelect();
@@ -1958,7 +2136,10 @@
   </div>
 </div>
 
-<script src="js/push.js"></script>
+<script src="js/push.js?v=11"></script>
+<script src="js/mobile-sync.js?v=11"></script>
+<script src="js/session.js?v=7"></script>
+<script src="js/fixes.js?v=11"></script>
 
 
 </body>

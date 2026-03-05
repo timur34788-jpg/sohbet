@@ -1,4 +1,4 @@
-/* Nature.co Service Worker — sw-v14 */
+/* Nature.co Service Worker — sw-v29 */
 /* FCM arka plan bildirimi için Firebase Messaging eklendi */
 
 importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
@@ -45,7 +45,7 @@ function handleBackgroundMessage(payload) {
   });
 }
 
-const C = 'sw-v1913';
+const C = 'sw-v29';
 const CACHE_URLS = ['./'];
 
 self.addEventListener('install', e => {
