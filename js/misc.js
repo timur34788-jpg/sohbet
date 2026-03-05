@@ -101,130 +101,19 @@ function checkRateLimit(action, maxPerMin=20){
   _apiCallLog[action].push(now);
   return true;
 }
-async function submitLogin(){
-  // Sunucu seçilmemiş kontrolü
-  if (typeof FB_CONFIG === 'undefined' || !FB_CONFIG) {
-    const keys = typeof FB_SERVERS !== 'undefined' ? Object.keys(FB_SERVERS) : [];
-    if (keys.length === 1 && typeof selectServer === 'function') {
-      selectServer(keys[0]);
-      setTimeout(submitLogin, 1500);
-      return;
-    }
-    showLoginErr('Lütfen önce bir sunucu seçin.');
-    return;
-  }
 
-  const user=document.getElementById('loginUser').value.trim();
-  const pass=document.getElementById('loginPass').value;
-  if(!user){showLoginErr('Kullanıcı adı girin.');return;}
-  if(!pass){showLoginErr('Şifre girin.');return;}
-
-  const lockCheck = checkLoginLock(user);
-  if(!lockCheck.allowed){ showLoginErr('⏳ Çok fazla hatalı deneme. ' + lockCheck.mins + ' dakika bekleyin.'); return; }
-  if(!checkRateLimit('login', 10)){ showLoginErr('⚠️ Çok hızlı istek gönderiyorsunuz. Lütfen bekleyin.'); return; }
-
-  const btn=document.getElementById('loginBtn');
-  btn.textContent='Bağlanıyor...';
-  btn.disabled=true;
-
-  // Firebase hazır değilse init et ve bekle
-  if(!_db){
-    btn.textContent='Firebase başlatılıyor...';
-    const ok = await fbInit().catch(()=>false);
-    if(!ok || !_db){
-      showLoginErr('Sunucuya bağlanılamadı. Sayfayı yenileyip tekrar deneyin.');
-      btn.textContent='Giriş Yap →'; btn.disabled=false;
-      return;
-    }
-  }
-
-  btn.textContent='Giriş yapılıyor...';
-  // IP ban arka planda
-  checkIPBan().then(ipBanned => { if(ipBanned){ showLoginErr('Bu IP adresi yasaklıdır.'); btn.textContent='Giriş Yap →'; btn.disabled=false; } }).catch(()=>{});
-
-  const ph=await hashStr(pass+user);
-  try{
-    // ── Admin girişi — Cloud Function bağımlılığı yok, doğrudan DB (REST) ──
-    if(ADMIN_USERNAME && user===ADMIN_USERNAME){
-      try{
-        const adminData = await fbRestGet('users/'+user).catch(()=>null);
-        const phLegacy  = hashStrSync(pass+user);
-        if(!adminData){
-          showLoginErr('Admin hesabı bulunamadı. Firebase DB\'ye users/'+user+' kaydı ekleyin.');
-          resetBtn(); return;
-        }
-        const storedHash = adminData.passwordHash || '';
-        const phLegacyAdmin = await hashStr(pass+'admin'); // eski 'admin' adıyla üretilmiş hash desteği
-        const matched    = (storedHash === ph) || (storedHash === phLegacy) || (storedHash === phLegacyAdmin);
-        if(!matched){
-          const rem  = recordLoginAttempt(user, false);
-          const lock = checkLoginLock(user);
-          if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika kilitli.');
-          else showLoginErr('Şifre yanlış.' + (rem.remaining !== undefined ? ' ' + rem.remaining + ' hakkınız kaldı.' : ''));
-          resetBtn(); return;
-        }
-        if(adminData.banned){ showLoginErr('Bu hesap yasaklandı.'); resetBtn(); return; }
-        // Legacy hash yükselt
-        if(storedHash === phLegacy && storedHash !== ph){
-          await fbRestSet('users/'+user+'/passwordHash', ph).catch(()=>{});
-        }
-        // Admin yetkisi: isAdmin flag VEYA admins/ path
-        const isAdminFlag  = adminData.isAdmin === true;
-        const adminsEntry  = await fbRestGet('admins/'+user).catch(()=>null);
-        recordLoginAttempt(user, true);
-        _passwordHash=ph; _cu=user; _isAdmin=(isAdminFlag || !!adminsEntry);
-        onLoginSuccess();
-        return;
-      }catch(dbErr){
-        const msg = dbErr.message || String(dbErr);
-        if(msg.includes('permission_denied')||msg.includes('401')||msg.includes('403')){
-          showLoginErr('DB erişimi reddedildi. Firebase Rules veya Anonymous Auth ayarını kontrol edin.');
-        } else {
-          showLoginErr('Bağlantı hatası: ' + msg);
-        }
-        resetBtn(); return;
-      }
-    }
-    // Normal kullanıcı — users/ tablosundan doğrula
-    const phLegacy = hashStrSync(pass+user);
-    // _db null ise yeniden bağlanmayı dene
-    if(!_db){
-      const ok = await fbInit().catch(()=>false);
-      if(!ok || !_db){ showLoginErr('Sunucuya bağlanılamadı. Sayfayı yenileyip tekrar deneyin.'); resetBtn(); return; }
-    }
-    // SDK yerine REST kullan — auth/configuration-not-found olan sunucularda da çalışır
-    const rootD = await fbRestGet('users/'+user).catch(()=>null);
-    if(!rootD){showLoginErr('Kullanıcı bulunamadı. Kayıt ol!');resetBtn();return;}
-    const stored = rootD.passwordHash;
-    let matched = false;
-    if(stored === ph){ matched=true; }
-    else if(stored === phLegacy){
-      matched=true;
-      await fbRestSet('users/'+user+'/passwordHash', ph).catch(()=>{});
-    }
-    if(!matched){
-      const rem = recordLoginAttempt(user, false);
-      const lock = checkLoginLock(user);
-      if(!lock.allowed) showLoginErr('⏳ Çok fazla hatalı giriş. ' + lock.mins + ' dakika hesabın kilitli.');
-      else showLoginErr('Şifre yanlış.' + (rem.remaining !== undefined ? ' ' + rem.remaining + ' hakkınız kaldı.' : ''));
-      resetBtn();return;
-    }
-    if(rootD.banned){showLoginErr('Bu hesap yasaklandı.');resetBtn();return;}
-    recordLoginAttempt(user, true);
-    _passwordHash=ph;_cu=user;_isAdmin=false;
-    onLoginSuccess();
-  }catch(e){
-    let msg = e.message || String(e);
-    if(msg.includes('permission_denied') || msg.includes('HTTP 401') || msg.includes('HTTP 403')){
-      msg = 'Sunucu bağlantı yetkisi reddedildi. Firebase Console\'da Anonymous Authentication\'ı etkinleştirin.';
-    } else if(e.name==='AbortError'){
-      msg = 'Sunucuya ulaşılamadı. İnternet bağlantını kontrol et ve tekrar dene.';
-    } else {
-      msg = 'Bağlantı hatası: ' + msg;
-    }
-    showLoginErr(msg); resetBtn();
-  }
+/* Telefon OTP teyit — login ekranı */
+async function submitPhoneLoginOTP() {
+  const otp  = document.getElementById('loginPhoneOtp')?.value.trim() || '';
+  const user = document.getElementById('loginUser')?.value.trim() || '';
+  if (!otp)  { showLoginErr('Kodu girin.'); return; }
+  if (!user) { showLoginErr('Kullanıcı adını girin.'); return; }
+  const btn = document.getElementById('loginPhoneOtpBtn');
+  if (btn) { btn.textContent = 'Doğrulanıyor...'; btn.disabled = true; }
+  const ok = await verifyPhoneLoginOTP(otp, user);
+  if (!ok && btn) { btn.textContent = 'Onayla →'; btn.disabled = false; }
 }
+window.submitPhoneLoginOTP = submitPhoneLoginOTP;
 
 
 /* ── Nav ── */
@@ -1724,7 +1613,7 @@ async function submitChangePassword(){
 
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function initials(n){return String(n||'?').slice(0,2).toUpperCase();}
-function strColor(s){const c=['#E01E5A','#36C5F0','#2EB67D','#ECB22E','#9B72FF','#1D9BD1','#E8912D','#78D26F'];let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return c[h%c.length];}
+function strColor(s){if(!s||typeof s!=='string'||s.length===0)return '#9B72FF';const c=['#E01E5A','#36C5F0','#2EB67D','#ECB22E','#9B72FF','#1D9BD1','#E8912D','#78D26F'];let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return c[h%c.length];}
 
 
 /* ══ TARİHİ TÜRK SÖYLEM SİSTEMİ ══ */
@@ -2552,11 +2441,12 @@ function checkAndNotify(roomId, msg){
 /* ── Init ── */
 
 function waitForFirebase(cb,tries=0){
-  if(typeof firebase!=='undefined'&&firebase.database){cb();}
-  else if(tries<20){setTimeout(()=>waitForFirebase(cb,tries+1),100);}
-  else{document.body.innerHTML='<div style="color:#fff;background:#3f0e40;height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:sans-serif;"><div><div style="font-size:3rem;margin-bottom:16px">⚠️</div><div style="font-size:1.1rem;font-weight:700;margin-bottom:8px">Bağlantı hatası</div><div style="font-size:.9rem;opacity:.7">Sayfayı yenileyin veya internet bağlantınızı kontrol edin.</div><button onclick="location.reload()" style="margin-top:20px;padding:12px 24px;background:#fff;color:#3f0e40;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer">Yenile</button></div></div>';}
+  // _db varsa (nc-backend) veya firebase hazırsa devam et
+  if(window._db||(typeof firebase!=='undefined'&&firebase.database)){cb();}
+  else if(tries<50){setTimeout(()=>waitForFirebase(cb,tries+1),200);}
+  else{cb();} // 10sn sonra timeout — yine de çalıştır
 }
-document.addEventListener('DOMContentLoaded',()=>{
+window.addEventListener('load',()=>{
   const lastServer = localStorage.getItem('sohbet_last_server');
   if(lastServer && typeof FB_SERVERS!=='undefined' && FB_SERVERS[lastServer]){
     const savedUser = localStorage.getItem('sohbet_user_' + lastServer);
@@ -2579,89 +2469,56 @@ document.addEventListener('DOMContentLoaded',()=>{
 
       const removeLoader = ()=>{ const l=document.getElementById('_autoLoginLoader'); if(l)l.remove(); };
 
+      // ── HIZLI OTOMATİK GİRİŞ ──
+      // LOCAL_USERS'dan anında doğrula — Firebase bekleme yok
+      const _localUsers = (typeof LOCAL_USERS !== 'undefined' && LOCAL_USERS[lastServer]) || {};
+      const _localUser  = _localUsers[savedUser];
+
+      if(_localUser && !_localUser.banned){
+        // Hash eşleşiyor mu? (stored hash ile karşılaştır)
+        const _hashMatch = _localUser.passwordHash === savedPass;
+        if(_hashMatch){
+          _passwordHash = savedPass;
+          _cu           = savedUser;
+          _isAdmin      = _localUser.isAdmin === true;
+          removeLoader();
+          // Firebase'i arka planda başlat (UI'yi bloklamaz)
+          waitForFirebase(()=>{ fbInit().catch(()=>{}); });
+          onLoginSuccess();
+          return;
+        }
+      }
+
+      // LOCAL_USERS'da bulunamadı veya hash uyuşmadı — Firebase ile dene
       waitForFirebase(async ()=>{
         try{
           if(!await fbInit()) throw new Error('fbInit failed');
-          const rootD = await fbRestGet('users/'+savedUser).catch(()=>null);
-          if(rootD && rootD.passwordHash===savedPass && !rootD.banned){
-            _passwordHash=savedPass; _cu=savedUser; _isAdmin=false;
-            removeLoader();
-            onLoginSuccess();
-            return;
-          }
-          // REST null ise ağ geçici hatası — kayıtlı kimliği ile giriş yaptır
-          if(!rootD){
-            _passwordHash=savedPass; _cu=savedUser; _isAdmin=false;
-            removeLoader();
-            onLoginSuccess();
-            // 6sn sonra arka planda doğrula: şifre değişmiş/ban varsa çıkış yaptır
-            setTimeout(async()=>{
-              try{
-                const check = await fbRestGet('users/'+savedUser).catch(()=>null);
-                if(check && (check.passwordHash!==savedPass || check.banned)){
-                  if(typeof logout==='function') logout();
-                }
-              }catch(e){}
-            }, 1500);
-            return;
-          }
-          // Şifre yanlış ama ban değil — oturumu aç, arka planda doğrula
-          if(!rootD.banned){
-            _passwordHash=savedPass; _cu=savedUser; _isAdmin=false;
-            removeLoader();
-            onLoginSuccess();
-            // Arka planda yeniden doğrula — şifre değişmişse çıkış yaptır
-            setTimeout(async()=>{
-              try{
-                const recheck = await fbRestGet('users/'+savedUser).catch(()=>null);
-                if(recheck && (recheck.passwordHash!==savedPass || recheck.banned)){
-                  if(typeof logout==='function') logout();
-                }
-              }catch(e){}
-            }, 3000);
-            return;
-          }
-          // Ban durumunda logout
-          throw new Error('banned');
+          // Firebase hazır, direkt giriş yap (REST doğrulama yok — hash zaten biliniyor)
+          _passwordHash = savedPass;
+          _cu           = savedUser;
+          _isAdmin      = _localUser ? (_localUser.isAdmin === true) : false;
+          removeLoader();
+          onLoginSuccess();
+          // Arka planda ban kontrolü (5sn sonra)
+          setTimeout(async()=>{
+            try{
+              const check = await fbRestGet('users/'+savedUser).catch(()=>null);
+              if(check && check.banned){ if(typeof logout==='function') logout(); }
+            }catch(e){}
+          }, 5000);
         }catch(e){
           console.warn('Otomatik giriş başarısız:', e);
-          // Sadece açık ban durumunda çıkış yap
-          const isBanned = e && (e.message === 'banned' || String(e).includes('banned'));
-          if(!isBanned){
-            // Ağ/Firebase hatası — kayıtlı kimlikle devam et, login ekranı gösterme
-            console.info('Ağ hatası oluştu, önbellek kimlikle devam ediliyor...');
-            _passwordHash = savedPass;
-            _cu = savedUser;
-            _isAdmin = false;
-            removeLoader();
-            onLoginSuccess();
-            // 5sn sonra arka planda yeniden doğrula
-            setTimeout(async () => {
-              try {
-                const bg = await fbRestGet('users/' + savedUser).catch(() => null);
-                if(bg && (bg.passwordHash !== savedPass || bg.banned)){
-                  if(typeof logout === 'function') logout();
-                }
-              } catch(bgErr) { /* ağ yine hatalı, oturumu koru */ }
-            }, 5000);
-            return;
-          }
-          // Ban durumu: oturumu temizle ve login ekranına git
-          localStorage.removeItem('sohbet_last_server');
-          localStorage.removeItem('sohbet_user_' + lastServer);
-          localStorage.removeItem('sohbet_pass_' + lastServer);
+          removeLoader();
+          _activeServer = 'chat';
+          FB_CONFIG     = FB_SERVERS['chat'].config;
+          _FB_REST      = FB_SERVERS['chat'].config.databaseURL;
+          await fbInit().catch(()=>{});
+          const ss_fl = document.getElementById('serverSelectScreen');
+          const ls_fl = document.getElementById('loginScreen');
+          if(ss_fl) ss_fl.classList.remove('active');
+          if(ls_fl) ls_fl.classList.add('active');
+          if(typeof startTurkQuoteTimer === 'function') startTurkQuoteTimer();
         }
-        removeLoader();
-        // Başarısız otomatik girişte Ekosistem Chat login ekranına dön
-        _activeServer = 'chat';
-        FB_CONFIG     = FB_SERVERS['chat'].config;
-        _FB_REST      = FB_SERVERS['chat'].config.databaseURL;
-        await fbInit().catch(()=>{});
-        const ss_fl = document.getElementById('serverSelectScreen');
-        const ls_fl = document.getElementById('loginScreen');
-        if(ss_fl) ss_fl.classList.remove('active');
-        if(ls_fl) ls_fl.classList.add('active');
-        if(typeof startTurkQuoteTimer === 'function') startTurkQuoteTimer();
       });
       return;
     }
@@ -3722,12 +3579,28 @@ const SPEECH = {
 
   getVoice() {
     const voices = speechSynthesis.getVoices();
-    // Öncelik: Türkçe kadın/kız sesi
-    const trFemale = voices.find(v => v.lang.startsWith('tr') && /female|woman|girl|kadın/i.test(v.name));
-    const tr = voices.find(v => v.lang.startsWith('tr'));
-    // Türkçe yoksa İngilizce kadın sesi (daha tiz çıkar)
-    const enFemale = voices.find(v => v.lang.startsWith('en') && /female|woman|girl|samantha|karen|victoria|fiona/i.test(v.name));
-    return trFemale || tr || enFemale || voices[0] || null;
+    if (!voices.length) return null;
+    // 1) Google Türkçe (Chrome — en doğal kalite)
+    const gTR = voices.find(v => /google.*turkish|turkish.*google/i.test(v.name));
+    if (gTR) return gTR;
+    // 2) Microsoft Türkçe (Edge/Windows)
+    const msTR = voices.find(v => v.lang === 'tr-TR' && /microsoft/i.test(v.name));
+    if (msTR) return msTR;
+    // 3) Herhangi Türkçe
+    const anyTR = voices.find(v => v.lang && v.lang.startsWith('tr'));
+    if (anyTR) return anyTR;
+    // 4) Google UK English Male — kaliteli doğal erkek
+    const gUK = voices.find(v => /Google UK English Male/i.test(v.name));
+    if (gUK) return gUK;
+    // 5) macOS/iOS erkek sesleri
+    const natM = voices.find(v => /Daniel|Alex|Tom|Fred|Bruce/i.test(v.name));
+    if (natM) return natM;
+    // 6) İngilizce erkek
+    const enM = voices.find(v => v.lang.startsWith('en') && /male|man|guy/i.test(v.name));
+    if (enM) return enM;
+    // 7) İngilizce en-US
+    const en = voices.find(v => v.lang.startsWith('en-US'));
+    return en || voices[0] || null;
   },
 
   // Metni doğal, anlaşılır konuşmaya çevir
@@ -3805,8 +3678,8 @@ const SPEECH = {
 
     const utter = new SpeechSynthesisUtterance(clean);
     utter.lang = 'tr-TR';
-    utter.pitch = 2.0;   // maksimum tiz — çocuk sesi
-    utter.rate = 1.1;    // hafif hızlı ama anlaşılır
+    utter.pitch = 0.78;   // doğal erkek tonu — daha derin ve akıcı
+    utter.rate  = 1.08;   // hafif hızlı = daha akıcı konuşma
     utter.volume = 1.0;
 
     // Sesi yükle ve ata

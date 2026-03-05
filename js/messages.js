@@ -46,7 +46,12 @@ function renderMsgs(msgsObj, clearedAt){
           <span style="color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc((m.replyTo.text||'').slice(0,60))}</span>
         </div>`;
       }
-      content=own?`<div class="ob">${replyHtml}${linkify(esc(m.text))}</div>`:`<div class="mb-text">${replyHtml}${linkify(esc(m.text))}</div>`;
+      // Konferans/yayın daveti
+      if (m.isConferenceInvite && m.confId && typeof renderConferenceInviteMsg === 'function') {
+        content = renderConferenceInviteMsg(m) || (own?`<div class="ob">${replyHtml}${linkify(esc(m.text))}</div>`:`<div class="mb-text">${replyHtml}${linkify(esc(m.text))}</div>`);
+      } else {
+        content=own?`<div class="ob">${replyHtml}${linkify(esc(m.text))}</div>`:`<div class="mb-text">${replyHtml}${linkify(esc(m.text))}</div>`;
+      }
     }
     const meta=first?`<div class="mb-meta"><div class="mb-name">${esc(own?_cu:m.user)}</div><div class="mb-ts">${fmtTime(m.ts)}${own?getMsgStatusSvg('sent'):''}</div></div>`:
     own?`<div class="mb-meta mb-meta-mini"><div class="mb-ts">${fmtTime(m.ts)}${getMsgStatusSvg('sent')}</div></div>`:'';

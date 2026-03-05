@@ -94,7 +94,74 @@ let FB_CONFIG = null;
 
 const ADMIN_USERNAME = 'admin1';
 
-let _db=null,_auth=null,_functions=null,_cu=null,_isAdmin=false,_cRoom=null;
+/* ══════════════════════════════════════
+   YERELKULLANıCı VERİTABANI
+   Firebase'e bağlı değil — tamamen yerel.
+   Şifreler SHA-256(şifre + kullanıcıAdı) ile hashlenmiş.
+   Yeni kullanıcı eklemek için buraya ekleyin.
+   ══════════════════════════════════════ */
+const LOCAL_USERS = {
+  // ── Biyom (layla-d3710) sunucusu ──
+  sohbet: {
+    admin1: {
+      username: 'admin1',
+      passwordHash: 'fd65cf3469d1b1d461561fabcc8ef0d8ac91549f4934bf2ea777ce9d128e02e4',
+      isAdmin: true,
+      banned: false,
+      createdAt: 1709460000000,
+      email: ''
+    },
+    'İnci': {
+      username: 'İnci',
+      passwordHash: '9e68e195b6b1381d481fa4170b26bee560e4d8449855bd33ab07651f1039a074',
+      isAdmin: false,
+      banned: false,
+      createdAt: 1234567890,
+      email: 'timurhanhz3@gmail.com'
+    }
+  },
+  // ── Ekosistem Chat (lisa-518f0) sunucusu ──
+  chat: {
+    admin1: {
+      username: 'admin1',
+      passwordHash: 'fd65cf3469d1b1d461561fabcc8ef0d8ac91549f4934bf2ea777ce9d128e02e4',
+      isAdmin: true,
+      banned: false,
+      createdAt: 1709460000000,
+      email: 'gencayolgun07@gmail.com'
+    },
+    Gencay: {
+      username: 'Gencay',
+      passwordHash: 'ba6b24de6f35818f85a6b2d93e8ad68c9ccb09053da4d2ad47a727ab22fbaee5',
+      isAdmin: false,
+      banned: false,
+      createdAt: 1772646150194,
+      email: 'gencayolgun07@gmail.com',
+      origin: '🇹🇷 Türk'
+    },
+    Meryem: {
+      username: 'Meryem',
+      passwordHash: '0f6d247d3920d804c88e3c097587f3ea9b92bdbf25db43fb7a6fada47ea3d1d8',
+      isAdmin: false,
+      banned: false,
+      createdAt: 1772646150000,
+      email: ''
+    }
+  }
+};
+
+/* Aktif sunucunun kullanıcı listesini döndür */
+function getLocalUsers() {
+  return LOCAL_USERS[_activeServer] || {};
+}
+
+/* Kullanıcıyı yerel DB'den getir */
+function getLocalUser(username) {
+  const users = getLocalUsers();
+  return users[username] || null;
+}
+
+let _db=null,_functions=null,_cu=null,_isAdmin=false,_cRoom=null;
 let _fbInitPromise=null; // double-init önleyici
 
 
@@ -152,7 +219,7 @@ function allGames(){
   return [...GAME_CATALOG, ..._customGames];
 }
 
-const _mainScreenIds={home:'roomsScreen',msgs:'msgsScreen',forum:'forumScreen',friends:'friendsScreen',profile:'profileScreen',games:'gamesScreen',watch:'watchScreen'};
+const _mainScreenIds={home:'roomsScreen',msgs:'msgsScreen',forum:'forumScreen',friends:'friendsScreen',profile:'profileScreen',games:'gamesScreen',watch:'watchScreen',liveroom:'liveRoomScreen'};
 let _activeMainTab='home';
 
 function switchMainTab(tab){
@@ -163,7 +230,7 @@ function switchMainTab(tab){
   }
   if(typeof _updateURL === 'function') _updateURL(tab);
   // Hide all screens except login/chat/admin
-  ['roomsScreen','forumScreen','msgsScreen','friendsScreen','profileScreen','chatScreen','adminPanel','gamesScreen','watchScreen'].forEach(id=>{
+  ['roomsScreen','forumScreen','msgsScreen','friendsScreen','profileScreen','chatScreen','adminPanel','gamesScreen','watchScreen','liveRoomScreen'].forEach(id=>{
     var el=document.getElementById(id);
     if(el){ el.classList.remove('active'); el.style.display=''; }
   });
@@ -172,7 +239,7 @@ function switchMainTab(tab){
   var el=document.getElementById(targetId);
   if(el) el.classList.add('active');
   // Update tab bar active indicator
-  var tabMap={home:'tabHome',forum:'tabForum',msgs:'tabMsgs',friends:'tabFriends',profile:'tabProfile',games:'tabGames',watch:'tabWatch'};
+  var tabMap={home:'tabHome',forum:'tabForum',msgs:'tabMsgs',friends:'tabFriends',profile:'tabProfile',games:'tabGames',watch:'tabWatch',liveroom:'tabLiveRoom'};
   document.querySelectorAll('.tab-bar .tab').forEach(function(t){t.classList.remove('act');});
   var atId=tabMap[tab];
   if(atId){var at=document.getElementById(atId);if(at)at.classList.add('act');}
@@ -303,29 +370,9 @@ async function _fbInitInternal(){
     }
     const a = firebase.initializeApp(FB_CONFIG);
     _db = firebase.database(a);
-    _auth = firebase.auth(a);
     _functions = firebase.functions(a);
-    // Her ziyaretçiyi anonim olarak Firebase Auth'a giriş yaptır
-    // Bu sayede auth!=null kuralları çalışır ve raw REST saldırıları engellenir
-    // NOT: Bazı projelerde Anonymous Auth kapalı olabilir; bu hata kritik değil, devam edilir.
-    try{
-      await _auth.signInAnonymously();
-    }catch(e){
-      if(e.code === 'auth/configuration-not-found' || e.code === 'auth/operation-not-allowed'){
-        console.warn('⚠️ Bu Firebase projesinde Anonymous Authentication aktif değil.',
-          'Firebase Console → Authentication → Sign-in method → Anonymous → Enable yapın.');
-        // Auth olmadan devam et; DB bağlantısı var, REST token'sız çalışacak
-      } else {
-        console.warn('Anonim giriş başarısız:', e);
-      }
-    }
-    // Persistence: offline cache ile anlık yükleme
+    // Bağlantı durumunu izle
     try{ _db.ref('.info/connected').on('value',()=>{}); }catch(e){}
-    // Sık kullanılan yolları ön belleğe al
-    try{
-      _db.ref('rooms').keepSynced(true);
-      _db.ref('online').keepSynced(true);
-    }catch(e){}
     return true;
   }catch(e){ console.error('fbInit hatası:', e); return false; }
 }
@@ -378,16 +425,17 @@ function selectServer(key){
     if (typeof firebase !== 'undefined' && firebase.database) {
       (async () => {
         try {
-          if (!await fbInit()) { showScreen('loginScreen'); showToast && showToast('Firebase bağlanamadı'); return; }
-          showScreen('loginScreen');
+          const _ss = (id) => typeof showScreen==='function' ? showScreen(id) : (()=>{const el=document.getElementById(id);if(el){el.classList.add('active');el.style.display='flex';}})();
+          if (!await fbInit()) { _ss('loginScreen'); showToast && showToast('Firebase bağlanamadı'); return; }
+          _ss('loginScreen');
           const tb=document.querySelector('.tab-bar'); if(tb) tb.style.display='';
           if (typeof startTurkQuoteTimer === 'function') startTurkQuoteTimer();
-        } catch(e) { console.error('Server init error:', e); showScreen('loginScreen'); }
+        } catch(e) { console.error('Server init error:', e); if(typeof showScreen==='function') showScreen('loginScreen'); }
       })();
     } else if (tries < 30) {
       setTimeout(() => _waitAndInit(tries + 1), 100);
     } else {
-      showScreen('loginScreen');
+      if(typeof showScreen==='function') showScreen('loginScreen'); else { const el=document.getElementById('loginScreen');if(el){el.classList.add('active');el.style.display='flex';} }
     }
   };
   _waitAndInit();
@@ -403,7 +451,7 @@ async function backToServerSelect(){
   _isAdmin = false;
 
   // Firebase apps temizle - bekle
-  try{ if(_auth){ await _auth.signOut().catch(()=>{}); _auth=null; } }catch(e){}
+  // Firebase Auth kaldırıldı — RTDB tabanlı auth kullanılıyor
   try{ await Promise.all(firebase.apps.map(app=>app.delete().catch(()=>{}))); }catch(e){}
   _functions=null;
   document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='';});
@@ -464,7 +512,7 @@ async function _switchToServer(key){
   clearInterval(_hbTimer);
   if(_db&&_cu) dbRef('online/'+_cu).remove().catch(()=>{});
   _cu=null;_cRoom=null;_online={};_unread={};_isAdmin=false;
-  if(_auth){ _auth.signOut().catch(()=>{}); _auth=null; }
+  // Firebase Auth kaldırıldı
   _functions=null;
   Object.values(_lastMsgListeners).forEach(s=>{try{s();}catch(e){}});
   Object.keys(_lastMsgListeners).forEach(k=>delete _lastMsgListeners[k]);
@@ -475,30 +523,9 @@ function onUsernameInput(){ hideLoginErr(); }
 function showLoginErr(msg){const el=document.getElementById('loginErr');el.textContent=msg;el.classList.add('show');}
 function hideLoginErr(){document.getElementById('loginErr').classList.remove('show');}
 
-function loginNext(){
-  const user=document.getElementById('loginUser').value.trim();
-  if(!user){showLoginErr('Kullanıcı adı girin.');return;}
-  hideLoginErr();
-  // Avatar rengi
-  const av=document.getElementById('loginUserAvatar');
-  av.textContent=initials(user);
-  av.style.background=strColor(user);
-  document.getElementById('loginUserLabel').textContent=user;
-  document.getElementById('loginStep1').style.display='none';
-  document.getElementById('loginStep2').style.display='block';
-  // Şifre alanına odaklan
-  setTimeout(function(){
-    const p=document.getElementById('loginPass');
-    if(p) p.focus();
-  },100);
-}
-function loginBack(){
-  hideLoginErr();
-  document.getElementById('loginStep2').style.display='none';
-  document.getElementById('loginStep1').style.display='block';
-  const p=document.getElementById('loginPass');
-  if(p) p.value='';
-}
+// loginNext/loginBack — tek adıma geçildi, uyumluluk için kaldı
+function loginNext(){ submitLogin && submitLogin(); }
+function loginBack(){ hideLoginErr && hideLoginErr(); }
 
 /* ── Install Banners ── */
 
@@ -629,14 +656,8 @@ let _FB_REST='https://layla-d3710-default-rtdb.europe-west1.firebasedatabase.app
 
 /* ── Firebase REST Auth Token Yardımcısı ── */
 
-async function getFbAuthToken(){
-  try{
-    if(_auth && _auth.currentUser){
-      return await _auth.currentUser.getIdToken(false);
-    }
-  }catch(e){}
-  return null;
-}
+// Firebase Auth kaldırıldı — token gerekmez
+async function getFbAuthToken(){ return null; }
 
 async function fbRestGet(path, retries=3){
   const wpath = wsPath(path);
@@ -644,10 +665,9 @@ async function fbRestGet(path, retries=3){
     const ctrl=new AbortController();
     const t=setTimeout(()=>ctrl.abort(),8000);
     try{
-      const token = await getFbAuthToken();
-      const authParam = token ? '?auth='+token : '';
-      const r=await fetch(_FB_REST+'/'+wpath+'.json'+authParam,{signal:ctrl.signal,cache:'no-store'});
+      const r=await fetch(_FB_REST+'/'+wpath+'.json',{signal:ctrl.signal,cache:'no-store'});
       clearTimeout(t);
+      if(r.status===401||r.status===403) return null;
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     }catch(e){
@@ -666,10 +686,9 @@ async function fbRestSet(path,val, retries=3){
     const ctrl=new AbortController();
     const t=setTimeout(()=>ctrl.abort(),8000);
     try{
-      const token = await getFbAuthToken();
-      const authParam = token ? '?auth='+token : '';
-      const r=await fetch(_FB_REST+'/'+wpath+'.json'+authParam,{method:'PUT',body:JSON.stringify(val),headers:{'Content-Type':'application/json'},signal:ctrl.signal});
+      const r=await fetch(_FB_REST+'/'+wpath+'.json',{method:'PUT',body:JSON.stringify(val),headers:{'Content-Type':'application/json'},signal:ctrl.signal});
       clearTimeout(t);
+      if(r.status===401||r.status===403) return null;
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.json();
     }catch(e){
@@ -897,14 +916,16 @@ function applyCustomGameImages(){ return Promise.resolve(); }
   const TAB_HASH = {
     home: '', forum: 'forum', msgs: 'mesajlar',
     friends: 'arkadaslar', profile: 'profil',
-    games: 'oyunlar', watch: 'izle', admin: 'admin'
+    games: 'oyunlar', watch: 'izle', admin: 'admin',
+    liveroom: 'canli', botHome: 'robotevi', leaderboard: 'liderlik'
   };
   const HASH_TAB = {};
   Object.entries(TAB_HASH).forEach(([t,h])=>{ HASH_TAB[h]=t; });
   const labels = {
     home:'Ana Sayfa', forum:'Forum', msgs:'Mesajlar',
     friends:'Arkadaşlar', profile:'Profil',
-    games:'Oyunlar', watch:'İzle', admin:'Admin'
+    games:'Oyunlar', watch:'İzle', admin:'Admin',
+    liveroom:'Canlı Sohbet Odası', botHome:'Robot Evi', leaderboard:'Liderlik'
   };
   window._updateURL = function(tab){
     try {

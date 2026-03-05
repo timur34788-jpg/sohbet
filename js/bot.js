@@ -357,7 +357,19 @@ class NatureBotPet {
       this.initDesktop();
     }
 
-    this.bindClick();
+    // bindClick misc.js'den geliyor — misc.js henüz yüklenmediyse bekle
+    if (typeof this.bindClick === 'function') {
+      this.bindClick();
+    } else {
+      const _self = this;
+      const _waitBind = setInterval(() => {
+        if (typeof _self.bindClick === 'function') {
+          clearInterval(_waitBind);
+          _self.bindClick();
+        }
+      }, 50);
+      setTimeout(() => clearInterval(_waitBind), 5000);
+    }
     this.scheduleIdleMsg();
     this.hookCallScreen();
 
@@ -827,8 +839,39 @@ class NatureBotPet {
     this.bubble.innerHTML = `<span class="bot-bubble-close" onclick="this.parentNode.style.display='none'">✕</span><div class="bot-bubble-name">🌿 NatureBot</div><div class="bot-bubble-msg">${msg}</div>`;
     this.bubble.classList.add('visible');
     this.updateBubblePos();
+
+    // ── Her bubble sesli okunur ──
+    if (window.SPEECH && window.SPEECH.supported) {
+      // Önceki sesi kes
+      SPEECH.stop();
+      // Temiz metin: HTML etiketlerini ve emojileri sil
+      const cleanMsg = msg
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/[🌿🤖💚🌱👋💬🌤️🎲🪙👥🔔🎨📋⏳❌📍📊🔑⚙️👤📅🕐🎯🌳✅➕📡🎉⏰🔊]/g, '')
+        .replace(/\s{2,}/g, ' ').trim();
+      if (cleanMsg.length > 1) {
+        setTimeout(() => {
+          SPEECH.speak(
+            cleanMsg,
+            () => { // konuşmaya başladı — waveform göster
+              if (this.voiceWave) {
+                this.voiceWave.style.display = 'flex';
+                this.updateVoiceWavePos();
+              }
+            },
+            () => { // konuşma bitti — waveform gizle
+              if (this.voiceWave) this.voiceWave.style.display = 'none';
+            }
+          );
+        }, 150);
+      }
+    }
+
     if (autoHide) {
-      this.bubbleTimeout = setTimeout(() => this.hideBubble(), 5000);
+      // Ses süresi + 1 sn sonra gizle
+      const wordCount = msg.replace(/<[^>]+>/g,'').split(/\s+/).length;
+      const speakDuration = Math.max(4000, wordCount * 420 + 1200);
+      this.bubbleTimeout = setTimeout(() => this.hideBubble(), autoHide === true ? speakDuration : 5000);
     }
   }
 
@@ -889,9 +932,9 @@ window._natureBotRunCmd = function(cmd) {
 };
 
 
-/* ── NatureBot Akıllı Sohbet Motoru ── */
+/* ── NatureBot Akıllı Sohbet Motoru (naturebot-brain.js ile değiştirildi) ── */
 
-window._natureBotReply = function(text) {
+window._natureBotReplyLEGACY = function(text) {
   if (!text || !text.trim()) return;
   const bot = window._natureBotInstance;
   if (!bot) return;
@@ -1443,22 +1486,29 @@ document.addEventListener('click', e => {
     return _origCheckBotCommand ? _origCheckBotCommand(text) : false;
   };
 
-  // ══ BAŞLAT ══
-  setTimeout(async () => {
-    await loadModSettings();
-    // Mevcut mute listesini Firebase'den yükle
-    try {
-      const mutes = await fbRestGet('mutes').catch(()=>null)||{};
-      Object.entries(mutes).forEach(([user, data]) => {
-        if (data && data.expiresAt && Date.now() < data.expiresAt) {
-          _muteList[user] = data.expiresAt;
-        }
-      });
-    } catch(e) {}
-    // Mevcut oda varsa dinleyici başlat
-    if (window._cRoom) window._startModListener(window._cRoom);
-    if (window._deskRoom) window._startModListener(window._deskRoom);
-  }, 2000);
+  // ══ BAŞLAT — Auth hazır olduktan sonra yükle ══
+  function _initModWhenReady(attempt) {
+    attempt = attempt || 0;
+    // _cu (current user) set olmadan Firebase'e istek atma → 401 önlemi
+    if (!window._cu || !window._db) {
+      if (attempt < 20) setTimeout(() => _initModWhenReady(attempt + 1), 800);
+      return;
+    }
+    (async () => {
+      await loadModSettings();
+      try {
+        const mutes = await fbRestGet('mutes').catch(()=>null)||{};
+        Object.entries(mutes).forEach(([user, data]) => {
+          if (data && data.expiresAt && Date.now() < data.expiresAt) {
+            _muteList[user] = data.expiresAt;
+          }
+        });
+      } catch(e) {}
+      if (window._cRoom) window._startModListener(window._cRoom);
+      if (window._deskRoom) window._startModListener(window._deskRoom);
+    })();
+  }
+  setTimeout(() => _initModWhenReady(0), 2000);
 
   // Global erişim
   window._natureBotMod = {

@@ -140,27 +140,23 @@ async function loadFriendsList(){
     el.innerHTML=h;
   }
 
-  // _online henüz dolmadıysa kısa bir bekleme sonrası tekrar dene
+  // _db ve _online hazır olana kadar bekle, sonra friends çek
   function tryLoad(attempt){
-    if(attempt>3){
-      // Online listesi boş görünüyor, direkt Firebase'den çek
-      dbRef('online').once('value').then(function(onSnap){
-        const now=Date.now();
-        const onData=onSnap.val()||{};
-        Object.entries(onData).forEach(function([k,v]){if(v&&now-v.ts<60000)_online[k]=true;});
-        dbRef('friends/'+_cu).once('value').then(function(frSnap){
-          renderWithFriends(frSnap.val()||{});
-        }).catch(function(){ renderWithFriends({}); });
-      }).catch(function(){ renderWithFriends({}); });
+    if(!window._db){
+      if(attempt<30){ setTimeout(function(){ tryLoad(attempt+1); }, 300); }
+      else { renderWithFriends({}); }
       return;
     }
-    if(Object.keys(_online).length>0){
-      dbRef('friends/'+_cu).once('value').then(function(frSnap){
-        renderWithFriends(frSnap.val()||{});
-      }).catch(function(){ renderWithFriends({}); });
-    } else {
-      setTimeout(function(){ tryLoad(attempt+1); }, 600);
-    }
+    // _db hazır — direkt friends + online çek (paralel)
+    Promise.all([
+      dbRef('friends/'+_cu).once('value'),
+      dbRef('online').once('value')
+    ]).then(function(results){
+      var frSnap=results[0], onSnap=results[1];
+      var now=Date.now(), onData=onSnap.val()||{};
+      Object.entries(onData).forEach(function([k,v]){if(v&&now-v.ts<60000)_online[k]=true;});
+      renderWithFriends(frSnap.val()||{});
+    }).catch(function(){ renderWithFriends({}); });
   }
   tryLoad(0);
 }

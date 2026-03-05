@@ -48,16 +48,16 @@ function _attachRemoteMedia(username, stream) {
 }
 
 const STUN_SERVERS = {iceServers:[
+  // STUN — bağlantı bilgisi için
   {urls:'stun:stun.l.google.com:19302'},
   {urls:'stun:stun1.l.google.com:19302'},
   {urls:'stun:stun2.l.google.com:19302'},
   {urls:'stun:stun.cloudflare.com:3478'},
-  {urls:'stun:stun.relay.metered.ca:80'},
-  // Metered TURN - daha güvenilir
-  {urls:'turn:global.relay.metered.ca:80',  username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
-  {urls:'turn:global.relay.metered.ca:80?transport=tcp', username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
-  {urls:'turn:global.relay.metered.ca:443', username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
-  {urls:'turns:global.relay.metered.ca:443?transport=tcp', username:'83e843c4cc4ddfd87a7aad2a',credential:'a/baxE8l+xWBtFaX'},
+  // TURN — farklı ağlar/mobil için zorunlu (open relay, ücretsiz)
+  {urls:'turn:openrelay.metered.ca:80',      username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443',     username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject'},
+  {urls:'turns:openrelay.metered.ca:443',    username:'openrelayproject', credential:'openrelayproject'},
 ]};
 
 
@@ -99,17 +99,36 @@ async function _setupPeer(remoteUser, isOfferer){
     if(e.candidate) dbRef(sig+'/ice_'+_cu).push(e.candidate.toJSON());
   };
 
+  // Bağlantı timeout — 20sn içinde kurulamazsa hata göster
+  const _connTimeout = setTimeout(()=>{
+    if(pc.connectionState !== 'connected'){
+      const st = document.getElementById('callStatus');
+      if(st) st.textContent = '❌ Bağlanamadı — ağ uyumsuzluğu';
+      _updateCallQuality('bad');
+      // 3sn sonra aramayı kapat
+      setTimeout(()=>{ if(pc.connectionState !== 'connected') _peerLeft(remoteUser); }, 3000);
+    }
+  }, 20000);
+
   pc.onconnectionstatechange = ()=>{
     const s = pc.connectionState;
     if(s==='connected'){
+      clearTimeout(_connTimeout);
       const st=document.getElementById('callStatus');
       if(st && !_callTimer) st.textContent='Bağlandı';
       _updateParticipantsUI();
       if(!_callTimer) startCallTimer();
+      _updateCallQuality('good');
     } else if(s==='failed'){
+      clearTimeout(_connTimeout);
       if(isOfferer) pc.restartIce();
+      else { _peerLeft(remoteUser); }
+      _updateCallQuality('bad');
     } else if(s==='disconnected'){
+      _updateCallQuality('poor');
       setTimeout(()=>{ if(pc.connectionState==='disconnected') _peerLeft(remoteUser); },6000);
+    } else if(s==='connecting'){
+      _updateCallQuality('connecting');
     }
   };
   pc.oniceconnectionstatechange = ()=>{
